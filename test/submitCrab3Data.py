@@ -25,7 +25,7 @@ if ARGSN < 3:
 RUN_RANGE       = ''
 UNITS_PER_JOB   = 500
 TYPE            = 'DATA'
-CAMPAIGN        = 'Run2016/80x_moriond17_reminiaod_03Feb2017_v1'
+CAMPAIGN        = 'Run2016/80x_moriond17_reminiaod_03Feb2017_v2'
 
 ARGS = sys.argv
 PSET = ARGS[1]
