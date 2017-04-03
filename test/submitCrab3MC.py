@@ -26,7 +26,7 @@ if ARGSN < 3:
 # Some parameter steering
 UNITS_PER_JOB   = 2
 TYPE            = 'MC'
-CAMPAIGN        = 'Moriond17/80x_moriond17_data03Feb2017_v1'
+CAMPAIGN        = 'Moriond17/80x_moriond17_data03Feb2017_v2'
 
 ARGS = sys.argv
 PSET = ARGS[1]
