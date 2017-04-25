@@ -1,3 +1,8 @@
+#_________________________________#
+#                                 #
+#  CMSSW_9_0_X with 83X samples   #
+#_________________________________#
+
 ### how to include ntuplizer (+ filters) within cmsDriver config
 ### cmsDriver commands
 
@@ -6,27 +11,26 @@
 # include ntuplizer (+ filters) within cmsDriver config
 #_______________ Addition to cmsDriver - begin
 
-isMC = False
+isMC = True
 
 ## Filter counter (maybe more useful for MC)
 process.TotalEvents    = cms.EDProducer("EventCountProducer")
 process.FilteredEvents = cms.EDProducer("EventCountProducer")
 
 # pileup filter MC
-process.RemovePileUpDominatedEventsGen = cms.EDFilter("RemovePileUpDominatedEventsGen")
+process.RemovePileUpDominatedEventsGen = cms.EDFilter("RemovePileUpDominatedEventsGen",
+     generatorInfo = cms.InputTag("generator"),
+     pileupSummaryInfos = cms.InputTag("addPileupInfo"),
+     )
 
 # Trigger filter (HLT config)
 from Analysis.Ntuplizer.TriggerFilter_cfi import triggerFilter
 
 # =========================
 # Trigger config modifications
-# Example triggers
-#                                  'HLT_BTagMu_DiJet20_Mu5_v*',
-#                                  'HLT_ZeroBias_BunchTrains_part*',
-#                                  'HLT_ZeroBias_part0_v*',
 process.triggerFilter = triggerFilter.clone()
 process.triggerFilter.hltResults = cms.InputTag( 'TriggerResults', '', 'HLT' )
-process.triggerFilter.triggerConditions  = cms.vstring  ('HLT_BTagMu_DiJet20_Mu5_v*')
+process.triggerFilter.triggerConditions  = cms.vstring  ('HLT_ZeroBias_v*')
 # =========================                                  
 # Filtering the trigger sequence                                  
 # comment or modified the lines below if no filter or other filters are required
@@ -48,15 +52,15 @@ process.MssmHbbTrigger = ntuplizer.clone()
 process.MssmHbbTrigger.MonteCarlo        = cms.bool(isMC)
 process.MssmHbbTrigger.TotalEvents       = cms.InputTag("TotalEvents")
 process.MssmHbbTrigger.FilteredEvents    = cms.InputTag("FilteredEvents")
-process.MssmHbbTrigger.PrimaryVertices   = cms.VInputTag(cms.InputTag('hltFastPrimaryVertex'),cms.InputTag('hltFastPVPixelVertices'))
-process.MssmHbbTrigger.L1TJets           = cms.VInputTag(cms.InputTag('hltCaloStage2Digis','Jet'))
-process.MssmHbbTrigger.L1TMuons          = cms.VInputTag(cms.InputTag('hltGmtStage2Digis','Muon'))
+process.MssmHbbTrigger.PrimaryVertices   = cms.VInputTag(cms.InputTag('hltFastPrimaryVertex'),cms.InputTag('hltFastPVPixelVertices'),cms.InputTag('hltVerticesPF'))
+process.MssmHbbTrigger.L1TJets           = cms.VInputTag(cms.InputTag('hltGtStage2Digis','Jet'))
+process.MssmHbbTrigger.L1TMuons          = cms.VInputTag(cms.InputTag('hltGtStage2Digis','Muon'))
 process.MssmHbbTrigger.ChargedCandidates = cms.VInputTag(cms.InputTag('hltL2MuonCandidates'),cms.InputTag('hltL3MuonCandidates') )
 process.MssmHbbTrigger.CaloJets          = cms.VInputTag(cms.InputTag('hltAK4CaloJetsCorrectedIDPassed') )
-process.MssmHbbTrigger.JetsTags          = cms.VInputTag(cms.InputTag('hltCombinedSecondaryVertexBJetTagsCalo'))
+process.MssmHbbTrigger.JetsTags          = cms.VInputTag(cms.InputTag('hltCombinedSecondaryVertexBJetTagsCalo'),cms.InputTag('hltCombinedSecondaryVertexBJetTagsPF'))
 process.MssmHbbTrigger.PFJets            = cms.VInputTag(cms.InputTag('hltAK4PFJets'),cms.InputTag('hltAK4PFJetsLooseIDCorrected'),cms.InputTag('hltAK4PFJetsTightIDCorrected'))
 process.MssmHbbTrigger.TriggerResults    = cms.VInputTag(cms.InputTag('TriggerResults','','HLT2'))
-process.MssmHbbTrigger.TriggerPaths      = cms.vstring ('HLT_ZeroBias_v','HLT_CaloJets_Muons_CaloBTagCSV_PFJets_v')
+process.MssmHbbTrigger.TriggerPaths      = cms.vstring ('HLT_ZeroBias_v')
 if isMC:
    # MC specific
    process.MssmHbbTrigger.PileupInfo        = cms.InputTag("addPileupInfo","","HLT")
@@ -74,15 +78,67 @@ process.schedule.extend([process.endjob_step,process.ntuplizer_step]) # Modified
 
 #_______________________________________________________________
 
+
+# HLT_User_cff.py
+# don't forget to remove the duplicated lines
+
+hltGetConfiguration --cff --offline /dev/CMSSW_9_0_1/HLT/V26 --paths HLTriggerFirstPath,HLTriggerFinalPath --unprescale > HLT_User_cff.py
+hltGetConfiguration --cff --offline /users/rwalsh/dev/CMSSW_9_0_X/MssmHbb/V7 >> HLT_User_cff.py
+
+#_______________________________________________________________
+
+# hlt.py with full output
+
+hltGetConfiguration  /users/rwalsh/dev/CMSSW_9_0_X/MssmHbb/V7 \
+--setup /dev/CMSSW_9_0_1/HLT/V26 \
+--full \
+--offline \
+--mc \
+--unprescale \
+--process HLT2 \
+--globaltag 90X_upgrade2017_TSG_Hcal_V2 \
+--l1-emulator FullSimHcalTP \
+--output full \
+--input /store/mc/PhaseIFall16DR/SUSYGluGluToBBHToBB_NarrowWidth_M-300_TuneCUETP8M1_13TeV-pythia8/GEN-SIM-RAW/FlatPU28to62HcalNZSRAW_90X_upgrade2017_realistic_v6_C1-v1/50000/003C6E24-2415-E711-8D09-D067E5F91B8A.root \
+--max-events 10 \
+> hlt.py
+
+
+#_______________________________________________________________
+
+
 # cmsDriver commands
 
- DATA
+ MC
+====
+
+cmsDriver.py step2 \
+--step=L1REPACK:FullSimHcalTP,HLT:User \
+--conditions=90X_upgrade2017_TSG_Hcal_V2 \
+--filein=/store/mc/PhaseIFall16DR/SUSYGluGluToBBHToBB_NarrowWidth_M-300_TuneCUETP8M1_13TeV-pythia8/GEN-SIM-RAW/FlatPU28to62HcalNZSRAW_90X_upgrade2017_realistic_v6_C1-v1/50000/003C6E24-2415-E711-8D09-D067E5F91B8A.root \
+--secondfilein= \
+--custom_conditions= \
+--number=100 \
+--mc\
+--no_exec \
+--datatier RAW\
+--eventcontent=RAW\
+--customise=HLTrigger/Configuration/CustomConfigs.L1THLT \
+--era=Run2_2016 \
+--customise= \
+--scenario=pp \
+--python_filename=ReHLT_L1Trepack_HLTUser_MCNtuple.py \
+--processName=HLT2 \
+--no_output
+
+
+ DATA ( ***  NOT AVAILABLE YET!!! *** )
 ======
 
 cmsDriver.py step2 \
 --step=L1REPACK:Full,HLT:User \
 --conditions=auto:run2_hlt_GRun \
---filein=/store/data/Run2016H/BTagMu/RAW/v1/000/283/408/00000/78879B75-CC94-E611-BAE6-02163E0146EA.root \
+--filein=/store/mc/PhaseIFall16DR/SUSYGluGluToBBHToBB_NarrowWidth_M-300_TuneCUETP8M1_13TeV-pythia8/GEN-SIM-RAW/FlatPU28to62HcalNZSRAW_90X_upgrade2017_realistic_v6_C1-v1/50000/003C6E24-2415-E711-8D09-D067E5F91B8A.root \
 --custom_conditions= \
 --number=10 \
 --data \
@@ -98,24 +154,3 @@ cmsDriver.py step2 \
 --no_output
 
 
- MC
-====
-
-cmsDriver.py step2 \
---step=L1REPACK:FullMC,HLT:User \
---conditions=auto:run2_mc_GRun \
---filein=/store/mc/RunIISummer16DR80/QCD_Pt_15to30_TuneCUETP8M1_13TeV_pythia8/GEN-SIM-RAW/FlatPU28to62HcalNZSRAW_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/110000/021D009D-21A3-E611-B83B-0025905A6080.root \
---secondfilein= \
---custom_conditions= \
---number=100 \
---mc\
---no_exec \
---datatier RAW\
---eventcontent=RAW\
---customise=HLTrigger/Configuration/CustomConfigs.L1THLT \
---era=Run2_2016 \
---customise= \
---scenario=pp \
---python_filename=ReHLT_L1Trepack_HLTUser80Xv35_MCNtuple.py \
---processName=HLT2 \
---no_output
