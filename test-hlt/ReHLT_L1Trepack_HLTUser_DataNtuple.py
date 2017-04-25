@@ -81,9 +81,10 @@ from Analysis.Ntuplizer.TriggerFilter_cfi import triggerFilter
 #                                  'HLT_BTagMu_DiJet20_Mu5_v*',
 #                                  'HLT_ZeroBias_BunchTrains_part*',
 #                                  'HLT_ZeroBias_part0_v*',
+#                                  'HLT_DoubleJetsC100_DoubleBTagCSV_p014_DoublePFJetsC100MaxDeta1p6_v*',
 process.triggerFilter = triggerFilter.clone()
 process.triggerFilter.hltResults = cms.InputTag( 'TriggerResults', '', 'HLT' )
-process.triggerFilter.triggerConditions  = cms.vstring  ('HLT_BTagMu_DiJet20_Mu5_v*')
+process.triggerFilter.triggerConditions  = cms.vstring  ('HLT_DoubleJetsC100_DoubleBTagCSV_p014_DoublePFJetsC100MaxDeta1p6_v*')
 # =========================                                  
 # Filtering the trigger sequence                                  
 # comment or modified the lines below if no filter or other filters are required
