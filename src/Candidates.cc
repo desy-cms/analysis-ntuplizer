@@ -369,10 +369,10 @@ void Candidates<T>::Kinematics()
       {
          pat::Muon * muon = dynamic_cast<pat::Muon*> (&candidates_[i]);
          const reco::Vertex::Point vtxp  = muon->reco::LeafCandidate::vertex();
-	 const reco::Vertex::Error error ; 
-	 //const reco::Vertex::Error error = muon->reco::LeafCandidate::vertexCovariance(); not implemented at edm level
- 	
-	 const reco::Vertex vtx ( vtxp, error ) ;
+         const reco::Vertex::Error error ; 
+         //const reco::Vertex::Error error = muon->reco::LeafCandidate::vertexCovariance(); not implemented at edm level
+         
+         const reco::Vertex vtx ( vtxp, error ) ;
 
          isPFMuon_       [n] = muon->isPFMuon()     ;
          isGlobalMuon_   [n] = muon->isGlobalMuon() ;
@@ -385,13 +385,13 @@ void Candidates<T>::Kinematics()
          // default values
          segmentCompatibility_      [n] = -1.;
          validFraction_             [n] = -1.;
- 	 matchedStations_           [n] = 9999.;
- 	 validPixelHits_            [n] = 9999.;
- 	 validMuonHits_             [n] = 9999.;
- 	 trkLayersWithMeasurement_  [n] = 9999.;
- 	 trkKink_                   [n] = 9999.;
- 	 ipxy_                      [n] = 9999.;
- 	 ipz_                       [n] = 9999.;
+         matchedStations_           [n] = 9999.;
+         validPixelHits_            [n] = 9999.;
+         validMuonHits_             [n] = 9999.;
+         trkLayersWithMeasurement_  [n] = 9999.;
+         trkKink_                   [n] = 9999.;
+         ipxy_                      [n] = 9999.;
+         ipz_                       [n] = 9999.;
          normChi2_                  [n] = 9999.;
          chi2LocalPos_              [n] = 9999.;
     
@@ -400,16 +400,16 @@ void Candidates<T>::Kinematics()
          {
            // muon chamber stations      
            segmentCompatibility_   [n] = muon->segmentCompatibility()       ; // medium muon
- 	   matchedStations_        [n] = muon->numberOfMatchedStations()    ; // at least 2 in tight 
+           matchedStations_        [n] = muon->numberOfMatchedStations()    ; // at least 2 in tight 
  
- 	   //inner tracker
- 	   validFraction_             [n] = muon->innerTrack()->validFraction()                             ;  
- 	   validPixelHits_            [n] = muon->innerTrack()->hitPattern().numberOfValidPixelHits()       ; 
- 	   trkLayersWithMeasurement_  [n] = muon->innerTrack()->hitPattern().trackerLayersWithMeasurement() ;
+           //inner tracker
+           validFraction_             [n] = muon->innerTrack()->validFraction()                             ;  
+           validPixelHits_            [n] = muon->innerTrack()->hitPattern().numberOfValidPixelHits()       ; 
+           trkLayersWithMeasurement_  [n] = muon->innerTrack()->hitPattern().trackerLayersWithMeasurement() ;
  
- 	   //transverse and longitudinal ip - tracker only 
- 	   ipxy_[n] = fabs(muon->muonBestTrack()->dxy(vtx.position()))     ; 
- 	   ipz_ [n] = fabs(muon->muonBestTrack()->dz (vtx.position()))     ; 
+           //transverse and longitudinal ip - tracker only 
+           ipxy_[n] = fabs(muon->muonBestTrack()->dxy(vtx.position()))     ; 
+           ipz_ [n] = fabs(muon->muonBestTrack()->dz (vtx.position()))     ; 
 
            //global tracker - only for GlobalMuons
            if ( isGlobalMuon_[n] ) 
@@ -417,7 +417,7 @@ void Candidates<T>::Kinematics()
               normChi2_    [n] = muon->normChi2();                         
               trkKink_     [n] = muon->combinedQuality().trkKink;          
               chi2LocalPos_[n] = muon->combinedQuality().chi2LocalPosition;
-	      validMuonHits_[n] = muon->globalTrack()->hitPattern().numberOfValidMuonHits();
+              validMuonHits_[n] = muon->globalTrack()->hitPattern().numberOfValidMuonHits();
            }
         }
      }
@@ -787,23 +787,22 @@ void Candidates<T>::Branches()
 
       if ( is_patmuon_ )
         {
-          tree_->Branch("isPFMuon",     isPFMuon_,     "isPFMuon[n]/O");
-          tree_->Branch("isGlobalMuon", isGlobalMuon_, "isGlobalMuon[n]/O");
-          tree_->Branch("isTrackerMuon",isTrackerMuon_,"isTrackerMuon[n]/O");
-          tree_->Branch("isLooseMuon",  isLooseMuon_,  "isLooseMuon[n]/O");
-          tree_->Branch("isMediumMuon", isMediumMuon_, "isMediumMuon[n]/O");
-	  tree_->Branch("isTightMuon",  isTightMuon_,  "isTightMuon[n]/O");
-
+           tree_->Branch("isPFMuon",     isPFMuon_,     "isPFMuon[n]/O");
+           tree_->Branch("isGlobalMuon", isGlobalMuon_, "isGlobalMuon[n]/O");
+           tree_->Branch("isTrackerMuon",isTrackerMuon_,"isTrackerMuon[n]/O");
+           tree_->Branch("isLooseMuon",  isLooseMuon_,  "isLooseMuon[n]/O");
+           tree_->Branch("isMediumMuon", isMediumMuon_, "isMediumMuon[n]/O");
+           tree_->Branch("isTightMuon",  isTightMuon_,  "isTightMuon[n]/O"); 
           
-          tree_->Branch("validFraction",          validFraction_,          "validFraction[n]/F");
-          tree_->Branch("segmentCompatibility",   segmentCompatibility_,   "segmentCompatibility[n]/F");
+           tree_->Branch("validFraction",          validFraction_,          "validFraction[n]/F");
+           tree_->Branch("segmentCompatibility",   segmentCompatibility_,   "segmentCompatibility[n]/F");
 
- 	  tree_->Branch("matchedStations_",       matchedStations_,        "matchedStations[n]/F");
- 	  tree_->Branch("validPixelHits_",        validPixelHits_,         "validPixelHits[n]/F" );
- 	  tree_->Branch("validMuonHits_",         validMuonHits_,           "validMuonHits[n]/F"  );
- 	  tree_->Branch("trkLayersWithMeasurement_",      trkLayersWithMeasurement_,        "trkLayersWithMeasurement[n]/F");
- 	  tree_->Branch("ipxy_",       ipxy_,        "ipxy[n]/F" );
- 	  tree_->Branch("ipz_",        ipz_,         "ipz[n]/F"  );
+           tree_->Branch("matchedStations",       matchedStations_,        "matchedStations[n]/F");
+           tree_->Branch("validPixelHits",        validPixelHits_,         "validPixelHits[n]/F" );
+           tree_->Branch("validMuonHits",         validMuonHits_,           "validMuonHits[n]/F"  );
+           tree_->Branch("trkLayersWithMeasurement",      trkLayersWithMeasurement_,        "trkLayersWithMeasurement[n]/F");
+           tree_->Branch("ipxy",       ipxy_,        "ipxy[n]/F" );
+           tree_->Branch("ipz",        ipz_,         "ipz[n]/F"  );
 
 
           tree_->Branch("normChi2",     normChi2_,     "normChi2[n]/F");
