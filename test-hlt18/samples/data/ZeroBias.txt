@@ -1,0 +1,6 @@
+#/ZeroBias/Run2017C-PromptReco-v1/MINIAOD
+#/ZeroBias/Run2017C-PromptReco-v2/MINIAOD
+#/ZeroBias/Run2017C-PromptReco-v3/MINIAOD
+#/ZeroBias/Run2017D-PromptReco-v1/MINIAOD
+#/ZeroBias/Run2017E-PromptReco-v1/MINIAOD
+/ZeroBias/Run2017F-PromptReco-v1/MINIAOD
