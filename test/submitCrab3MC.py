@@ -19,21 +19,29 @@ P  = '\033[35m' # purple
 
 ARGSN = len(sys.argv)
 if ARGSN < 3:
-   print (R+"You need to provide the CMSSW python config and the samples file in this order"+W)
+   print (R+"You need to provide the CMSSW python config, the samples file and the campaign, e.g Fall17, in this order."+W)
+   print (R+"Optionally you can provide the UNITS_PER_JOB (def. 1)"+W)
    sys.exit()
 
 # ---
 # Some parameter steering
-UNITS_PER_JOB   = 2
+UNITS_PER_JOB   = 1
 TYPE            = 'MC'
-CAMPAIGN        = 'Moriond17/80x_moriond17_data03Feb2017_v1'
+#CAMPAIGN        = 'Moriond17/80x_moriond17_data03Feb2017_v1'
+
+#CRABCMDOPTS = '--dryrun'
+CRABCMDOPTS = ''
 
 ARGS = sys.argv
 PSET = ARGS[1]
+psetname, pset_ext = os.path.splitext(PSET)
 SAMPLE = ARGS[2]
 
-psetname, pset_ext = os.path.splitext(PSET)
 samplename, sample_ext = os.path.splitext(SAMPLE)
+CAMPAIGN        = ARGS[3] + '/' + psetname
+if ARGSN == 5:
+   UNITS_PER_JOB = int(ARGS[4])
+   
 
 if not ( os.path.isfile(PSET) and pset_ext == '.py' ):
    print (R+"The given python config does not exist or it is not a python file"+W)
@@ -58,6 +66,7 @@ import FWCore.ParameterSet.Config as cms
 pset = PSET.split('.')[0]
 process = __import__(pset).process #(see why it does not work!)
 
+
 # _________________________________________________________________________
 
 if __name__ == '__main__':
@@ -79,12 +88,17 @@ if __name__ == '__main__':
    config.Data.outLFNDirBase   = BASEOUTDIR + '/'
 #   config.Data.inputDBS = 'https://cmsweb.cern.ch/dbs/prod/phys03/DBSReader/'
 #   config.Data.allowNonValidInputDataset = True    # If dataset not valid yet, will run over valid files only
+#   config.Data.allowNonValidInputDataset = True    # If dataset not valid yet, will run over valid files only
 
 # ====== JOBTYPE
+#   config.JobType.psetName    = PSET
+#   config.JobType.numCores = 4
 #   config.JobType.inputFiles = ['Fall15_25nsV2_MC_PtResolution_AK4PFPuppi.txt','Fall15_25nsV2_MC_PtResolution_AK4PFchs.txt','Fall15_25nsV2_MC_SF_AK4PFPuppi.txt','Fall15_25nsV2_MC_SF_AK4PFchs.txt']
 
    for dataset in datasets:
       dataset=dataset.replace(" ", "")
+      if dataset[0] == '#':
+         continue
       cross_section = 1.
       if len(dataset.split(',')) > 1:
          cross_section = dataset.split(',')[1].split('\n')[0]
@@ -95,8 +109,6 @@ if __name__ == '__main__':
       dataset_name = dataset.split('/')[1]
       dataset_cond = dataset.split('/')[2]
       dataset_tier = dataset.split('/')[3]
-       
-       
       
 #      
       config.Data.inputDataset     = dataset
@@ -118,6 +130,8 @@ if __name__ == '__main__':
 #
       outtext = "Submitting dataset " + dataset + "..."
       print (O+str(outtext)+W) 
+#      
+#      crabCommand('submit', config = config, *CRABCMDOPTS.split())
       crabCommand('submit', config = config)
       print (O+"--------------------------------"+W)
       print

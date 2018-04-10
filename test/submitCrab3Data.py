@@ -27,14 +27,19 @@ RUN_RANGE       = ''
 UNITS_PER_JOB   = 500
 TYPE            = 'DATA'
 
+#CRABCMDOPTS = '--dryrun'
+CRABCMDOPTS = ''
+
 ARGS = sys.argv
 PSET = ARGS[1]
 psetname, pset_ext = os.path.splitext(PSET)
 SAMPLE = ARGS[2]
+
 samplename, sample_ext = os.path.splitext(SAMPLE)
 CAMPAIGN        = ARGS[3] + '/' + psetname
 if ARGSN == 5:
    UNITS_PER_JOB = int(ARGS[4])
+   
    
 if not ( os.path.isfile(PSET) and pset_ext == '.py' ):
    print (R+"The given python config does not exist or it is not a python file"+W)
@@ -82,10 +87,14 @@ if __name__ == '__main__':
 
 # ====== JOBTYPE
    config.JobType.psetName    = PSET
+#   config.JobType.numCores = 4
 #   config.JobType.inputFiles = ['Fall15_25nsV2_DATA_PtResolution_AK4PFPuppi.txt','Fall15_25nsV2_DATA_PtResolution_AK4PFchs.txt','Fall15_25nsV2_DATA_SF_AK4PFPuppi.txt','Fall15_25nsV2_DATA_SF_AK4PFchs.txt']
 
    
    for dataset in datasets:
+      dataset=dataset.replace(" ", "")
+      if dataset[0] == '#':
+         continue
       dataset = dataset.split('\n')[0]
       dataset_name = dataset.split('/')[1]
       dataset_cond = dataset.split('/')[2]
@@ -102,6 +111,7 @@ if __name__ == '__main__':
       outtext = "Submitting dataset " + dataset + "..."
       print (O+str(outtext)+W) 
 #      
+#      crabCommand('submit', config = config, *CRABCMDOPTS.split())
       crabCommand('submit', config = config)
       print (O+"--------------------------------"+W)
       print

@@ -23,6 +23,8 @@ MssmHbbNtuplizerL1Seeds = cms.PSet(
                                      'L1_SingleMu3',
                                      'L1_SingleMu5',
                                      'L1_SingleMu7',
+                                     'L1_SingleMu22',
+                                     'L1_SingleMu25',
                                      'L1_Mu3_Jet30er2p5',
    ),
 )

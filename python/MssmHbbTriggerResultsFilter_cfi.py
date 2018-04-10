@@ -10,6 +10,14 @@ MssmHbbTriggerResultsFilter = cms.PSet(
                      'HLT_DoublePFJets128MaxDeta1p6_DoubleCaloBTagCSV_p33_v*', 
                      'HLT_Mu12_DoublePFJets54MaxDeta1p6_DoubleCaloBTagCSV_p33_v*', 
                      'HLT_Mu12_DoublePFJets62MaxDeta1p6_DoubleCaloBTagCSV_p33_v*',
+# addictional triggers
+                     'HLT_AK8PFJet360_TrimMass30_v*',
+                     'HLT_AK8PFJet380_TrimMass30_v*',
+                     'HLT_AK8PFJet400_TrimMass30_v*',
+                     'HLT_AK8PFJet420_TrimMass30_v*',
+                     'HLT_AK8PFJet330_PFAK8BTagCSV_p17_v*',
+                     'HLT_AK8PFJet330_PFAK8BTagCSV_p1_v*',
+
 # control triggers
 ### btag             
                      'HLT_SingleJet30_Mu12_SinglePFJet40_v*', 
@@ -41,8 +49,18 @@ MssmHbbTriggerResultsFilter = cms.PSet(
                      
 ### muon triggers
                      'HLT_Mu8_v*', 
+                     'HLT_Mu50_v*',
+                     'HLT_Mu55_v*',
                      'HLT_Mu3_PFJet40_v*', 
 ### zerobias trigger                     
                      'HLT_ZeroBias_v*',
+### additional
+                     'HLT_AK8PFJet320_v*',
+                     'HLT_AK8PFJet400_v*',
+                     'HLT_AK8PFJet450_v*',
+                     'HLT_AK8PFJet500_v*',
+                     'HLT_AK8PFJet550_v*',
+
+                     
     )
 )

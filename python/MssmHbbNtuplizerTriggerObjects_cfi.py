@@ -1,7 +1,9 @@
 import FWCore.ParameterSet.Config as cms
 
+# if long list, use + cms.vstring or extend
+# see https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideAboutPythonConfigFile#Modifying_Parameters
 MssmHbbNtuplizerTriggerObjects = cms.PSet(
-   TriggerObjectLabels    = cms.vstring  (
+   TriggerObjectLabels    = ( cms.vstring  (  
 
                                              'hltL1DoubleJet100er2p3dEtaMax1p6',
                                              'hltL1DoubleJet100er2p3dEtaMax1p6Ior112er2p3dEtaMax1p6',
@@ -187,9 +189,69 @@ MssmHbbNtuplizerTriggerObjects = cms.PSet(
                                              
                                              'hltL1sSingleJet170IorSingleJet180IorSingleJet200',
                                              'hltDiCaloJetAve450',
-                                             'hltDiPFJetAve500',
+                                             'hltDiPFJetAve500', )
+                            + cms.vstring  (                 
+                                             'hltL1sSingleJet180',
+                                             'hltAK8SingleCaloJet260',
+                                             'hltAK8SinglePFJet360',
+                                             'hltAK8SinglePFJetTrimModMass30',
                                              
-   ),
+                                             'hltL1sSingleJet180',
+                                             'hltAK8SingleCaloJet280',
+                                             'hltAK8SinglePFJet380',
+                                             'hltAK8SinglePFJetTrimModMass30',
+                                             
+                                             'hltL1sSingleJet180',
+                                             'hltAK8SingleCaloJet300',
+                                             'hltAK8SinglePFJet400',
+                                             'hltAK8SinglePFJetTrimModMass30',
+                                             
+                                             'hltL1sSingleJet180',
+                                             'hltAK8SingleCaloJet320',
+                                             'hltAK8SinglePFJet420',
+                                             'hltAK8SinglePFJetTrimModMass30',
+                                             
+                                             'hltL1sSingleJet170IorSingleJet180IorSingleJet200',
+                                             'hltAK8SingleCaloJet300',
+                                             'hltSinglePFJet330AK8',
+                                             'hltPFJetForBtagSelectorAK8',
+                                             'hltBTagPFCSVp3Single',
+                                             
+                                             'hltL1sSingleJet170IorSingleJet180IorSingleJet200',
+                                             'hltAK8SingleCaloJet300',
+                                             'hltSinglePFJet330AK8',
+                                             'hltPFJetForBtagSelectorAK8',
+                                             'hltBTagPFCSVp4Single',
+                                             
+                                             'hltL1sSingleJet170IorSingleJet180IorSingleJet200',
+                                             'hltSingleCaloJet270AK8',
+                                             'hltSinglePFJet320AK8',
+                                             
+                                             'hltL1sSingleJet170IorSingleJet180IorSingleJet200',
+                                             'hltSingleCaloJet350AK8',
+                                             'hltSinglePFJet400AK8',
+                                             
+                                             'hltL1sSingleJet170IorSingleJet180IorSingleJet200',
+                                             'hltSingleCaloJet400AK8',
+                                             'hltSinglePFJet450AK8',
+                                             
+                                             'hltL1sSingleJet170IorSingleJet180IorSingleJet200',
+                                             'hltSingleCaloJet450AK8',
+                                             'hltSinglePFJet500AK8',
+                                             
+                                             'hltL1sSingleJet170IorSingleJet180IorSingleJet200',
+                                             'hltSingleCaloJet500AK8',
+                                             'hltSinglePFJet550AK8',
+                                             
+                                             'hltL1sSingleMu22or25',
+                                             'hltL1fL1sMu22or25L1Filtered0',
+                                             'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q',
+                                             
+                                             'hltL1sSingleMu22or25',
+                                             'hltL1fL1sMu22or25L1Filtered0',
+                                             'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered55Q',
+                                             
+   ) ),
    TriggerObjectSplits         = cms.vstring  (
                                              'hltL1Mu12er2p3Jet40er2p3dRMax0p4DoubleJet40er2p3dEtaMax1p6',
                                              'hltL1sSingleMu3IorMu3Jet30er2p5',
