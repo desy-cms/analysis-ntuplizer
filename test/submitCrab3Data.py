@@ -74,9 +74,9 @@ if __name__ == '__main__':
 
 
 # ====== DATA   
-   config.Data.splitting   = 'LumiBased'
-   config.Data.unitsPerJob  = UNITS_PER_JOB
-   config.Data.totalUnits   = -1
+#   config.Data.splitting   = 'Automatic'
+#   config.Data.unitsPerJob  = UNITS_PER_JOB
+#   config.Data.totalUnits   = -1
    config.Data.outLFNDirBase   = BASEOUTDIR + '/'
 #   config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Reprocessing/Cert_13TeV_16Dec2015ReReco_Collisions15_25ns_JSON_v2.txt'
 #   config.Data.inputDBS = 'https://cmsweb.cern.ch/dbs/prod/phys03/DBSReader/'

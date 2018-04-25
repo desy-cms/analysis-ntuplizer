@@ -22,9 +22,9 @@ def crabConfig():
    # -- Data
    config.section_('Data')
    config.Data.publication  = False
-   config.Data.unitsPerJob  = 1
+#   config.Data.unitsPerJob  = 1
    config.Data.totalUnits   = -1
-   config.Data.splitting    = 'FileBased'
+   config.Data.splitting    = 'Automatic'
    config.Data.outLFNDirBase= ''
    
    # -- User

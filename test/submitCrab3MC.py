@@ -82,9 +82,9 @@ if __name__ == '__main__':
    config.General.workArea += '_' + PROCESS
    
 # ====== DATA   
-   config.Data.splitting   = 'FileBased'
-   config.Data.unitsPerJob  = UNITS_PER_JOB
-   config.Data.totalUnits   = -1
+#   config.Data.splitting   = 'Automatic'
+#   config.Data.unitsPerJob  = UNITS_PER_JOB
+#   config.Data.totalUnits   = -1
    config.Data.outLFNDirBase   = BASEOUTDIR + '/'
 #   config.Data.inputDBS = 'https://cmsweb.cern.ch/dbs/prod/phys03/DBSReader/'
 #   config.Data.allowNonValidInputDataset = True    # If dataset not valid yet, will run over valid files only
