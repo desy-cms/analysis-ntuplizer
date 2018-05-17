@@ -20,12 +20,13 @@ P  = '\033[35m' # purple
 ARGSN = len(sys.argv)
 if ARGSN < 3:
    print (R+"You need to provide the CMSSW python config, the samples file and the campaign, e.g Fall17, in this order."+W)
-   print (R+"Optionally you can provide the UNITS_PER_JOB (def. 1)"+W)
+   print (R+"Optionally you can provide the max number of events (def. -1)"+W)
    sys.exit()
 
 # ---
 # Some parameter steering
 UNITS_PER_JOB   = 1
+TOTAL_EVENTS    = -1
 TYPE            = 'MC'
 #CAMPAIGN        = 'Moriond17/80x_moriond17_data03Feb2017_v1'
 
@@ -40,7 +41,7 @@ SAMPLE = ARGS[2]
 samplename, sample_ext = os.path.splitext(SAMPLE)
 CAMPAIGN        = ARGS[3] + '/' + psetname
 if ARGSN == 5:
-   UNITS_PER_JOB = int(ARGS[4])
+   TOTAL_EVENTS = int(ARGS[4])
    
 
 if not ( os.path.isfile(PSET) and pset_ext == '.py' ):
@@ -84,7 +85,7 @@ if __name__ == '__main__':
 # ====== DATA   
 #   config.Data.splitting   = 'Automatic'
 #   config.Data.unitsPerJob  = UNITS_PER_JOB
-#   config.Data.totalUnits   = -1
+   config.Data.totalUnits   = TOTAL_EVENTS
    config.Data.outLFNDirBase   = BASEOUTDIR + '/'
 #   config.Data.inputDBS = 'https://cmsweb.cern.ch/dbs/prod/phys03/DBSReader/'
 #   config.Data.allowNonValidInputDataset = True    # If dataset not valid yet, will run over valid files only
