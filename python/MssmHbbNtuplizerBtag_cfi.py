@@ -9,6 +9,7 @@ MssmHbbNtuplizerBtag = cms.PSet(
                 'pfDeepCSVJetTags:probc',
                 'pfDeepCSVJetTags:probbb',
                 'pfDeepCSVJetTags:probcc',
+                'pfDeepCSVDiscriminatorsJetTags:BvsAll',
     ),
     BTagAlgorithmsAlias = cms.vstring   (
                 'btag_csvivf',
@@ -18,5 +19,6 @@ MssmHbbNtuplizerBtag = cms.PSet(
                 'btag_deepc',
                 'btag_deepbb',
                 'btag_deepcc',
+                'btag_deepbvsall',
     ),
 )

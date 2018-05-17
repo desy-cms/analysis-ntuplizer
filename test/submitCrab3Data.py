@@ -78,7 +78,7 @@ if __name__ == '__main__':
 #   config.Data.unitsPerJob  = UNITS_PER_JOB
 #   config.Data.totalUnits   = -1
    config.Data.outLFNDirBase   = BASEOUTDIR + '/'
-#   config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Reprocessing/Cert_13TeV_16Dec2015ReReco_Collisions15_25ns_JSON_v2.txt'
+   config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions18/13TeV/DCSOnly/json_DCSONLY.txt'
 #   config.Data.inputDBS = 'https://cmsweb.cern.ch/dbs/prod/phys03/DBSReader/'
 #   config.Data.allowNonValidInputDataset = True    # If dataset not valid yet, will run over valid files only
    if RUN_RANGE != '':
