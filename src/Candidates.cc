@@ -42,6 +42,13 @@
 #include "DataFormats/JetReco/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
 
+#include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/MuonReco/interface/MuonFwd.h"
+
+#include "DataFormats/TrackReco/interface/Track.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+
+
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
@@ -88,6 +95,7 @@ namespace analysis {
       template <> void Candidates<trigger::TriggerObject>::Kinematics();
       template <> void Candidates<l1t::Jet>::Kinematics();
       template <> void Candidates<l1t::Muon>::Kinematics();
+      template <> void Candidates<reco::Track>::Kinematics();
  }
 }   
 //
@@ -110,6 +118,8 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    is_l1jet_           = std::is_same<T,l1extra::L1JetParticle>::value;
    is_l1muon_          = std::is_same<T,l1extra::L1MuonParticle>::value;
    is_calojet_         = std::is_same<T,reco::CaloJet>::value;
+   is_recomuon_        = std::is_same<T,reco::Muon>::value;
+   is_recotrack_       = std::is_same<T,reco::Track>::value;
    is_pfjet_           = std::is_same<T,reco::PFJet>::value;
    is_patjet_          = std::is_same<T,pat::Jet>::value;
    is_patmuon_         = std::is_same<T,pat::Muon>::value;
@@ -360,9 +370,9 @@ void Candidates<T>::Kinematics()
       px_[n]  = candidates_[i].px();
       py_[n]  = candidates_[i].py();
       pz_[n]  = candidates_[i].pz();
+      q_[n]   = candidates_[i].charge();
       e_[n]   = candidates_[i].energy();
       et_[n]  = candidates_[i].et();
-      q_[n]   = candidates_[i].charge();
       
       // PAT MUONS
       if ( is_patmuon_ )
@@ -674,6 +684,64 @@ void Candidates<l1t::Muon>::Kinematics()
 
 }
 
+template <>
+void Candidates<reco::Track>::Kinematics()
+{
+   using namespace edm;
+
+   int n = 0;
+   
+   for ( size_t i = 0 ; i < candidates_.size(); ++i )
+   {
+      reco::Track * cand = dynamic_cast<reco::Track*> (&candidates_[i]);
+      if ( n >= maxCandidates ) break;
+      
+      pt_[n]       = cand->pt();
+      eta_[n]      = cand->eta();
+      phi_[n]      = cand->phi();
+      px_[n]       = cand->px();
+      py_[n]       = cand->py();
+      pz_[n]       = cand->pz();
+      q_[n]        = cand->charge();
+      
+      trkchi2_[n]  = cand->chi2();
+      trkndof_[n]  = cand->ndof();
+      trkd0_[n]    = cand->d0();      
+      trkdxy_[n]   = cand->dxy();
+      
+      
+      trkqual_[0][n] = cand->quality(reco::TrackBase::TrackQuality::undefQuality       );
+      trkqual_[1][n] = cand->quality(reco::TrackBase::TrackQuality::loose              );
+      trkqual_[2][n] = cand->quality(reco::TrackBase::TrackQuality::tight              );
+      trkqual_[3][n] = cand->quality(reco::TrackBase::TrackQuality::highPurity         );
+      trkqual_[4][n] = cand->quality(reco::TrackBase::TrackQuality::confirmed          );
+      trkqual_[5][n] = cand->quality(reco::TrackBase::TrackQuality::goodIterative      );
+      trkqual_[6][n] = cand->quality(reco::TrackBase::TrackQuality::looseSetWithPV     );
+      trkqual_[7][n] = cand->quality(reco::TrackBase::TrackQuality::highPuritySetWithPV);
+      trkqual_[8][n] = cand->quality(reco::TrackBase::TrackQuality::discarded          );
+      trkqual_[9][n] = cand->quality(reco::TrackBase::TrackQuality::qualitySize        );
+      
+      trkhp_lostmu_[n] = cand -> hitPattern().numberOfLostMuonHits()  ;
+      trkhp_valmu_[n]  = cand -> hitPattern().numberOfValidMuonHits() ;
+      trkhp_badmu_[n]  = cand -> hitPattern().numberOfBadMuonHits()   ;
+
+      trkhp_valtrkhits_[n] = cand -> hitPattern().numberOfValidTrackerHits() ;
+      trkhp_valtechits_[n] = cand -> hitPattern().numberOfValidStripTECHits();
+      trkhp_valtibhits_[n] = cand -> hitPattern().numberOfValidStripTIBHits();
+      trkhp_valtidhits_[n] = cand -> hitPattern().numberOfValidStripTIDHits();
+      trkhp_valtobhits_[n] = cand -> hitPattern().numberOfValidStripTOBHits();
+
+      trkhp_stationsvalhits_[n]      = cand -> hitPattern().muonStationsWithValidHits ()        ;
+      trkhp_stationsbadhits_[n]      = cand -> hitPattern().muonStationsWithBadHits ()          ;
+      trkhp_innerstationsvalhits_[n] = cand -> hitPattern().innermostMuonStationWithValidHits ();
+      trkhp_outerstationsvalhits_[n] = cand -> hitPattern().outermostMuonStationWithValidHits ();
+
+      
+      ++n;
+   }
+   n_ = n;
+
+}
 
 
 template <typename T>
@@ -773,9 +841,14 @@ void Candidates<T>::Branches()
       tree_->Branch("px",  px_,  "px[n]/F");
       tree_->Branch("py",  py_,  "py[n]/F");
       tree_->Branch("pz",  pz_,  "pz[n]/F");
-      tree_->Branch("e",   e_,   "e[n]/F");
-      tree_->Branch("et",  et_,  "et[n]/F");
       tree_->Branch("q",   q_,   "q[n]/I");
+      
+      if ( ! is_recotrack_ )
+      {
+         tree_->Branch("e",   e_,   "e[n]/F");
+         tree_->Branch("et",  et_,  "et[n]/F");
+      }
+
       
       if ( is_genparticle_ )
       {
@@ -879,6 +952,46 @@ void Candidates<T>::Branches()
          tree_->Branch("phiAtVtx",  phiAtVtx_, "phiAtVtx[n]/F");
       }
       
+      if ( is_recotrack_ )      
+      {
+         tree_->Branch("chi2",  trkchi2_, "chi2[n]/F");
+         tree_->Branch("ndof",  trkndof_, "ndof[n]/F");
+         tree_->Branch("d0",    trkd0_,   "d0[n]/F");
+         tree_->Branch("dxy",   trkdxy_,  "dxy[n]/F");
+      
+         std::string trkqualities[10];
+         trkqualities[0] = "undefQuality";
+         trkqualities[1] = "loose";
+         trkqualities[2] = "tight";
+         trkqualities[3] = "highPurity";
+         trkqualities[4] = "confirmed";
+         trkqualities[5] = "goodIterative";
+         trkqualities[6] = "looseSetWithPV";
+         trkqualities[7] = "highPuritySetWithPV";
+         trkqualities[8] = "discarded";
+         trkqualities[9] = "qualitySize";
+         for ( int it = 0 ; it < 10 ; ++it )
+            tree_->Branch(Form("quality_%s",trkqualities[it].c_str()), trkqual_[it],Form("quality_%s[n]/O",trkqualities[it].c_str()));
+      }
+      
+      // hit pattern
+      tree_->Branch("numberOfLostMuonHits" ,trkhp_lostmu_, "numberOfLostMuonHits[n]/I");
+      tree_->Branch("numberOfValidMuonHits",trkhp_valmu_ , "numberOfValidMuonHits[n]/I");
+      tree_->Branch("numberOfBadMuonHits",  trkhp_badmu_ , "numberOfBadMuonHits[n]/I");
+      
+      tree_->Branch("numberOfValidTrackerHits" ,trkhp_valtrkhits_,"numberOfValidTrackerHits[n]/I");
+      tree_->Branch("numberOfValidStripTECHits",trkhp_valtechits_,"numberOfValidStripTECHits[n]/I");
+      tree_->Branch("numberOfValidStripTIBHits",trkhp_valtibhits_,"numberOfValidStripTIBHits[n]/I");
+      tree_->Branch("numberOfValidStripTIDHits",trkhp_valtidhits_,"numberOfValidStripTIDHits[n]/I");
+      tree_->Branch("numberOfValidStripTOBHits",trkhp_valtobhits_,"numberOfValidStripTOBHits[n]/I");
+      
+      tree_->Branch("muonStationsWithValidHits" ,        trkhp_stationsvalhits_     ,"muonStationsWithValidHits[n]/I");
+      tree_->Branch("muonStationsWithBadHits" ,          trkhp_stationsbadhits_     ,"muonStationsWithBadHits[n]/I");
+      tree_->Branch("innermostMuonStationWithValidHits" ,trkhp_innerstationsvalhits_,"innermostMuonStationWithValidHits[n]/I");
+      tree_->Branch("outermostMuonStationWithValidHits" ,trkhp_outerstationsvalhits_,"outermostMuonStationWithValidHits[n]/I");
+
+      
+
    }
       
    
@@ -960,6 +1073,8 @@ template class Candidates<l1extra::L1JetParticle>;
 template class Candidates<l1extra::L1MuonParticle>;
 template class Candidates<reco::CaloJet>;
 template class Candidates<reco::PFJet>;
+template class Candidates<reco::Muon>;
+template class Candidates<reco::Track>;
 template class Candidates<pat::Jet>;
 template class Candidates<pat::Muon>;
 template class Candidates<pat::MET>;

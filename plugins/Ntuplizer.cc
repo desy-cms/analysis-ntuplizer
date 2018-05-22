@@ -52,6 +52,13 @@
 #include "DataFormats/JetReco/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
 
+#include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/MuonReco/interface/MuonFwd.h"
+
+#include "DataFormats/TrackReco/interface/Track.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+
+
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
@@ -115,6 +122,8 @@ typedef analysis::ntuple::Candidates<l1extra::L1JetParticle> L1JetCandidates;
 typedef analysis::ntuple::Candidates<l1extra::L1MuonParticle> L1MuonCandidates;
 typedef analysis::ntuple::Candidates<reco::CaloJet> CaloJetCandidates;
 typedef analysis::ntuple::Candidates<reco::PFJet> PFJetCandidates;
+typedef analysis::ntuple::Candidates<reco::Muon> RecoMuonCandidates;
+typedef analysis::ntuple::Candidates<reco::Track> RecoTrackCandidates;
 typedef analysis::ntuple::Candidates<pat::Jet> PatJetCandidates;
 typedef analysis::ntuple::Candidates<pat::MET> PatMETCandidates;
 typedef analysis::ntuple::Candidates<pat::Muon> PatMuonCandidates;
@@ -140,6 +149,8 @@ typedef std::unique_ptr<L1JetCandidates> pL1JetCandidates;
 typedef std::unique_ptr<L1MuonCandidates> pL1MuonCandidates;
 typedef std::unique_ptr<CaloJetCandidates> pCaloJetCandidates;
 typedef std::unique_ptr<PFJetCandidates> pPFJetCandidates;
+typedef std::unique_ptr<RecoMuonCandidates> pRecoMuonCandidates;
+typedef std::unique_ptr<RecoTrackCandidates> pRecoTrackCandidates;
 typedef std::unique_ptr<PatJetCandidates> pPatJetCandidates;
 typedef std::unique_ptr<PatMETCandidates> pPatMETCandidates;
 typedef std::unique_ptr<PatMuonCandidates> pPatMuonCandidates;
@@ -189,6 +200,8 @@ class Ntuplizer : public edm::EDAnalyzer {
       bool do_l1muons_;
       bool do_calojets_;
       bool do_pfjets_;
+      bool do_recomuons_;
+      bool do_recotracks_;
       bool do_patjets_;
       bool do_patmets_;
       bool do_patmuons_;
@@ -228,6 +241,8 @@ class Ntuplizer : public edm::EDAnalyzer {
       std::map<std::string, edm::EDGetTokenT<l1extra::L1MuonParticleCollection> > l1MuonTokens_;
       std::map<std::string, edm::EDGetTokenT<reco::CaloJetCollection> > caloJetTokens_;
       std::map<std::string, edm::EDGetTokenT<reco::PFJetCollection> > pfJetTokens_;
+      std::map<std::string, edm::EDGetTokenT<reco::MuonCollection> > recoMuonTokens_;
+      std::map<std::string, edm::EDGetTokenT<reco::TrackCollection> > recoTrackTokens_;
       std::map<std::string, edm::EDGetTokenT<pat::JetCollection> > patJetTokens_;
       std::map<std::string, edm::EDGetTokenT<pat::METCollection> > patMETTokens_;
       std::map<std::string, edm::EDGetTokenT<pat::MuonCollection> > patMuonTokens_;
@@ -284,6 +299,8 @@ class Ntuplizer : public edm::EDAnalyzer {
       std::vector<pL1MuonCandidates> l1muons_collections_;
       std::vector<pCaloJetCandidates> calojets_collections_;
       std::vector<pPFJetCandidates> pfjets_collections_;
+      std::vector<pRecoMuonCandidates> recomuons_collections_;
+      std::vector<pRecoTrackCandidates> recotracks_collections_;
       std::vector<pPatJetCandidates> patjets_collections_;
       std::vector<pPatMETCandidates> patmets_collections_;
       std::vector<pPatMuonCandidates> patmuons_collections_;
@@ -351,6 +368,8 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
          if ( inputTags == "L1ExtraMuons" ) l1MuonTokens_[collection_name] = consumes<l1extra::L1MuonParticleCollection>(collection);
          if ( inputTags == "CaloJets" ) caloJetTokens_[collection_name] = consumes<reco::CaloJetCollection>(collection);
          if ( inputTags == "PFJets" ) pfJetTokens_[collection_name] = consumes<reco::PFJetCollection>(collection);
+         if ( inputTags == "RecoMuons" ) recoMuonTokens_[collection_name] = consumes<reco::MuonCollection>(collection);
+         if ( inputTags == "RecoTracks" ) recoTrackTokens_[collection_name] = consumes<reco::TrackCollection>(collection);
          if ( inputTags == "PatJets" ) patJetTokens_[collection_name] = consumes<pat::JetCollection>(collection);
          if ( inputTags == "PatMETs" ) patMETTokens_[collection_name] = consumes<pat::METCollection>(collection);
          if ( inputTags == "PatMuons" ) patMuonTokens_[collection_name] = consumes<pat::MuonCollection>(collection);
@@ -446,6 +465,14 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup)
       for ( auto & collection : pfjets_collections_ )
          collection -> Fill(event);
 
+      // Reco muon (reco)
+      for ( auto & collection : recomuons_collections_ )
+         collection -> Fill(event);
+   
+      // Reco track (reco)
+      for ( auto & collection : recotracks_collections_ )
+         collection -> Fill(event);
+   
       // Pat jets (pat)
       for ( auto & collection : patjets_collections_ )
          collection -> Fill(event, setup);
@@ -516,6 +543,8 @@ Ntuplizer::beginJob()
    do_l1muons_          = config_.exists("L1ExtraMuons");
    do_calojets_         = config_.exists("CaloJets");
    do_pfjets_           = config_.exists("PFJets");
+   do_recomuons_        = config_.exists("RecoMuons");
+   do_recotracks_       = config_.exists("RecoTracks");
    do_patjets_          = config_.exists("PatJets");
    do_patmets_          = config_.exists("PatMETs");
    do_patmuons_         = config_.exists("PatMuons");
@@ -745,6 +774,19 @@ Ntuplizer::beginJob()
             pfjets_collections_.push_back( pPFJetCandidates( new PFJetCandidates(collection, tree_[name], is_mc_ ) ));
             pfjets_collections_.back() -> Init();
          }
+         // Reco Muons
+         if ( inputTags == "RecoMuons" )
+         {
+            recomuons_collections_.push_back( pRecoMuonCandidates( new RecoMuonCandidates(collection, tree_[name], is_mc_ ) ));
+            recomuons_collections_.back() -> Init();
+         }
+         // Reco Tracks
+         if ( inputTags == "RecoTracks" )
+         {
+            recotracks_collections_.push_back( pRecoTrackCandidates( new RecoTrackCandidates(collection, tree_[name], is_mc_ ) ));
+            recotracks_collections_.back() -> Init();
+         }
+         
          // Pat Jets
          if ( inputTags == "PatJets" )
          {
