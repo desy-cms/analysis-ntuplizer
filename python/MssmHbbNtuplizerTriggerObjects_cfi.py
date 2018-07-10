@@ -305,6 +305,10 @@ MssmHbbNtuplizerTriggerObjects = cms.PSet(
                                              'hltL1sZeroBias',
                                              'hltDiCaloJetAve30',
                                              'hltDiPFJetAve40',
+# HLT_DiPFJetAve60_v                                             
+                                             'hltL1sZeroBias',
+                                             'hltDiCaloJetAve45',
+                                             'hltDiPFJetAve60',
 # HLT_DiPFJetAve80_v                                             
                                              'hltL1sSingleJet60',
                                              'hltDiCaloJetAve60',
@@ -366,7 +370,55 @@ MssmHbbNtuplizerTriggerObjects = cms.PSet(
                                              'hltSingleCaloJet500AK8',
                                              'hltSinglePFJet550AK8',
                                              
-   ) ),
+   ) 
+                            + cms.vstring  (  
+# muon triggers
+# HLT_Mu17_v                                            
+                                             'hltL1sSingleMu10LowQ',
+                                             'hltL1fL1sMu10lqL1Filtered0',
+                                             'hltL3fL1sMu10lqL1f0L2f10L3Filtered17',
+                                             #
+                                             'hltL1sSingleMu10er1p5',
+                                             #
+                                             'hltL1sSingleMu15DQ',
+                                             'hltL1fL1sMu15DQlqL1Filtered0',
+                                             'hltL3fL1sMu15DQlqL1f0L2f10L3Filtered17',
+# HLT_Mu19_v                                            
+                                             'hltL1sSingleMu10LowQ',
+                                             'hltL1fL1sMu10lqL1Filtered0',
+                                             'hltL3fL1sMu10lqL1f0L2f10L3Filtered19',
+                                             #
+                                             'hltL1sSingleMu10er1p5',
+                                             #
+                                             'hltL1sSingleMu15DQ',
+                                             'hltL1fL1sMu15DQlqL1Filtered0',
+                                             'hltL3fL1sMu15DQlqL1f0L2f10L3Filtered19',
+# HLT_Mu20_v                                            
+                                             'hltL1sSingleMu18',
+                                             'hltL1fL1sMu18L1Filtered0',
+                                             'hltL3fL1sMu18L1f0L2f10QL3Filtered20Q',
+# HLT_Mu27_v                                            
+                                             'hltL1sSingleMu22or25',
+                                             'hltL1fL1sMu22or25L1Filtered0',
+                                             'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q',
+# jet triggers
+# HLT_DiPFJetAve140_v                                             
+                                             'hltL1sSingleJet90',
+                                             'hltDiCaloJetAve110',
+                                             'hltDiPFJetAve140',
+# HLT_DiPFJetAve260_v                                             
+                                             'hltL1sSingleJet170IorSingleJet180IorSingleJet200',
+                                             'hltDiCaloJetAve210',
+                                             'hltDiPFJetAve260',
+# HLT_DiPFJetAve400_v                                             
+                                             'hltL1sSingleJet170IorSingleJet180IorSingleJet200',
+                                             'hltDiCaloJetAve350',
+                                             'hltDiPFJetAve400',
+
+
+                                             
+   )
+   ),
    TriggerObjectSplits         = cms.vstring  (
                                              'hltL1Mu12er2p3Jet40er2p3dRMax0p4DoubleJet40er2p3dEtaMax1p6',
                                              'hltL1sSingleMu3IorMu3Jet30er2p5',
