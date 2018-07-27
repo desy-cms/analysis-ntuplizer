@@ -21,7 +21,7 @@ process.TFileService = cms.Service('TFileService',
    fileName = cms.string(output_file)
 )
 
-from Analysis.Ntuplizer.MssmHbbTriggerResultsFilter_cfi import *
+from Analysis.Ntuplizer.run2017.MssmHbbTriggerResultsFilter_cfi import *
 
 ## ============ TRIGGER FILTER =============== 
 ## Enable below at cms.Path if needed - DATA ONLY!!!
@@ -63,10 +63,10 @@ process.primaryVertexFilter = cms.EDFilter('VertexSelector',
    filter = cms.bool(True),   # otherwise it won't filter the events, just produce an empty vertex collection.
 )
 
-from Analysis.Ntuplizer.MssmHbbNtuplizerTriggerPaths_cfi import *
-from Analysis.Ntuplizer.MssmHbbNtuplizerL1Seeds_cfi import *
-from Analysis.Ntuplizer.MssmHbbNtuplizerTriggerObjects_cfi import *
-from Analysis.Ntuplizer.MssmHbbNtuplizerBtag_cfi import *
+from Analysis.Ntuplizer.run2017.MssmHbbNtuplizerTriggerPaths_cfi import *
+from Analysis.Ntuplizer.run2017.MssmHbbNtuplizerL1Seeds_cfi import *
+from Analysis.Ntuplizer.run2017.MssmHbbNtuplizerTriggerObjects_cfi import *
+from Analysis.Ntuplizer.run2017.MssmHbbNtuplizerBtag_cfi import *
 
 
 ## ============  THE NTUPLIZER!!!  ===============

@@ -1,7 +1,9 @@
 # For the ntuple production
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process('MssmHbb')
+from Configuration.StandardSequences.Eras import eras
+
+process = cms.Process('MssmHbb',eras.Run2_2017,eras.run2_nanoAOD_94XMiniAODv2)
 
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(100000)
@@ -47,28 +49,47 @@ bTagDiscriminators = [
     'pfDeepCSVJetTags:probcc',
 ]
 
+### ==== Updated Jets ==== ###
+from PhysicsTools.PatAlgos.tools.jetTools import *
+
+
+# Puppi specifics
+from PhysicsTools.PatAlgos.tools.helpers import getPatAlgosToolsTask
+patAlgosToolsTask = getPatAlgosToolsTask(process)
+from PhysicsTools.PatAlgos.patPuppiJetSpecificProducer_cfi import patPuppiJetSpecificProducer
+process.patPuppiJetSpecificProducer = patPuppiJetSpecificProducer.clone(
+   src=cms.InputTag("slimmedJetsPuppi"),
+)
+patAlgosToolsTask.add(process.patPuppiJetSpecificProducer)
+updateJetCollection(
+   process,
+   labelName = 'PuppiJetSpecific',
+   jetSource = cms.InputTag('slimmedJetsPuppi'),
+)
+process.updatedPatJetsPuppiJetSpecific.userData.userFloats.src = ['patPuppiJetSpecificProducer:puppiMultiplicity', 'patPuppiJetSpecificProducer:neutralPuppiMultiplicity', 'patPuppiJetSpecificProducer:neutralHadronPuppiMultiplicity', 'patPuppiJetSpecificProducer:photonPuppiMultiplicity', 'patPuppiJetSpecificProducer:HFHadronPuppiMultiplicity', 'patPuppiJetSpecificProducer:HFEMPuppiMultiplicity' ]
+
+
 
 ### ============ Jet energy correctiosn update ============== (not really running!???)
-from PhysicsTools.PatAlgos.tools.jetTools import *
 ## Update the slimmedJets in miniAOD: corrections from the chosen Global Tag are applied and the b-tag discriminators are re-evaluated
 updateJetCollection(
     process,
     jetSource = cms.InputTag('slimmedJets'),
-    jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+    jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
 #    btagDiscriminators = bTagDiscriminators
 )
 updateJetCollection(
     process,
     labelName = 'Puppi',
-    jetSource = cms.InputTag('slimmedJetsPuppi'),
-    jetCorrections = ('AK4PFPuppi', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+    jetSource = cms.InputTag('updatedPatJetsPuppiJetSpecific'),
+    jetCorrections = ('AK4PFPuppi', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
 #    btagDiscriminators = bTagDiscriminators
 )
 updateJetCollection(
     process,
     labelName = 'AK8',
     jetSource = cms.InputTag('slimmedJetsAK8'),
-    jetCorrections = ('AK8PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
+    jetCorrections = ('AK8PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
 #    btagDiscriminators = bTagDiscriminators    
 )
 
@@ -131,6 +152,7 @@ process.p = cms.Path(
           process.primaryVertexFilter *
           process.FilteredEvents *
           process.patJetCorrFactors * process.updatedPatJets *
+          process.patPuppiJetSpecificProducer * process.updatedPatJetsPuppiJetSpecific *
           process.patJetCorrFactorsPuppi * process.updatedPatJetsPuppi *
           process.patJetCorrFactorsAK8 * process.updatedPatJetsAK8 *
           process.MssmHbb
@@ -141,7 +163,8 @@ readFiles = cms.untracked.vstring()
 secFiles = cms.untracked.vstring() 
 process.source = cms.Source ('PoolSource',fileNames = readFiles, secondaryFileNames = secFiles)
 readFiles.extend( [
-   '/store/mc/RunIIFall17MiniAOD/SUSYGluGluToBBHToBB_M-350_TuneCP5_13TeV-pythia8/MINIAODSIM/94X_mc2017_realistic_v11-v1/00000/02D5DD76-241B-E811-A02E-0CC47A2B0214.root',
+#   '/store/mc/RunIIFall17MiniAOD/SUSYGluGluToBBHToBB_M-350_TuneCP5_13TeV-pythia8/MINIAODSIM/94X_mc2017_realistic_v11-v1/00000/02D5DD76-241B-E811-A02E-0CC47A2B0214.root',
+   '/store/mc/RunIIFall17MiniAODv2/SUSYGluGluToBBHToBB_NarrowWidth_M-350_TuneCP5_13TeV-pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/20000/5CCCC2D7-BB41-E811-8AD3-FA163EF96190.root',
 ] );
 
 

@@ -1,7 +1,9 @@
 # For the ntuple production
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process('MssmHbb')
+from Configuration.StandardSequences.Eras import eras
+
+process = cms.Process('MssmHbb',eras.Run2_2017,eras.run2_nanoAOD_94XMiniAODv2)
 
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(100000)
@@ -11,7 +13,7 @@ process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cf
 process.load('Configuration.Geometry.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '94X_mc2017_realistic_v14')
+process.GlobalTag = GlobalTag(process.GlobalTag, '94X_dataRun2_v6')
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
 
@@ -47,9 +49,28 @@ bTagDiscriminators = [
     'pfDeepCSVJetTags:probcc',
 ]
 
+### ==== Updated Jets ==== ###
+from PhysicsTools.PatAlgos.tools.jetTools import *
+
+
+# Puppi specifics
+from PhysicsTools.PatAlgos.tools.helpers import getPatAlgosToolsTask
+patAlgosToolsTask = getPatAlgosToolsTask(process)
+from PhysicsTools.PatAlgos.patPuppiJetSpecificProducer_cfi import patPuppiJetSpecificProducer
+process.patPuppiJetSpecificProducer = patPuppiJetSpecificProducer.clone(
+   src=cms.InputTag("slimmedJetsPuppi"),
+)
+patAlgosToolsTask.add(process.patPuppiJetSpecificProducer)
+updateJetCollection(
+   process,
+   labelName = 'PuppiJetSpecific',
+   jetSource = cms.InputTag('slimmedJetsPuppi'),
+)
+process.updatedPatJetsPuppiJetSpecific.userData.userFloats.src = ['patPuppiJetSpecificProducer:puppiMultiplicity', 'patPuppiJetSpecificProducer:neutralPuppiMultiplicity', 'patPuppiJetSpecificProducer:neutralHadronPuppiMultiplicity', 'patPuppiJetSpecificProducer:photonPuppiMultiplicity', 'patPuppiJetSpecificProducer:HFHadronPuppiMultiplicity', 'patPuppiJetSpecificProducer:HFEMPuppiMultiplicity' ]
+
+
 
 ### ============ Jet energy correctiosn update ============== (not really running!???)
-from PhysicsTools.PatAlgos.tools.jetTools import *
 ## Update the slimmedJets in miniAOD: corrections from the chosen Global Tag are applied and the b-tag discriminators are re-evaluated
 updateJetCollection(
     process,
@@ -57,13 +78,15 @@ updateJetCollection(
     jetCorrections = ('AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
 #    btagDiscriminators = bTagDiscriminators
 )
+
 updateJetCollection(
     process,
     labelName = 'Puppi',
-    jetSource = cms.InputTag('slimmedJetsPuppi'),
+    jetSource = cms.InputTag('updatedPatJetsPuppiJetSpecific'),
     jetCorrections = ('AK4PFPuppi', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
 #    btagDiscriminators = bTagDiscriminators
 )
+
 updateJetCollection(
     process,
     labelName = 'AK8',
@@ -71,6 +94,9 @@ updateJetCollection(
     jetCorrections = ('AK8PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual']), 'None'),
 #    btagDiscriminators = bTagDiscriminators    
 )
+
+
+
 
 
 ## ============ EVENT FILTER COUNTER ===============
@@ -99,15 +125,7 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     MssmHbbNtuplizerL1Seeds,
     MssmHbbNtuplizerTriggerObjects,
     
-    MonteCarlo      = cms.bool(True),
-    ## Monte Carlo only
-    CrossSection    = cms.double(1.),  # in pb
-    GenFilterInfo   = cms.InputTag("genFilterEfficiencyProducer"),
-    GenRunInfo      = cms.InputTag("generator"),
-    GenEventInfo    = cms.InputTag("generator"),
-    GenJets         = cms.VInputTag(cms.InputTag("slimmedGenJets")),
-    GenParticles    = cms.VInputTag(cms.InputTag("prunedGenParticles")),
-    PileupInfo      = cms.InputTag("slimmedAddPileupInfo"),    
+    MonteCarlo      = cms.bool(False),
     ###################
     TotalEvents     = cms.InputTag ('TotalEvents'),
     FilteredEvents  = cms.InputTag ('FilteredEvents'),
@@ -127,10 +145,11 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
 
 process.p = cms.Path(
           process.TotalEvents *
-#          process.triggerSelection *
+          process.triggerSelection *
           process.primaryVertexFilter *
           process.FilteredEvents *
           process.patJetCorrFactors * process.updatedPatJets *
+          process.patPuppiJetSpecificProducer * process.updatedPatJetsPuppiJetSpecific *
           process.patJetCorrFactorsPuppi * process.updatedPatJetsPuppi *
           process.patJetCorrFactorsAK8 * process.updatedPatJetsAK8 *
           process.MssmHbb
@@ -141,7 +160,7 @@ readFiles = cms.untracked.vstring()
 secFiles = cms.untracked.vstring() 
 process.source = cms.Source ('PoolSource',fileNames = readFiles, secondaryFileNames = secFiles)
 readFiles.extend( [
-   '/store/mc/RunIIFall17MiniAOD/SUSYGluGluToBBHToBB_M-350_TuneCP5_13TeV-pythia8/MINIAODSIM/94X_mc2017_realistic_v11-v1/00000/02D5DD76-241B-E811-A02E-0CC47A2B0214.root',
+   '/store/data/Run2017F/BTagCSV/MINIAOD/17Nov2017-v1/00000/0202DCDF-4CFF-E711-8269-141877642F9D.root',
 ] );
 
 

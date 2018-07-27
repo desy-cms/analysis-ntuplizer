@@ -13,7 +13,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '101X_dataRun2_Prompt_v9')
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
 
 ## TFileService
 output_file = 'ntuple.root'
@@ -21,7 +21,7 @@ process.TFileService = cms.Service('TFileService',
    fileName = cms.string(output_file)
 )
 
-from Analysis.Ntuplizer.MssmHbbTriggerResultsFilter_cfi import *
+from Analysis.Ntuplizer.run2018.MssmHbbTriggerResultsFilter_cfi import *
 
 ## ============ TRIGGER FILTER =============== 
 ## Enable below at cms.Path if needed - DATA ONLY!!!
@@ -85,10 +85,10 @@ process.primaryVertexFilter = cms.EDFilter('VertexSelector',
    filter = cms.bool(True),   # otherwise it won't filter the events, just produce an empty vertex collection.
 )
 
-from Analysis.Ntuplizer.MssmHbbNtuplizerTriggerPaths_cfi import *
-from Analysis.Ntuplizer.MssmHbbNtuplizerL1Seeds_cfi import *
-from Analysis.Ntuplizer.MssmHbbNtuplizerTriggerObjects_cfi import *
-from Analysis.Ntuplizer.MssmHbbNtuplizerBtag_cfi import *
+from Analysis.Ntuplizer.run2018.MssmHbbNtuplizerTriggerPaths_cfi import *
+from Analysis.Ntuplizer.run2018.MssmHbbNtuplizerL1Seeds_cfi import *
+from Analysis.Ntuplizer.run2018.MssmHbbNtuplizerTriggerObjects_cfi import *
+from Analysis.Ntuplizer.run2018.MssmHbbNtuplizerBtag_cfi import *
 
 
 ## ============  THE NTUPLIZER!!!  ===============

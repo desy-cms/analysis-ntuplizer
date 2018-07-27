@@ -156,6 +156,10 @@ namespace analysis {
             float puJetIdFullDiscr_[maxCandidates];
             int   puJetIdFullId_[maxCandidates];
             std::string pujetidInst_;
+            
+            // bJet regression
+            float bjetRegCorr_[maxCandidates];
+            float bjetRegRes_[maxCandidates];
                         
             int pdg_[maxCandidates];
             int status_[maxCandidates];

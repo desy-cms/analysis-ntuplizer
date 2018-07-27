@@ -146,13 +146,14 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    // definitions
    // jetid
    id_vars_.clear();
-   id_vars_.push_back({"neutralHadronEnergyFraction", "id_nHadFrac"});
-   id_vars_.push_back({"neutralEmEnergyFraction",     "id_nEmFrac" });
-   id_vars_.push_back({"neutralMultiplicity",         "id_nMult"   });
-   id_vars_.push_back({"chargedHadronEnergyFraction", "id_cHadFrac"});
-   id_vars_.push_back({"chargedEmEnergyFraction",     "id_cEmFrac" });
-   id_vars_.push_back({"chargedMultiplicity",         "id_cMult"   });
-   id_vars_.push_back({"muonEnergyFraction",          "id_muonFrac"});
+   id_vars_.push_back({"neutralHadronEnergyFraction", "id_nHadFrac" });
+   id_vars_.push_back({"neutralEmEnergyFraction",     "id_nEmFrac"  });
+   id_vars_.push_back({"neutralMultiplicity",         "id_nMult"    });
+   id_vars_.push_back({"chargedHadronEnergyFraction", "id_cHadFrac" });
+   id_vars_.push_back({"chargedEmEnergyFraction",     "id_cEmFrac"  });
+   id_vars_.push_back({"chargedMultiplicity",         "id_cMult"    });
+   id_vars_.push_back({"muonEnergyFraction",          "id_muonFrac" });
+   id_vars_.push_back({"puppiJetsSpecific",           "id_puppi"    });
    
    // init
    btag_vars_.clear();
@@ -450,6 +451,11 @@ void Candidates<T>::Kinematics()
 //             std::cout << "    Tag Name = " << tagNames[it] << std::endl;
 //          }
          
+         if ( jet->hasUserFloat("bJetRegCorr") ) bjetRegCorr_[n] = jet->userFloat("bJetRegCorr");
+         else                                    bjetRegCorr_[n] = 1;
+         
+         if ( jet->hasUserFloat("bJetRegRes") )  bjetRegRes_[n] = jet->userFloat("bJetRegRes");
+         else                                    bjetRegRes_[n] = 1;
          
          for ( size_t it = 0 ; it < btag_vars_.size() ; ++it )
          {
@@ -460,10 +466,26 @@ void Candidates<T>::Kinematics()
          {
             jetid_[0][n] = jet->neutralHadronEnergyFraction();
             jetid_[1][n] = jet->neutralEmEnergyFraction();
-            jetid_[2][n] = (float)jet->neutralMultiplicity();
+            if ( jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") )
+            {
+               jetid_[2][n] = jet->userFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity");
+            }
+            else
+            {
+               jetid_[2][n] = (float)jet->neutralMultiplicity();
+            }
             jetid_[3][n] = jet->chargedHadronEnergyFraction();
             jetid_[4][n] = jet->chargedEmEnergyFraction();
-            jetid_[5][n] = (float)jet->chargedMultiplicity();
+            if ( jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") && jet->hasUserFloat("patPuppiJetSpecificProducer:puppiMultiplicity") )
+            {
+               jetid_[5][n] = jet->userFloat("patPuppiJetSpecificProducer:puppiMultiplicity") - jet->userFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity");
+               jetid_[7][n] = 1.;
+            }
+            else
+            {
+               jetid_[5][n] = (float)jet->chargedMultiplicity();
+               jetid_[7][n] = -1.;
+            }
             jetid_[6][n] = jet->muonEnergyFraction();
          }
          else  // set some dummy values
@@ -916,6 +938,8 @@ void Candidates<T>::Branches()
           tree_->Branch("puJetIdFullDiscriminant", puJetIdFullDiscr_, "puJetIdFullDiscriminant[n]/F");
           tree_->Branch("puJetIdFullId", puJetIdFullId_, "puJetIdFullId[n]/I");
           
+          tree_->Branch("bjetRegCorr",bjetRegCorr_,"bjetRegCorr_[n]/F");
+          tree_->Branch("bjetRegRes",bjetRegRes_,"bjetRegRes_[n]/F");
          
       }
       if ( is_pfjet_ || is_patjet_ )
@@ -972,24 +996,23 @@ void Candidates<T>::Branches()
          trkqualities[9] = "qualitySize";
          for ( int it = 0 ; it < 10 ; ++it )
             tree_->Branch(Form("quality_%s",trkqualities[it].c_str()), trkqual_[it],Form("quality_%s[n]/O",trkqualities[it].c_str()));
+      
+         // hit pattern
+         tree_->Branch("numberOfLostMuonHits" ,trkhp_lostmu_, "numberOfLostMuonHits[n]/I");
+         tree_->Branch("numberOfValidMuonHits",trkhp_valmu_ , "numberOfValidMuonHits[n]/I");
+         tree_->Branch("numberOfBadMuonHits",  trkhp_badmu_ , "numberOfBadMuonHits[n]/I");
+         
+         tree_->Branch("numberOfValidTrackerHits" ,trkhp_valtrkhits_,"numberOfValidTrackerHits[n]/I");
+         tree_->Branch("numberOfValidStripTECHits",trkhp_valtechits_,"numberOfValidStripTECHits[n]/I");
+         tree_->Branch("numberOfValidStripTIBHits",trkhp_valtibhits_,"numberOfValidStripTIBHits[n]/I");
+         tree_->Branch("numberOfValidStripTIDHits",trkhp_valtidhits_,"numberOfValidStripTIDHits[n]/I");
+         tree_->Branch("numberOfValidStripTOBHits",trkhp_valtobhits_,"numberOfValidStripTOBHits[n]/I");
+         
+         tree_->Branch("muonStationsWithValidHits" ,        trkhp_stationsvalhits_     ,"muonStationsWithValidHits[n]/I");
+         tree_->Branch("muonStationsWithBadHits" ,          trkhp_stationsbadhits_     ,"muonStationsWithBadHits[n]/I");
+         tree_->Branch("innermostMuonStationWithValidHits" ,trkhp_innerstationsvalhits_,"innermostMuonStationWithValidHits[n]/I");
+         tree_->Branch("outermostMuonStationWithValidHits" ,trkhp_outerstationsvalhits_,"outermostMuonStationWithValidHits[n]/I");
       }
-      
-      // hit pattern
-      tree_->Branch("numberOfLostMuonHits" ,trkhp_lostmu_, "numberOfLostMuonHits[n]/I");
-      tree_->Branch("numberOfValidMuonHits",trkhp_valmu_ , "numberOfValidMuonHits[n]/I");
-      tree_->Branch("numberOfBadMuonHits",  trkhp_badmu_ , "numberOfBadMuonHits[n]/I");
-      
-      tree_->Branch("numberOfValidTrackerHits" ,trkhp_valtrkhits_,"numberOfValidTrackerHits[n]/I");
-      tree_->Branch("numberOfValidStripTECHits",trkhp_valtechits_,"numberOfValidStripTECHits[n]/I");
-      tree_->Branch("numberOfValidStripTIBHits",trkhp_valtibhits_,"numberOfValidStripTIBHits[n]/I");
-      tree_->Branch("numberOfValidStripTIDHits",trkhp_valtidhits_,"numberOfValidStripTIDHits[n]/I");
-      tree_->Branch("numberOfValidStripTOBHits",trkhp_valtobhits_,"numberOfValidStripTOBHits[n]/I");
-      
-      tree_->Branch("muonStationsWithValidHits" ,        trkhp_stationsvalhits_     ,"muonStationsWithValidHits[n]/I");
-      tree_->Branch("muonStationsWithBadHits" ,          trkhp_stationsbadhits_     ,"muonStationsWithBadHits[n]/I");
-      tree_->Branch("innermostMuonStationWithValidHits" ,trkhp_innerstationsvalhits_,"innermostMuonStationWithValidHits[n]/I");
-      tree_->Branch("outermostMuonStationWithValidHits" ,trkhp_outerstationsvalhits_,"outermostMuonStationWithValidHits[n]/I");
-
       
 
    }
