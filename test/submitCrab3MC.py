@@ -33,10 +33,20 @@ TYPE            = 'MC'
 #CRABCMDOPTS = '--dryrun'
 CRABCMDOPTS = ''
 
+IS_NANO = False
+
 ARGS = sys.argv
 PSET = ARGS[1]
+if PSET.find('nano') >= 0:
+   IS_NANO = True
+   print "Producing NanoAOD ntuples..."
+else:
+   print "Producing Ntuplizer ntuples..."
+
+   
 psetname, pset_ext = os.path.splitext(PSET)
 SAMPLE = ARGS[2]
+
 
 samplename, sample_ext = os.path.splitext(SAMPLE)
 CAMPAIGN        = ARGS[3] + '/' + psetname
@@ -96,9 +106,12 @@ if __name__ == '__main__':
 #   config.JobType.numCores = 4
 #   config.JobType.inputFiles = ['Fall15_25nsV2_MC_PtResolution_AK4PFPuppi.txt','Fall15_25nsV2_MC_PtResolution_AK4PFchs.txt','Fall15_25nsV2_MC_SF_AK4PFPuppi.txt','Fall15_25nsV2_MC_SF_AK4PFchs.txt']
 
+   if IS_NANO:
+      config.JobType.outputFiles = ['nano.root']
+
    for dataset in datasets:
       dataset=dataset.replace(" ", "")
-      if dataset[0] == '#':
+      if dataset[0] == '#' or dataset[0] != '/':
          continue
       cross_section = 1.
       if len(dataset.split(',')) > 1:
@@ -107,6 +120,7 @@ if __name__ == '__main__':
       else:
          dataset = dataset.split('\n')[0]
          
+      print " oioi ", dataset
       dataset_name = dataset.split('/')[1]
       dataset_cond = dataset.split('/')[2]
       dataset_tier = dataset.split('/')[3]
@@ -121,13 +135,20 @@ if __name__ == '__main__':
 #      config.General.requestName  += '_'+processname[0]+'-'+processname[1]+'_oldGT'
 #      print config.General.requestName 
 #     
-      process.MssmHbb.CrossSection = cms.double(cross_section)
-      psettmp = pset+'_tmp.py'
-      f = open(psettmp, 'w')
-      f.write(process.dumpPython())
-      f.close()
+
+      if IS_NANO:
+         config.JobType.psetName    = PSET
+      else:
+         try:
+            process.MssmHbb.CrossSection = cms.double(cross_section)
+         except AttributeError:
+            pass
+         psettmp = pset+'_tmp.py'
+         f = open(psettmp, 'w')
+         f.write(process.dumpPython())
+         f.close()
 #      
-      config.JobType.psetName    = psettmp
+         config.JobType.psetName    = psettmp
 #
       outtext = "Submitting dataset " + dataset + "..."
       print (O+str(outtext)+W) 
@@ -137,6 +158,7 @@ if __name__ == '__main__':
       print (O+"--------------------------------"+W)
       print
 #
-      os.remove(psettmp)
+      if not IS_NANO:
+         os.remove(psettmp)
 
 # _________________________________________________________________________

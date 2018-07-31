@@ -30,8 +30,17 @@ TYPE            = 'DATA'
 #CRABCMDOPTS = '--dryrun'
 CRABCMDOPTS = ''
 
+IS_NANO = False
+
 ARGS = sys.argv
 PSET = ARGS[1]
+if PSET.find('nano') >= 0:
+   IS_NANO = True
+   print "Producing NanoAOD ntuples..."
+else:
+   print "Producing Ntuplizer ntuples..."
+
+
 psetname, pset_ext = os.path.splitext(PSET)
 SAMPLE = ARGS[2]
 
@@ -78,7 +87,7 @@ if __name__ == '__main__':
 #   config.Data.unitsPerJob  = UNITS_PER_JOB
 #   config.Data.totalUnits   = -1
    config.Data.outLFNDirBase   = BASEOUTDIR + '/'
-   config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions18/13TeV/DCSOnly/json_DCSONLY.txt'
+#   config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions18/13TeV/DCSOnly/json_DCSONLY.txt'
 #   config.Data.inputDBS = 'https://cmsweb.cern.ch/dbs/prod/phys03/DBSReader/'
 #   config.Data.allowNonValidInputDataset = True    # If dataset not valid yet, will run over valid files only
    if RUN_RANGE != '':
@@ -91,6 +100,9 @@ if __name__ == '__main__':
 #   config.JobType.inputFiles = ['Fall15_25nsV2_DATA_PtResolution_AK4PFPuppi.txt','Fall15_25nsV2_DATA_PtResolution_AK4PFchs.txt','Fall15_25nsV2_DATA_SF_AK4PFPuppi.txt','Fall15_25nsV2_DATA_SF_AK4PFchs.txt']
 
    
+   if IS_NANO:
+      config.JobType.outputFiles = ['nano.root']
+
    for dataset in datasets:
       dataset=dataset.replace(" ", "")
       if dataset[0] == '#':
