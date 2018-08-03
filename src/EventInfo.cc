@@ -13,6 +13,9 @@
 
 // system include files
 // 
+#include <iostream>
+
+
 // user include files
 #include "FWCore/Framework/interface/Event.h"
 // 
@@ -54,6 +57,7 @@ EventInfo::EventInfo(edm::Service<TFileService> & fs)
    do_pu_   = false;
    do_gen_  = false;
    do_lumi_ = false;
+   do_rho_  = false;
    
    
 }
@@ -128,6 +132,11 @@ void EventInfo::Fill(const edm::Event& event)
    if ( do_lumi_ )
    {
       ReadLumiScalers(event);
+   }
+   
+   if ( do_rho_ )
+   {
+      ReadFixedGridRhoInfo(event);
    }
       
    tree_ -> Fill();
@@ -233,3 +242,19 @@ void EventInfo::ReadLumiScalers(const edm::Event& event)
    
 }
 
+void EventInfo::FixedGridRhoInfo(const edm::InputTag& tag)
+{
+   do_rho_ = true;
+   rho_collection_ = tag;
+   
+   tree_->Branch("rho",&rho_,"rho/D");
+   
+}
+
+void EventInfo::ReadFixedGridRhoInfo(const edm::Event& event)
+{
+   edm::Handle<double> rhoHandler;
+   event.getByLabel(rho_collection_, rhoHandler);
+   rho_ = *(rhoHandler.product());
+   
+}

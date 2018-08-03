@@ -56,6 +56,8 @@ namespace analysis {
             void ReadPileupInfo(const edm::Event&);
             void ReadGenEventInfo(const edm::Event&);
             void ReadLumiScalers(const edm::Event&);
+            void FixedGridRhoInfo(const edm::InputTag&);
+            void ReadFixedGridRhoInfo(const edm::Event&);
             TTree * Tree();
       
          private:
@@ -93,6 +95,10 @@ namespace analysis {
             float instLumi_;
             float lumiPU_;
             
+            // FixedGridRho
+            bool do_rho_;
+            edm::InputTag rho_collection_;
+            double rho_;
       };
    }
 }

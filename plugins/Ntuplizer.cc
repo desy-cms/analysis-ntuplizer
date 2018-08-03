@@ -666,6 +666,10 @@ Ntuplizer::beginJob()
    
    // Event info tree
    eventinfo_ = pEventInfo (new EventInfo(eventsDir));
+   if ( config_.exists("FixedGridRhoAll") )
+   {
+      eventinfo_ -> FixedGridRhoInfo(config_.getParameter<edm::InputTag>("FixedGridRhoAll"));
+   }
    if ( do_pileupinfo_ )
       eventinfo_ -> PileupInfo(config_.getParameter<edm::InputTag>("PileupInfo"));
    if ( do_geneventinfo_ )
