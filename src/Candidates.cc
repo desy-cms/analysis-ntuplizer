@@ -356,13 +356,29 @@ void Candidates<T>::Kinematics()
          pdg_[n]   = pdg;
          status_[n]= status;
          lastcopy_[n] = gp -> isLastCopy();
+         indx_[n] = i;
+         mo1_[n] = -1;
+         mo2_[n] = -1;
+         da1_[n] = -1;
+         da2_[n] = -1;
+         if ( gp->numberOfMothers() > 0 )
+         {
+            mo1_[n] = gp->motherRef(0).key();
+            mo2_[n] = gp->motherRef(gp->numberOfMothers()-1).key();
+         }
+         if ( gp->numberOfDaughters() > 0 )
+         {
+            da1_[n] = gp->daughterRef(0).key();
+            da2_[n] = gp->daughterRef(gp->numberOfDaughters()-1).key();
+         }
          const reco::Candidate * mother = gp->mother(0);
          higgs_dau_[n] = false;
          if ( mother != NULL )  // initial protons are orphans
          {
-            if ( mother->pdgId() == higgs_pdg_ )
+            if ( mother->pdgId() == 36 || mother->pdgId() == 25 )
                higgs_dau_[n] = true;
          }
+         mass_[n] = gp->mass();
       }
             
       pt_[n]  = candidates_[i].pt();
@@ -874,10 +890,16 @@ void Candidates<T>::Branches()
       
       if ( is_genparticle_ )
       {
+         tree_->Branch("index",indx_,   "index[n]/I");
          tree_->Branch("pdg",   pdg_,   "pdg[n]/I");
          tree_->Branch("status",status_,"status[n]/I");
          tree_->Branch("last_copy",lastcopy_,"last_copy[n]/O");
          tree_->Branch("higgs_dau",higgs_dau_,"higgs_dau[n]/O");
+         tree_->Branch("mother1",mo1_,"mother1[n]/I");
+         tree_->Branch("mother2",mo2_,"mother2[n]/I");
+         tree_->Branch("daughter1",da1_,"daughter1[n]/I");
+         tree_->Branch("daughter2",da2_,"daughter2[n]/I");
+         tree_->Branch("mass",mass_,"mass[n]/F");
       }
 
       if ( is_patmuon_ )

@@ -74,7 +74,7 @@ namespace analysis {
             void JECRecord(const std::string &);
             void QGTaggerInstance(const std::string &);
             void PileupJetIdInstance(const std::string &);
-            static const int maxCandidates = 200;
+            static const int maxCandidates = 250;
       
          protected:
             // ----------member data ---------------------------
@@ -161,10 +161,16 @@ namespace analysis {
             float bjetRegCorr_[maxCandidates];
             float bjetRegRes_[maxCandidates];
                         
+            int indx_[maxCandidates];
             int pdg_[maxCandidates];
             int status_[maxCandidates];
             bool lastcopy_[maxCandidates];
             bool higgs_dau_[maxCandidates];
+            int mo1_[maxCandidates];
+            int mo2_[maxCandidates];
+            int da1_[maxCandidates];
+            int da2_[maxCandidates];
+            float mass_[maxCandidates];
             
             // met specifics
             float sigxx_[maxCandidates];
