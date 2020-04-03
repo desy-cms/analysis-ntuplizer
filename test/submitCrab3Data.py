@@ -60,7 +60,8 @@ if not ( os.path.isfile(SAMPLE) and sample_ext == '.txt' ):
 
 # Some parameter steering
 PROCESS         = samplename.split('/')[-1]
-MYPATH          = '/store/user/%s/' % (getUsernameFromSiteDB())
+MYPATH          = '/store/user/rwalsh/'
+#MYPATH          = '/store/user/%s/' % (getUsernameFromSiteDB())
 BASEOUTDIR      = MYPATH+'Analysis/Ntuples/' + TYPE + '/' + CAMPAIGN
 
 dataset_list    = 'samples/data/' + PROCESS + '.txt'
@@ -96,7 +97,8 @@ if __name__ == '__main__':
 
 # ====== JOBTYPE
    config.JobType.psetName    = PSET
-#   config.JobType.numCores = 4
+   config.JobType.numCores = 4
+   config.JobType.maxMemoryMB = 10000
 #   config.JobType.inputFiles = ['Fall15_25nsV2_DATA_PtResolution_AK4PFPuppi.txt','Fall15_25nsV2_DATA_PtResolution_AK4PFchs.txt','Fall15_25nsV2_DATA_SF_AK4PFPuppi.txt','Fall15_25nsV2_DATA_SF_AK4PFchs.txt']
 
    

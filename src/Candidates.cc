@@ -545,6 +545,7 @@ void Candidates<T>::Kinematics()
             jerResolution_[n]    = res_.getResolution(jerParamRes);
 
             JME::JetParameters jerParamSF;
+            jerParamSF.set(JME::Binning::JetPt, pt_[n]);
             jerParamSF.set(JME::Binning::JetEta, eta_[n]);
             jerParamSF.set(JME::Binning::Rho, rho_);
 
