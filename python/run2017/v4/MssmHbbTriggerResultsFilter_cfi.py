@@ -15,8 +15,8 @@ MssmHbbTriggerResultsFilter = cms.PSet(
                      'HLT_AK8PFJet380_TrimMass30_v*',
                      'HLT_AK8PFJet400_TrimMass30_v*',
                      'HLT_AK8PFJet420_TrimMass30_v*',
-                     'HLT_AK8PFJet330_PFAK8BTagCSV_p17_v*',
-                     'HLT_AK8PFJet330_PFAK8BTagCSV_p1_v*',
+#                     'HLT_AK8PFJet330_PFAK8BTagCSV_p17_v*',
+#                     'HLT_AK8PFJet330_PFAK8BTagCSV_p1_v*',
 
 # control triggers
 ### btag             
