@@ -67,8 +67,8 @@ updatedPatJetsPuppi = updatedPatJets.clone(
 	jetCorrFactorsSource=cms.VInputTag(cms.InputTag("jetCorrFactorsPuppi") ),
 )
 
-PuppiJets = cms.Task()
-PuppiJets.add(jetCorrFactorsPuppi)
-PuppiJets.add(updatedPatJetsPuppi)
+AK4PuppiJets = cms.Task()
+AK4PuppiJets.add(jetCorrFactorsPuppi)
+AK4PuppiJets.add(updatedPatJetsPuppi)
 
 
