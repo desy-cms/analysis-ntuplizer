@@ -38,7 +38,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v33')
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
 
 ## TFileService
-output_file = 'ntuple_test2-v5.root'
+output_file = 'ntuple_test3-v5.root'
 process.TFileService = cms.Service('TFileService',
    fileName = cms.string(output_file)
 )
@@ -48,7 +48,7 @@ from Analysis.Ntuplizer.NtuplizerBTag_cfi import *
 
 ## Trigger information
 from Analysis.Ntuplizer.TriggerInfo_cfi import *
-triggerInfo = triggerInfo('trigger_info.json')
+triggerInfo = triggerInfo('trigger_info_v5.yml')
 
 # Apply JES corrections
 process.load('Analysis.Ntuplizer.JetCorrections_cff')
@@ -71,12 +71,12 @@ process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
 process.TotalEvents    = cms.EDProducer('EventCountProducer')
 process.FilteredEvents = cms.EDProducer('EventCountProducer')
 
-## Primary vertex
-process.primaryVertexFilter = cms.EDFilter('VertexSelector',
-   src = cms.InputTag('offlineSlimmedPrimaryVertices'), # primary vertex collection name
-   cut = cms.string('!isFake && ndof > 4 && abs(z) <= 24 && position.Rho <= 2'), # ndof>thr=4 corresponds to sum(track_weigths) > (thr+3)/2 = 3.5 so typically 4 good tracks
-   filter = cms.bool(True),   # otherwise it won't filter the events, just produce an empty vertex collection.
-)
+# ## Primary vertex
+# process.primaryVertexFilter = cms.EDFilter('VertexSelector',
+#    src = cms.InputTag('offlineSlimmedPrimaryVertices'), # primary vertex collection name
+#    cut = cms.string('!isFake && ndof > 4 && abs(z) <= 24 && position.Rho <= 2'), # ndof>thr=4 corresponds to sum(track_weigths) > (thr+3)/2 = 3.5 so typically 4 good tracks
+#    filter = cms.bool(True),   # otherwise it won't filter the events, just produce an empty vertex collection.
+# )
 
 
 ## Ntuplizer
@@ -107,7 +107,6 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
 ## Do the stuff!
 process.p = cms.Path(process.TotalEvents +
                      process.triggerSelection +
-                     process.primaryVertexFilter +
                      process.FilteredEvents +
                      process.MssmHbb,
                      process.BJetRegression,
@@ -132,13 +131,13 @@ readFiles.extend( [
 secFiles.extend( [
        ] )
 
-# ============ Output MiniAOD ======================
+# # ============ Output MiniAOD ======================
 # process.out = cms.OutputModule("PoolOutputModule",
 #                                fileName = cms.untracked.string('patTuple.root'),
 #                                outputCommands = cms.untracked.vstring('keep *' )
 #                                )
 # process.outpath = cms.EndPath(process.out)
-#
+# #
 ## ============ JSON Certified data ===============   BE CAREFUL!!!
 ## Don't use with CRAB!!!
 # import FWCore.PythonUtilities.LumiList as LumiList
