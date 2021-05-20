@@ -6,7 +6,7 @@
 import FWCore.ParameterSet.Config as cms
 
 import os
-import json
+import yaml
 
 def triggerInfo(info_file):
    info = dict()
@@ -17,7 +17,7 @@ def triggerInfo(info_file):
    
    if os.path.isfile(info_file):
       with open(info_file) as f:
-         info_data = json.load(f)
+         info_data = yaml.safe_load(f)
       for path, path_info in sorted(info_data.items()):
          p = str(path)
          triggerPaths.append(p)
@@ -27,13 +27,13 @@ def triggerInfo(info_file):
             if l1 == '':
                continue
             l1Seeds.append(str(l1))
-         objs = info_data[path]['trgobjs']
+         objs = info_data[path]['trigger_objects']
          for obj in objs:
             if obj == '':
                continue
             triggerObjects.append(str(obj))
    else:
-      print '>>>>>>>> Msg-W: The given JSON file with trigger info does not exist <<<<<<<<'
+      print '>>>>>>>> Msg-W: The given YAML file with trigger info does not exist <<<<<<<<'
       print ''
    triggerResultsFilter = cms.PSet(triggerConditions = triggerConditions)
    ntuplizerTriggerPaths = cms.PSet(TriggerPaths = triggerPaths)
