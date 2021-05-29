@@ -14,6 +14,8 @@ def triggerInfo(info_file):
    triggerPaths = cms.vstring()          # paths for the ntuplizer
    l1Seeds = cms.vstring()               # l1 seeds for the ntuplizer
    triggerObjects = cms.vstring()        # trigger objects for the ntuplizer
+   trgObjL1MuJet = cms.vstring()
+   trgObjL1MuJetType = cms.vstring()
    
    if os.path.isfile(info_file):
       with open(info_file) as f:
@@ -32,13 +34,18 @@ def triggerInfo(info_file):
             if obj == '':
                continue
             triggerObjects.append(str(obj))
+            if 'hltL1' in obj and 'Mu' in obj and 'Jet' in obj:
+               trgObjL1MuJet.append(str(obj))
+               trgObjL1MuJetType.append('l1muon:l1jet')
    else:
       print '>>>>>>>> Msg-W: The given YAML file with trigger info does not exist <<<<<<<<'
       print ''
    triggerResultsFilter = cms.PSet(triggerConditions = triggerConditions)
    ntuplizerTriggerPaths = cms.PSet(TriggerPaths = triggerPaths)
    ntuplizerL1Seeds = cms.PSet(L1Seeds = l1Seeds)
-   ntuplizerTriggerObjects = cms.PSet(TriggerObjectLabels = triggerObjects)
+   ntuplizerTriggerObjects = cms.PSet(TriggerObjectLabels = triggerObjects, 
+       TriggerObjectSplits = trgObjL1MuJet,
+       TriggerObjectSplitsTypes = trgObjL1MuJetType)
    info['triggerResultsFilter']=triggerResultsFilter
    info['ntuplizerTriggerPaths']=ntuplizerTriggerPaths
    info['ntuplizerL1Seeds']=ntuplizerL1Seeds
