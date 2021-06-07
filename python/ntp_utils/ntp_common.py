@@ -159,5 +159,5 @@ class ntp_common:
    def base_outdir(self):
       bo = ''
       if self.python_config():
-         bo = '/Analysis/Ntuples/'+self.__opts.type.upper()+'/Run'+self.__opts.year+'/'+os.path.basename(self.__pyconfig).split('.py')[0]
+         bo = '/Analysis/Ntuples/'+self.__opts.type.upper()+'/Run'+self.__opts.year+'-v'+str(self.__opts.version)+'/'+os.path.basename(self.__pyconfig).split('.py')[0]
       return bo
