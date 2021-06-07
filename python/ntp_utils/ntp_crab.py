@@ -1,15 +1,6 @@
 import os
 import sys
 import yaml
-from CRABAPI.RawCommand import crabCommand
-from CRABClient.ClientExceptions import ClientException
-from httplib import HTTPException
-    
-from Analysis.Ntuplizer.crabConfig import crabConfig
-import subprocess
-
-from ntp_common import ntp_common
-
 from colors import tcolors
 W  = tcolors.W
 R  = tcolors.R
@@ -20,6 +11,24 @@ C  = tcolors.C
 Y  = tcolors.Y
 BOLD = tcolors.BOLD
 UNDERLINE = tcolors.UNDERLINE
+
+if not 'crab' in os.getenv('PYTHONPATH'):
+   print(R+'It seems you did not initialised CRAB. You may need to issue the command below before continue'+W)
+   print(Y+'source /cvmfs/cms.cern.ch/common/crab-setup.sh'+W)
+   print('Also make sure you have a valid grid proxy')
+   print(Y+'voms-proxy-init -rfc -valid 192:00 -voms cms:/cms/dcms'+W)
+   sys.exit()
+
+
+from CRABAPI.RawCommand import crabCommand
+from CRABClient.ClientExceptions import ClientException
+from httplib import HTTPException
+    
+from Analysis.Ntuplizer.crabConfig import crabConfig
+import subprocess
+
+from ntp_common import ntp_common
+
 
 def short_requestname(reqname):
    new_reqname = ''
@@ -56,6 +65,9 @@ class ntp_crab:
          self.__configs.append(self.__crab_config(dataset,info))
 
    def __crab_config(self,dataset,info=None):
+      dataset_pd = dataset.split('\n')[0]
+      dataset_name = dataset_pd.split('/')[1]
+      dataset_cond = dataset_pd.split('/')[2]
       config = crabConfig()
       config.General.workArea += '_' + self.__process        
       config.Data.outLFNDirBase   = self.__baseoutdir + '/'
@@ -70,10 +82,7 @@ class ntp_crab:
                config.JobType.pyCfgParams += ["xsection="+str(value)]
       
       #######
-      dataset = dataset.split('\n')[0]
-      dataset_name = dataset.split('/')[1]
-      dataset_cond = dataset.split('/')[2]
-      config.Data.inputDataset    = dataset
+      config.Data.inputDataset    = dataset_pd
       config.Data.outputDatasetTag = dataset_cond
       req_name = dataset_name+ '_'+dataset_cond
       # Long request names, usually MC
