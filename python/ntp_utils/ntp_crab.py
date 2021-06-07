@@ -54,7 +54,7 @@ class ntp_crab:
       self.__datasetslists = common.datasets_lists()
       self.__datasets = common.datasets()
       self.__pyconfig = common.python_config()
-      self.__process = opts.dataset
+      self.__process = common.dataset_alias()
       self.__datasets = common.datasets()
       self.__username = common.username()
       self.__mypath = '/store/user/'+self.__username
@@ -124,4 +124,4 @@ class ntp_crab:
       print(G+'=========================='+W)
       print
       if not opt=='debug' and not opt=='test':
-         print('See your CRAB projects in crab_projects_'+self.__opts.dataset)
+         print('See your CRAB projects in crab_projects_'+self.__process)

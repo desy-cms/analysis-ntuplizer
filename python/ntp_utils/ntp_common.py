@@ -24,7 +24,31 @@ class ntp_common:
       self.__datasetdir = self.__dataset_dir()
       self.__datasetyml = self.__dataset_yaml()
       self.__datasetsdict = self.__datasets_dict()
+      self.__datasetalias = self.dataset_alias()
       self.__pyconfig = self.__python_config()
+
+   def dataset_alias(self):
+      if not self.__opts.dataset.startswith('/'):
+         return self.__opts.dataset
+      dsa = ''
+      for alias,datasets in self.__datasetsdict.iteritems():
+         for dataset,values in datasets.iteritems():
+            if dataset == self.__opts.dataset:
+               # get the alias of the existing dataset block
+               dsa = alias
+               # alter dictionary content
+               content = self.__datasetsdict[alias][dataset]
+               self.__datasetsdict = {alias:{dataset:content}}
+               break
+         if dsa:
+            break
+      
+      if not dsa:
+         print(R+'The given dataset has no entry in '+W)
+         print(Y+self.__datasetyml+W)      
+         sys.exit()
+      return dsa
+      
       
    def __ntuples_dir(self):
       nd  = os.getenv('CMSSW_BASE')+'/src/Analysis/Ntuplizer/data/ntuples/'+self.__opts.year
@@ -93,8 +117,8 @@ class ntp_common:
       
    def datasets(self):
       ds = ''
-      if len(self.__datasetsdict) > 0 and self.__opts.dataset in self.__datasetsdict:
-         ds = self.__datasetsdict[self.__opts.dataset]
+      if len(self.__datasetsdict) > 0 and self.__datasetalias in self.__datasetsdict:
+         ds = self.__datasetsdict[self.__datasetalias]
       else:
          print(R+'ERROR: Please check the name of your dataset list'+W)
          self.print_datasets_lists()
@@ -138,7 +162,7 @@ class ntp_common:
       if len(ds) < 1:
          return
       print('Available datasets in the list')
-      print(' -> '+C+self.__opts.dataset+W)
+      print(' -> '+C+self.__datasetalias+W)
       for dataset,info in ds.iteritems():
          print('     - '+G+dataset+W)
          if not info:
