@@ -13,37 +13,48 @@ def crab_status(cdir):
       if not finished and 'Jobs status:                    finished' in line:
          finished = [ x for x in line.split(' ') if '%' in x ][0]
    finished = finished.replace('\t','')
-   jobs_finished = finished+' of the jobs finished'
-   if finished != '100.0%':
-      jobs_finished = 'Only '+jobs_finished
-   print
-   print(jobs_finished)
    return finished
    
-def crab_report(cdir, outdir=None):
-   status = subprocess.Popen(['crab','report','-d',cdir],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-   stdout,stderr = status.communicate()
+def crab_report(report, finished, dataset=None, outdir=None):
    if not outdir:
       return
    if not os.path.exists(outdir):
       os.makedirs(outdir)
-   outfile = outdir+'/report.txt'
+   outfile = outdir+'/README.md'
    with open(outfile,'w') as f:
-      f.write(stdout)
-   cmd = 'cp -pRd '+cdir+'/results ' + outdir
-   os.system(cmd)
-   print
-   print('See crab report at: ')
-   print(outdir)
+      f.write('## Dataset \n')
+      if dataset:
+         f.write(dataset+'\n')
+      else:
+         f.write('No dataset found\n')
+      f.write('## Status \n')
+      if finished == "100.0%":
+         f.write(finished+' of the jobs finished\n')
+      else:
+         f.write(':warning: NOT ALL JOBS FINISHED!!!<br>')
+         f.write('Only '+finished+' of the jobs finished<br>')
+         f.write('Crab report, results and rootFileList are incomplete!<br>')
+         f.write('Try again later!<br>\n')
+      
+      f.write('## CRAB Report \n')
+      f.write('```\n')
+      f.write(report)
+      f.write('```\n')
+      f.write('<br>')
+      f.write('See also the [results](results) directory above<br>\n')
 
 def crab_log(cdir):
-   crab_report(cdir)
+   status = subprocess.Popen(['crab','report','-d',cdir],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+   stdout,stderr = status.communicate()
+   report = stdout
    crablog = cdir+'/crab.log'
    myline = ''
    mytype = ''
    myntpdir = ''
    mypd= ''
    myreq = ''
+   myfullpd = ''
+   finished = ''
    with open(crablog,'r') as f:
       for line in f:
          line = line.rstrip()
@@ -64,9 +75,14 @@ def crab_log(cdir):
                mypd = mypd.split('/')[1][0:mypd.find('_Tune')-1]
          else:
             mypd = myreq.split('-')[0]
+         if not myfullpd and 'config.Data.inputDataset' in line:
+            myfullpd = line.split("'")[1]
+         if 'Jobs status:                    finished' in line:
+            finished = [ x for x in line.split(' ') if '%' in x ][0]
+            finished = finished.replace('\t','')
    
    outreport = myinfodir+'/'+myreq
-   crab_report(cdir,outreport)
+   crab_report(report,finished,outdir=outreport,dataset=myfullpd)
    
    if not myline:
       sys.exit()
@@ -92,6 +108,29 @@ def crab_log(cdir):
    print('See the rootFileList at:')
    print(rootfiles)
 
+   cmd = 'cp -pRd '+cdir+'/results ' + outreport
+   os.system(cmd)
+   print
+   print('See crab report and results at: ')
+   print(outreport)
+
+   jobs_finished = finished+' of the jobs finished'
+   print
+   if finished != "100.0%":
+      jobs_finished = 'Only '+jobs_finished
+      print(jobs_finished)
+      print
+      print('*** WARNING ***  NOT ALL JOBS FINISHED!!!')
+      print('                 CRAB report and rootFileList are incomplete!')
+      print('                 Try again later!')
+      print
+   else:
+      # when 100% is finished crab does not update this file to empty
+      with open(outreport+'/results/notFinishedLumis.json', 'w') as f:
+         f.write('{}')
+      print(jobs_finished)
+      
+      
 
 def main():
    if len(sys.argv) < 2:
@@ -99,17 +138,8 @@ def main():
       sys.exit()
    
    crabdir = sys.argv[1]
-   finished = crab_status(crabdir)
    crab_log(crabdir)
    
-   if finished != "100%":
-      print
-      print('*** WARNING ***  NOT ALL JOBS FINISHED!!!')
-      print('                 CRAB report and rootFileList are incomplete!')
-      print('                 Try again later!')
-      print
-      
-      
          
 
 if __name__ == '__main__':
