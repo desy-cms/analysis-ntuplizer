@@ -95,7 +95,7 @@ input_files['mc'][2018]='/store/mc/RunIISummer20UL18MiniAODv2/QCD_Pt_470to600_Tu
 # default triggerInfo
 trigger_info = {}
 trigger_info[2017]='/afs/desy.de/user/w/walsh/cms/ntuplizer/run2_ul/CMSSW_10_6_20/src/Analysis/Ntuplizer/data/ntuples/2017/v5/trigger_info.yml'
-trigger_info[2018]='/afs/desy.de/user/w/walsh/cms/ntuplizer/run2_ul/CMSSW_10_6_20/src/Analysis/Ntuplizer/data/ntuples/2017/v5/trigger_info.yml'
+trigger_info[2018]='/afs/desy.de/user/w/walsh/cms/ntuplizer/run2_ul/CMSSW_10_6_20/src/Analysis/Ntuplizer/data/ntuples/2018/v5/trigger_info.yml'
 
 
 # default globaTag
