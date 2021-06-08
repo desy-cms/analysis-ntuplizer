@@ -155,9 +155,15 @@ A script called `rootfilelist.py` accepts a crab directory as parameter. It will
 
 The example below will prepare everything for the example above for you
 ```bash
-cd $CMSSW_BASE/src/Analysis/Ntuplizer/test
-rootfilelist.py crab_projects_BTagCSV_UL2017/crab_BTagCSV_Run2017C-UL2017_MiniAODv2-v1
+cd $CMSSW_BASE/src/Analysis/Ntuplizer
+rootfilelist.py test/crab_projects_BTagCSV_UL2017/crab_BTagCSV_Run2017C-UL2017_MiniAODv2-v1
+```
+You will find the `BTagCSV_Run2017C_rootFileList.txt` in
+```bash
+cd data/ntuples/2017/v5/data
 ``` 
+where a directory with `additional_info` contains information produced by crab.
+
 
 :warning: The user should commit those files and directories to a branch in the user's forked repository and make a pull request to be merged to the central repository.
 
