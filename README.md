@@ -15,6 +15,7 @@ Ntuple production for CMS data analysis
 **For ntuple production of years 2017 and 2018**
 
 :warning: 08.06.2021: The trigger information for the year 2018 is not ready yet. For the moment, please only run on 2017 data and monte carlo.
+:warning: 08.06.2021: Not all MINIAODv2 samples are ready for monte carlo, therefore the `datasets.yml` files are incomplete
 
 ### Cheat sheet
 
