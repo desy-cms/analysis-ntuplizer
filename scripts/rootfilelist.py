@@ -130,7 +130,10 @@ def crab_log(cdir):
          f.write('{}')
       print(jobs_finished)
       
-      
+#    cmd = 'cp -p '+crablog+' '+outreport
+#    os.system(cmd)
+#    cmd = 'gzip '+outreport+'/crab.log'
+#    os.system(cmd)
 
 def main():
    if len(sys.argv) < 2:
