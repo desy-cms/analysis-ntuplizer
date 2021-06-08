@@ -18,6 +18,8 @@ Ntuple production for CMS data analysis
 
 ### Cheat sheet
 
+Before running make sure you did the [installation](#Installation).
+
 #### crab submission
 
 E.g., submitting BTagCSV 2017 datasets for ntuple production version 5
