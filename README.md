@@ -11,6 +11,10 @@ Ntuple production for CMS data analysis
 
 ## RunII Legacy Production v5
 
+**For ntuple production of years 2017 and 2018**
+
+:warning: 08.06.2021: The trigger information for the year 2018 is not ready yet. For the moment, please only run on 2017 data and monte carlo.
+
 ### Installation
 
 #### CMSSW
@@ -18,7 +22,7 @@ Ntuple production for CMS data analysis
 Recommended CMSSW release is CMSSW_10_6_X (X=20, maybe higher)
 
 ```bash
-export SCRAM_ARCH='slc7_amd64_gcc700'
+export SCRAM_ARCH=slc7_amd64_gcc700
 cmsrel CMSSW_10_6_20
 cd CMSSW_10_6_20/src
 cmsenv
