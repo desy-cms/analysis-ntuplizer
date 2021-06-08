@@ -5,6 +5,7 @@ Ntuple production for CMS data analysis
 ## Contents
 
 * [RunII Legacy Production v5](#RunII-Legacy-Production-v5)
+  * [Cheat sheet](#Cheat-sheet)
   * [Installation](#Installation)
   * [Execution](#Execution)
   * [CRAB submission](#CRAB-submission) 
@@ -14,6 +15,28 @@ Ntuple production for CMS data analysis
 **For ntuple production of years 2017 and 2018**
 
 :warning: 08.06.2021: The trigger information for the year 2018 is not ready yet. For the moment, please only run on 2017 data and monte carlo.
+
+### Cheat sheet
+
+#### crab submission
+
+E.g., submitting BTagCSV 2017 datasets for ntuple production version 5
+
+```bash
+cd $CMSSW_BASE/src/Analysis/Ntuplizer/test
+ntuples_production.py crab -y 2017 -t data -v 5 -d BTagCSV_UL2017 -c ntuplizer_106X_run2legacy_v5.py
+```
+For other datasets, option `-d`, see the `datasets.yml` files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v5
+- [data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
+- [monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
+
+#### preparing rootFileList.txt
+
+Search for all directories like `crab_projects_<name>` in the `test` directory. List all directories inside `crab_projects_<name>`. Then run the `rootfilelist.py` script for each crab job. E.g.
+
+```bash
+rootfilelist.py crab_projects_BTagCSV_UL2017/crab_BTagCSV_Run2017C-UL2017_MiniAODv2-v1
+```
 
 ### Installation
 
