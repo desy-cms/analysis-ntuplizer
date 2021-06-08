@@ -1,6 +1,0 @@
-/ZeroBiasBunchTrains0/Run2016H-v1/RAW
-/ZeroBiasBunchTrains1/Run2016H-v1/RAW
-/ZeroBiasBunchTrains2/Run2016H-v1/RAW
-/ZeroBiasBunchTrains3/Run2016H-v1/RAW
-/ZeroBiasBunchTrains4/Run2016H-v1/RAW
-/ZeroBiasBunchTrains5/Run2016H-v1/RAW
