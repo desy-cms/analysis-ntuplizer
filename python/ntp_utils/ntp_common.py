@@ -28,9 +28,11 @@ class ntp_common:
       self.__pyconfig = self.__python_config()
 
    def dataset_alias(self):
+      dsa = ''
+      if not self.__opts.dataset:
+         return dsa
       if not self.__opts.dataset.startswith('/'):
          return self.__opts.dataset
-      dsa = ''
       for alias,datasets in self.__datasetsdict.iteritems():
          for dataset,values in datasets.iteritems():
             if dataset == self.__opts.dataset:
