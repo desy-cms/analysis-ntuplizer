@@ -7,7 +7,7 @@ Ntuple production for CMS data analysis
 * [RunII Legacy Production v5](#RunII-Legacy-Production-v5)
   * [Installation](#Installation)
   * [Execution](#Execution)
-  * [Crab submission](#Crab-submission) 
+  * [CRAB submission](#CRAB-submission) 
 
 ## RunII Legacy Production v5
 
@@ -95,6 +95,69 @@ triggerInfo       :  /afs/desy.de/user/w/walsh/cms/ntuplizer/run2_ul/CMSSW_10_6_
 ----------------------------
 ```
 
+### CRAB submission
+
+Before any crab submission don't forget to initialise crab and get a valid grid proxy
+
+```bash
+source /cvmfs/cms.cern.ch/common/crab-setup.sh
+voms-proxy-init -rfc -valid 192:00 -voms cms:/cms/dcms
+```
+
+The user should go to the directory where the cmsRun python configuration is located.
+```bash
+cd $CMSSW_BASE/src/Analysis/Ntuplizer/test
+```
+
+#### Information on parameters to be parsed to crab submission
+
+To know which samples(*) are available the user can run the script below giving a few parameters, such as year (`-y`), type (`-t`), version (`-v`)
+```bash
+ntuples_production.py info -y 2017 -t data -v 5
+```
+(*) a sample is a block of primary datasets
+
+With the information given by the command above, one can list the primary datasets in each sample
+```bash
+ntuples_production.py info -y 2017 -t data -v 5 -d BTagCSV_UL2017
+```
+which yields
+```
+Available datasets in the list
+ -> BTagCSV_UL2017
+     - /BTagCSV/Run2017C-UL2017_MiniAODv2-v1/MINIAOD
+     - /BTagCSV/Run2017F-UL2017_MiniAODv2-v1/MINIAOD
+     - /BTagCSV/Run2017D-UL2017_MiniAODv2-v1/MINIAOD
+     - /BTagCSV/Run2017E-UL2017_MiniAODv2-v1/MINIAOD
+Info from file: 
+$CMSSW_BASE/src/Analysis/Ntuplizer/data/ntuples/2017/v5/data/datasets.yml
+```
+The samples and datasets can also be found in the yaml files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v5
+- [data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
+- [monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
 
 
+#### Submitting to CRAB
+
+The crab submission script is the same as above, but instead of `info` the user must use `crab` as first argument and give the cmsRun python configuration file to be used via option `-c`, e.g.
+```bash
+ntuples_production.py crab -y 2017 -t data -v 5 -d BTagCSV_UL2017 -c ntuplizer_106X_run2legacy_v5.py
+```
+The command will create a directory called `crab_projects_BTagCSV_UL2017`. Inside it there will be crab directories for the datasets submitted to crab. Those crab directories are the ones that are used when using crab tools, e.g. checking the crab status for BTagCSV 2017C dataset 
+```bash
+cd crab_projects_BTagCSV_UL2017
+crab status -d crab_BTagCSV_Run2017C-UL2017_MiniAODv2-v1
+``` 
+
+#### Retrieving information from submission
+
+A script called `rootfilelist.py` accepts a crab directory as parameter. It will run the `crab report` command and retrieve information from it and the `crab.log` file located inside that directory. The main information are the so-called rootFileList.txt files that contain the paths to the ntuples used in the analysis. That information is automatically copied into the analysis-ntuples directories.
+
+The example below will prepare everything for the example above for you
+```bash
+cd $CMSSW_BASE/src/Analysis/Ntuplizer/test
+rootfilelist.py crab_projects_BTagCSV_UL2017/crab_BTagCSV_Run2017C-UL2017_MiniAODv2-v1
+``` 
+
+:warning: The user should commit those files and directories to a branch in the user's forked repository and make a pull request to be merged to the central repository.
 
