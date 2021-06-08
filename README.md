@@ -143,7 +143,11 @@ The crab submission script is the same as above, but instead of `info` the user 
 ```bash
 ntuples_production.py crab -y 2017 -t data -v 5 -d BTagCSV_UL2017 -c ntuplizer_106X_run2legacy_v5.py
 ```
-The command will create a directory called `crab_projects_BTagCSV_UL2017`. Inside it there will be crab directories for the datasets submitted to crab. Those crab directories are the ones that are used when using crab tools, e.g. checking the crab status for BTagCSV 2017C dataset 
+Jobs for all the datasets in `BTagCSV_UL2017` will be created.
+
+The `-d` option also accepts a single dataset, e.g. `/BTagCSV/Run2017C-UL2017_MiniAODv2-v1/MINIAOD`. Thus, the script will submit a single dataset.
+
+The command will create a directory called `crab_projects_BTagCSV_UL2017`. Inside it there will be crab directories for the all datasets submitted to crab. Those crab directories are the ones that are used when using crab tools, e.g. checking the crab status for BTagCSV 2017C dataset 
 ```bash
 cd crab_projects_BTagCSV_UL2017
 crab status -d crab_BTagCSV_Run2017C-UL2017_MiniAODv2-v1
