@@ -103,7 +103,7 @@ def crab_log(cdir):
    rootfiles = myntpdir+'/'+mypd+'_rootFileList.txt'
    with open(rootfiles,'w') as f:
       for fl in fileslist:
-         f.write(fl+'\n')
+         f.write('root://dcache-cms-xrootd.desy.de/'fl+'\n')
    print
    print('See the rootFileList at:')
    print(rootfiles)
