@@ -30,7 +30,7 @@ ntuples_production.py crab -y 2017 -t data -v 5 -d BTagCSV_UL2017 -c ntuplizer_1
 ```
 For other datasets, option `-d`, see the `datasets.yml` files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v5
 - [datasets.yml for data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
-- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
+- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/mc/datasets.yml)
 
 #### preparing rootFileList.txt
 
@@ -159,7 +159,7 @@ $CMSSW_BASE/src/Analysis/Ntuplizer/data/ntuples/2017/v5/data/datasets.yml
 ```
 The samples and datasets can also be found in the yaml files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v5
 - [datasets.yml for data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
-- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
+- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/mc/datasets.yml)
 
 
 #### Submitting to CRAB
