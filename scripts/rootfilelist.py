@@ -43,7 +43,7 @@ def crab_report(report, finished, dataset=None, outdir=None):
       f.write('<br>')
       f.write('See also the [results](results) directory above<br>\n')
 
-def crab_log(cdir):
+def crab_log(cdir,ntp_name):
    status = subprocess.Popen(['crab','report','-d',cdir],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
    stdout,stderr = status.communicate()
    report = stdout
@@ -58,7 +58,7 @@ def crab_log(cdir):
    with open(crablog,'r') as f:
       for line in f:
          line = line.rstrip()
-         if 'Result: ' in line and 'runsAndLumis' in line and 'ntuple_' in line:
+         if 'Result: ' in line and 'runsAndLumis' in line and ntp_name in line:
             myline = line
          if not mytype and 'type              :' in line:
             mytype = line.split(':')[1].replace(' ','')
@@ -95,7 +95,7 @@ def crab_log(cdir):
       if key.startswith('0-'):
          continue
       filename = value[0]['lfn']
-      if 'ntuple_'  in filename:
+      if ntp_name  in filename:
          fileslist.append(filename.encode("ascii"))
    
    fileslist.sort()
@@ -103,7 +103,7 @@ def crab_log(cdir):
    rootfiles = myntpdir+'/'+mypd+'_rootFileList.txt'
    with open(rootfiles,'w') as f:
       for fl in fileslist:
-         f.write('root://dcache-cms-xrootd.desy.de/'fl+'\n')
+         f.write('root://dcache-cms-xrootd.desy.de/'+fl+'\n')
    print
    print('See the rootFileList at:')
    print(rootfiles)
@@ -139,9 +139,14 @@ def main():
    if len(sys.argv) < 2:
       print('Provide the directory with crab.log file')
       sys.exit()
-   
+      
    crabdir = sys.argv[1]
-   crab_log(crabdir)
+   
+   ntp_name = 'ntuple_'
+   if len(sys.argv) == 3:
+      ntp_name = os.path.splitext(sys.argv[2])[0]+'_'
+      
+   crab_log(crabdir,ntp_name)
    
          
 
