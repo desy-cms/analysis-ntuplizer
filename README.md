@@ -14,7 +14,9 @@ Ntuple production for CMS data analysis
 
 **For ntuple production of years 2017 and 2018**
 
-:warning: 08.06.2021: The trigger information for the year 2018 is not ready yet. For the moment, please only run on 2017 data and monte carlo.
+:warning: 08.06.2021: The trigger information for the year 2018 is not ready yet. For the moment, please only run on 2017 data and monte carlo
+
+:warning: 08.06.2021: Not all MINIAODv2 samples are ready for monte carlo, therefore the `datasets.yml` files are incomplete
 
 ### Cheat sheet
 
@@ -30,7 +32,7 @@ ntuples_production.py crab -y 2017 -t data -v 5 -d BTagCSV_UL2017 -c ntuplizer_1
 ```
 For other datasets, option `-d`, see the `datasets.yml` files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v5
 - [datasets.yml for data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
-- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
+- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/mc/datasets.yml)
 
 #### preparing rootFileList.txt
 
@@ -159,7 +161,7 @@ $CMSSW_BASE/src/Analysis/Ntuplizer/data/ntuples/2017/v5/data/datasets.yml
 ```
 The samples and datasets can also be found in the yaml files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v5
 - [datasets.yml for data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
-- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
+- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/mc/datasets.yml)
 
 
 #### Submitting to CRAB
