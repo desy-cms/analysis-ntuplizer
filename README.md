@@ -24,6 +24,13 @@ Before running make sure you did the [installation](#Installation).
 
 #### crab submission
 
+Don't forget to initialise crab and get a valid grid proxy
+
+```bash
+source /cvmfs/cms.cern.ch/common/crab-setup.sh
+voms-proxy-init -rfc -valid 192:00 -voms cms:/cms/dcms
+```
+
 E.g., submitting BTagCSV 2017 datasets for ntuple production version 5
 
 ```bash
