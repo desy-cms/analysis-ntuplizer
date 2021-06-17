@@ -34,6 +34,7 @@ def processing(process,hlt_path_nov):
    
    # trigger objects and L1 seeds of the path
    trg_objs = []
+#   print(process_modules)
    for mod_name  in process_modules:
       mod = eval("process."+mod_name+".dumpPython()")
       # HLT EDFilters with saveTags - trigger objects
@@ -53,6 +54,18 @@ def processing(process,hlt_path_nov):
          print("WARNING: 'AND' logic for L1! Skipping!")
          continue
       l1_seeds = l1_par.split(" OR ")
+   
+   # Preserving the path modules order
+   trg_objs_order = []
+   for pm in cms_path_modules:
+      pmo = pm.replace("process.","")
+      if pmo in trg_objs:
+         trg_objs_order.append(pmo)
+   if not trg_objs_order:
+      print("WARNING: no trigger object in the cms.Path for path "+hlt_path_nov)
+      return output
+         
+   trg_objs = trg_objs_order
    
    # remove the version number from the path
 #   hlt_path_nov = hlt_path.split("_")
@@ -89,6 +102,8 @@ def main():
       f.write("\n")
       for hlt_path in sorted(paths[1:]):
          hlt_path = hlt_path.replace("\n","").strip()
+#         if not "HLT_Mu12_DoublePFJets54MaxDeta1p6_DoubleCaloBTagDeepCSV_p71_v" in hlt_path:
+#            continue 
          output = processing(process,hlt_path)
          if output:
             f.write(output)
