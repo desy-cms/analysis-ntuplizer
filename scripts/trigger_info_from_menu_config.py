@@ -1,11 +1,15 @@
+#!/usr/bin/env python2
+
+
+# hlt_paths.txt is a file containing in the first line the name of the hlt menu config file (w/o .py),
+# which should be present at the same directory(*), and the other lines should contain each the name of
+# the HLT paths the will go into the trigger_info.yml
+# (*) add the directory to your PYTHONPATH
+
 import re
 import sys
 import importlib
 
-# # importing module using string with importlib.import_module
-# #from hlt_10_1_0_grun_v1 import process
-# loaded_process = importlib.import_module("hlt_10_1_0_grun_v1")
-# process = loaded_process.process
 # 
 def processing(process,hlt_path_nov):
    output = ''
