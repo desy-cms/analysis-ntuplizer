@@ -76,7 +76,7 @@ def processing(process,hlt_path_nov):
 #   hlt_path_nov = "_".join(hlt_path_nov[:-1])+"_v"
    
    # prepare output
-   output += hlt_path_nov+":\n"
+   output += hlt_path+":\n"
    output += " l1seeds:\n"
    for l1s in l1_seeds:
       output += " - "+l1s+"\n"
@@ -114,6 +114,4 @@ def main():
 
 if __name__ == "__main__":
    # HLT Path (process uses VarParsing, which prevents using command line parameters directly. TO DO: find a solution, or workaround)
-   hlt_path = "HLT_Mu12_DoublePFJets40MaxDeta1p6_DoubleCaloBTagCSV_p79_v"
-   #hlt_path = "HLT_Mu8_v11"
    main()
