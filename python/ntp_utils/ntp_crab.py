@@ -75,6 +75,7 @@ class ntp_crab:
       config.JobType.numCores = 4                       
       config.JobType.maxMemoryMB = 10000
       config.JobType.inputFiles = [self.__versiondir+'/trigger_info.yml']
+      # TO DO: add trigger_info option to run it locally in crab node
       config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type]
       if info:
          for var,value in info.iteritems():
@@ -119,7 +120,19 @@ class ntp_crab:
             print(' *** Running on '+opt+' mode. Nothing will be done ***'+W)
             continue
          
-         crabCommand('submit',config=cfg)
+         pyc = self.__opts.config+'c'
+         if ".pyc" in pyc and os.path.exists(pyc):
+            os.remove(pyc)
+        
+         proj_dir =cfg.General.workArea+"/crab_"+cfg.General.requestName
+         #crabCommand('submit',config=cfg)
+         
+         if os.path.exists(proj_dir):
+            # TO DO: put an ntuple_production.log file there
+            #        should contain input parameter to crab submission
+            #        year, dataset, version, config file, type
+            print
+         
          
       print(G+'=========================='+W)
       print
