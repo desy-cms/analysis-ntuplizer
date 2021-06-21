@@ -125,7 +125,7 @@ class ntp_crab:
             os.remove(pyc)
         
          proj_dir =cfg.General.workArea+"/crab_"+cfg.General.requestName
-         #crabCommand('submit',config=cfg)
+         crabCommand('submit',config=cfg)
          
          # ntuple_crab log file
          import subprocess
