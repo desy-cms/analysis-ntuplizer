@@ -75,8 +75,8 @@ class ntp_crab:
       config.JobType.numCores = 4                       
       config.JobType.maxMemoryMB = 10000
       config.JobType.inputFiles = [self.__versiondir+'/trigger_info.yml']
-      # TO DO: add trigger_info option to run it locally in crab node
-      config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type]
+      # Passing cmsRun parameters
+      config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type,"triggerInfo=trigger_info.yml"]
       if info:
          for var,value in info.iteritems():
             if var=='xsection_pb':
