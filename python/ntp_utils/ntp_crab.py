@@ -75,7 +75,8 @@ class ntp_crab:
       config.JobType.numCores = 4                       
       config.JobType.maxMemoryMB = 10000
       config.JobType.inputFiles = [self.__versiondir+'/trigger_info.yml']
-      config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type]
+      # Passing cmsRun parameters
+      config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type,"triggerInfo=trigger_info.yml"]
       if info:
          for var,value in info.iteritems():
             if var=='xsection_pb':
@@ -119,7 +120,37 @@ class ntp_crab:
             print(' *** Running on '+opt+' mode. Nothing will be done ***'+W)
             continue
          
+         pyc = self.__opts.config+'c'
+         if ".pyc" in pyc and os.path.exists(pyc):
+            os.remove(pyc)
+        
+         proj_dir =cfg.General.workArea+"/crab_"+cfg.General.requestName
          crabCommand('submit',config=cfg)
+         
+         # ntuple_crab log file
+         import subprocess
+         cmd = ['crab', '--version']
+         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+         crab_version = p.stdout.read()
+         if os.path.exists(proj_dir):
+            with open(proj_dir+"/ntuple_crab.log","w") as f:
+               f.write("DATASET = "+dataset+"\n")
+               f.write("YEAR = "+str(self.__opts.year)+"\n")
+               f.write("TYPE = "+self.__opts.type+"\n")
+               f.write("VERSION = "+self.__opts.version+"\n")
+               f.write("NTUPLES_REPO_DIR = "+self.__versiondir+"\n")
+               f.write("TRIGGER_INFO = "+self.__versiondir+'/trigger_info.yml'+"\n")
+               f.write("PYTHON_CONFIG = "+str(os.getcwd())+"/"+self.__opts.config+"\n")
+               f.write("NTUPLES_OUTPUT = "+self.__baseoutdir+"\n")
+               f.write("CMSSW_BASE = "+str(os.getenv('CMSSW_BASE'))+"\n")
+               f.write("CMSSW_RELEASE_BASE = "+str(os.getenv('CMSSW_RELEASE_BASE'))+"\n")
+               f.write("CRAB_VERSION = "+crab_version)
+               
+            # TO DO: put an ntuple_production.log file there
+            #        should contain input parameter to crab submission
+            #        year, dataset, version, config file, type
+            print
+         
          
       print(G+'=========================='+W)
       print

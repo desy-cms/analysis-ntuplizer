@@ -48,6 +48,7 @@ def crab_log(cdir,ntp_name):
    stdout,stderr = status.communicate()
    report = stdout
    crablog = cdir+'/crab.log'
+   ntplog = cdir+"/ntuple_crab.log"
    myline = ''
    mytype = ''
    myntpdir = ''
@@ -55,22 +56,29 @@ def crab_log(cdir,ntp_name):
    myreq = ''
    myfullpd = ''
    finished = ''
+   
+   # ntuple_crab.log
+   with open(ntplog,"r") as f:
+      for line in f:
+         line = line.rstrip().replace(' ','')
+         if not mytype and 'TYPE=' in line:
+            mytype = line.split('=')[1].replace(' ','')
+         if not myntpdir and 'NTUPLES_REPO_DIR=' in line:
+            myntpdir = line.split('=')[1].replace(' ','')
+   myinfodir = myntpdir+'/additional_info'
+   if not os.path.exists(myinfodir):
+      os.makedirs(myinfodir)
+            
+   # crab.log         
    with open(crablog,'r') as f:
       for line in f:
          line = line.rstrip()
          if 'Result: ' in line and 'runsAndLumis' in line and ntp_name in line:
             myline = line
-         if not mytype and 'type              :' in line:
-            mytype = line.split(':')[1].replace(' ','')
-         if not myntpdir and 'triggerInfo       :' in line:
-            myntpdir = line.split(':')[1].replace(' ','').replace('trigger_info.yml','')+mytype
-            myinfodir = myntpdir+'/additional_info'
-            if not os.path.exists(myinfodir):
-               os.makedirs(myinfodir)
-         if not myreq and 'config.General.requestName' in line:
+         if not myreq and 'config.General.requestName' in line:  # could be in the ntuple_crab.log
             myreq = line.split("'")[1]
          if mytype == 'mc':
-            if not mypd and 'config.Data.inputDataset' in line:
+            if not mypd and 'config.Data.inputDataset' in line:  # could be in the ntuple_crab.log
                mypd = line.split("'")[1]
                mypd = mypd.split('/')[1][0:mypd.find('_Tune')-1]
          else:
@@ -141,6 +149,13 @@ def main():
       sys.exit()
       
    crabdir = sys.argv[1]
+   if not os.path.exists(crabdir):
+      print(crabdir+" does not exist!")
+      sys.exit()
+   ntuple_crab_log = crabdir+"/ntuple_crab.log"
+   if not os.path.exists(ntuple_crab_log):
+      print(ntuple_crab_log+" does not exist!")
+      sys.exit()
    
    ntp_name = 'ntuple_'
    if len(sys.argv) == 3:
