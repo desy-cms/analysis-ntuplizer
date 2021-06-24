@@ -22,7 +22,7 @@ Ntuple production for CMS data analysis
 
 Before running make sure you did the [installation](#Installation).
 
-#### crab submission
+#### crab submission (cs)
 
 Don't forget to initialise crab and get a valid grid proxy
 
@@ -41,7 +41,7 @@ For other datasets, option `-d`, see the `datasets.yml` files in [analysis-ntupl
 - [datasets.yml for data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
 - [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/mc/datasets.yml)
 
-#### preparing rootFileList.txt
+#### preparing rootFileList.txt (cs)
 
 Search for all directories like `crab_projects_<name>` in the `test` directory. List all directories inside `crab_projects_<name>`. Then run the `rootfilelist.py` script for each crab job. E.g.
 
