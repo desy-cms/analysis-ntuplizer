@@ -76,7 +76,7 @@ class ntp_crab:
       config.JobType.maxMemoryMB = 10000
       config.JobType.inputFiles = [self.__versiondir+'/trigger_info.yml']
       # Passing cmsRun parameters
-      config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type,"triggerInfo=trigger_info.yml"]
+      config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type]
       if info:
          for var,value in info.iteritems():
             if var=='xsection_pb':
