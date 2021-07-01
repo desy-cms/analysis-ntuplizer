@@ -3,6 +3,7 @@ import os
 import sys
 import ast
 import subprocess
+import glob
 
 def crab_status(cdir):
    status = subprocess.Popen(['crab','status','-d',cdir],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -44,8 +45,11 @@ def crab_report(report, finished, dataset=None, outdir=None):
       f.write('See also the [results](results) directory above<br>\n')
 
 def crab_log(cdir,ntp_name):
+   finished_jobs_list = finished_jobs(cdir)
+   print("Getting crab report... ")
    status = subprocess.Popen(['crab','report','-d',cdir],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
    stdout,stderr = status.communicate()
+   print("done!")
    report = stdout
    crablog = cdir+'/crab.log'
    ntplog = cdir+"/ntuple_crab.log"
@@ -56,6 +60,35 @@ def crab_log(cdir,ntp_name):
    myreq = ''
    myfullpd = ''
    finished = ''
+   
+   # job logs
+   jobids = ""
+   for j in finished_jobs_list:
+      jobids += j+","
+   jobids = jobids[:-1]
+   print("Getting finished jobs log files... ")
+   cmd = "crab getlog -d "+cdir+" --short --jobids="+jobids+" >& /dev/null"
+   os.system(cmd)
+   print("done!")
+   job_log_list = glob.glob(cdir+"/results/job_out.*.*.txt")
+   ntuples_list = {}
+   for jlog in job_log_list:
+      jid = os.path.basename(jlog).split(".")[1]
+      crab_dest = subprocess.Popen(['grep','CRAB_Destination','-d',cdir],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+      grep_ntuple_path = subprocess.Popen(['grep','CRAB_Destination',jlog ],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+      stdout_grep,stderr_grep = grep_ntuple_path.communicate()
+      grep_ntp = stdout_grep.split(",")[-1]
+      grep_ntp = grep_ntp.replace('"','')
+      grep_ntp = grep_ntp.replace(' ','')
+      root_pos = grep_ntp.find("ntuple_"+jid+".root")
+      if root_pos < 0:  # no root file
+         continue
+      store_pos = grep_ntp.find("store")
+      grep_ntp = grep_ntp[store_pos-1:]
+      ntuples_list[jid] = grep_ntp
+   if len(ntuples_list) != len(finished_jobs_list):
+      print("*** warning ***: the size of the list of ntuples differ from the number of finished jobs")
+   
    
    # ntuple_crab.log
    with open(ntplog,"r") as f:
@@ -98,13 +131,14 @@ def crab_log(cdir,ntp_name):
    results = ast.literal_eval(myline.split('Result: ')[1])
    randl = results['result'][0]['runsAndLumis']
    
-   fileslist = []
-   for key,value in randl.iteritems():
-      if key.startswith('0-'):
-         continue
-      filename = value[0]['lfn']
-      if ntp_name  in filename:
-         fileslist.append(filename.encode("ascii"))
+   fileslist = [value.replace("\n","") for key,value in ntuples_list.iteritems()]
+#    fileslist = []
+#    for key,value in randl.iteritems():
+#       if key.startswith('0-'):
+#          continue
+#       filename = value[0]['lfn']
+#       if ntp_name  in filename:
+#          fileslist.append(filename.encode("ascii"))
    
    fileslist.sort()
    
@@ -142,6 +176,37 @@ def crab_log(cdir,ntp_name):
 #    os.system(cmd)
 #    cmd = 'gzip '+outreport+'/crab.log'
 #    os.system(cmd)
+
+def finished_jobs(cdir):
+   print("Getting list of finished jobs... ")
+   status = subprocess.Popen(['crab','status','-d',cdir,'--long'],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+   stdout,stderr = status.communicate()
+   stdout = stdout.split('\n')
+   # check whether lines are from the job status table
+   jobs_table = False
+   job_status = {}
+   for line in stdout:
+      line_split = line.split(' ')
+      line_split = [x for x in line_split if x!='']
+      # at the end of the status table the line is empty
+      if len(line_split)<2:
+         if jobs_table:
+            jobs_table = False
+         continue
+      # header of the status table
+      if line_split[0] == 'Job' and line_split[1] == 'State':
+         jobs_table = True
+         continue
+      # skip lines outside the status table
+      if not jobs_table:
+         continue
+      # get the job id and its status
+      job_status[line_split[0]] = line_split[1]
+      
+   runs_done = [ job for job, status in job_status.iteritems() if status=="finished"]
+   print("done!")
+   return runs_done
+
 
 def main():
    if len(sys.argv) < 2:
