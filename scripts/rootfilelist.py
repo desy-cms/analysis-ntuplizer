@@ -69,6 +69,7 @@ def crab_log(cdir,ntp_name):
    print("Getting finished jobs log files... ")
    cmd = "crab getlog -d "+cdir+" --short --jobids="+jobids+" >& /dev/null"
    os.system(cmd)
+   
    print("done!")
    job_log_list = glob.glob(cdir+"/results/job_out.*.*.txt")
    ntuples_list = {}
@@ -97,7 +98,7 @@ def crab_log(cdir,ntp_name):
          if not mytype and 'TYPE=' in line:
             mytype = line.split('=')[1].replace(' ','')
          if not myntpdir and 'NTUPLES_REPO_DIR=' in line:
-            myntpdir = line.split('=')[1].replace(' ','')
+            myntpdir = line.split('=')[1].replace(' ','')+'/'+mytype
    myinfodir = myntpdir+'/additional_info'
    if not os.path.exists(myinfodir):
       os.makedirs(myinfodir)
@@ -149,6 +150,12 @@ def crab_log(cdir,ntp_name):
    print
    print('See the rootFileList at:')
    print(rootfiles)
+   
+   cmd_tar = 'tar -zcvf '+cdir+'/results/job_out.tgz '+cdir+'/results/job_out.*.txt >& /dev/null'
+   os.system(cmd_tar)
+   cmd_tar = 'rm -f '+cdir+'/results/job_out.*.txt'
+   os.system(cmd_tar)
+   
 
    cmd = 'cp -pRd '+cdir+'/results ' + outreport
    os.system(cmd)
