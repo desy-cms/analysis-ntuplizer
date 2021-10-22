@@ -151,14 +151,26 @@ def crab_log(cdir,ntp_name):
    print('See the rootFileList at:')
    print(rootfiles)
    
+   
+   ## compression of logs
    cmd_tar  = 'cd '+ cdir+'/results ; '
    cmd_tar += 'tar -zcvf job_out.tgz job_out.*.txt >& /dev/null ; '
    cmd_tar += 'rm -f job_out.*.txt ; '
-   cmd_tar += 'cd -'
+   cmd_tar += 'cd - >& /dev/null'
    os.system(cmd_tar)
-#   cmd_tar = 'rm -f '+cdir+'/results/job_out.*.txt'
-#   os.system(cmd_tar)
    
+   ## json format improve
+   cmd_json  = 'cd '+ cdir+'/results'
+   os.system(cmd_json)
+   json_list = glob.glob(cdir+'/results/*.json')
+   json_list = [os.path.basename(x) for x in json_list]
+   for j in json_list:
+      jt = j+'_tmp'
+      cmd_json  = 'cd '+ cdir+'/results ;'
+      cmd_json += 'mv '+j+' '+jt+' ; '
+      cmd_json += 'printJSON.py '+jt+' > '+j+' ; '
+      cmd_json += 'rm -f '+jt+' ; cd - >& /dev/null'
+      os.system(cmd_json)
 
    cmd = 'cp -pRd '+cdir+'/results ' + outreport
    os.system(cmd)
