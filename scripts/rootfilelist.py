@@ -151,10 +151,13 @@ def crab_log(cdir,ntp_name):
    print('See the rootFileList at:')
    print(rootfiles)
    
-   cmd_tar = 'tar -zcvf '+cdir+'/results/job_out.tgz '+cdir+'/results/job_out.*.txt >& /dev/null'
+   cmd_tar  = 'cd '+ cdir+'/results ; '
+   cmd_tar += 'tar -zcvf job_out.tgz job_out.*.txt >& /dev/null ; '
+   cmd_tar += 'rm -f job_out.*.txt ; '
+   cmd_tar += 'cd -'
    os.system(cmd_tar)
-   cmd_tar = 'rm -f '+cdir+'/results/job_out.*.txt'
-   os.system(cmd_tar)
+#   cmd_tar = 'rm -f '+cdir+'/results/job_out.*.txt'
+#   os.system(cmd_tar)
    
 
    cmd = 'cp -pRd '+cdir+'/results ' + outreport
