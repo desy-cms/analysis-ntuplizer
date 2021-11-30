@@ -63,6 +63,7 @@ namespace analysis {
             void AddJecInfo(const std::string & );
             void AddJecInfo(const std::string &, const std::string & );
             void AddJerInfo(const std::string &, const edm::InputTag & );
+            void AddJerInfo(const JerESTokens &, const edm::InputTag & );
             void AddJerInfo(const std::string &, const std::string &, const std::string &, const edm::InputTag &  );
             void Branches();
             void Fill(const edm::Event&);
@@ -147,6 +148,7 @@ namespace analysis {
             float jerSFDown_[maxCandidates];            
             JME::JetResolution res_;
             JME::JetResolutionScaleFactor res_sf_;
+            JerESTokens res_tokens_;
             
             // QG Jet
             float qgLikelihood_[maxCandidates];

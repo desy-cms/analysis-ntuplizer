@@ -49,11 +49,13 @@ namespace analysis {
          public:
             TriggerAccepts();
             TriggerAccepts(const edm::InputTag&, TTree*, const std::vector<std::string> &, const std::vector<std::string> &, const std::shared_ptr<HLTPrescaleProvider> hltPrescale);
+            TriggerAccepts(const edm::InputTag&, TTree*, const std::vector<std::string> &, const std::vector<std::string> &);
            ~TriggerAccepts();
             void Fill(const edm::Event & event, const edm::EventSetup & setup);
             void Branches();
             void Run(edm::Run const & , edm::EventSetup const& );
             void Init();
+            void Providers(const std::shared_ptr<HLTPrescaleProvider> &, const std::shared_ptr<HLTConfigProvider> &);
 
             
             void ReadPrescaleInfo(const bool &);
@@ -63,7 +65,7 @@ namespace analysis {
             // ----------member data ---------------------------
             
             edm::InputTag input_collection_;
-            HLTConfigProvider hlt_config_;
+            std::shared_ptr<HLTConfigProvider> hlt_config_;
             std::shared_ptr<HLTPrescaleProvider> hlt_prescale_;
             std::vector<std::string> paths_;
             std::vector<std::string> seeds_;

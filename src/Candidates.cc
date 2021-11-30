@@ -550,8 +550,8 @@ void Candidates<T>::Kinematics()
             jerParamSF.set(JME::Binning::Rho, rho_);
 
             jerSF_[n]       = res_sf_.getScaleFactor(jerParamSF);
-            jerSFUp_[n]     = res_sf_. getScaleFactor(jerParamSF,Variation::UP);
-            jerSFDown_[n]   = res_sf_. getScaleFactor(jerParamSF,Variation::DOWN);
+            jerSFUp_[n]     = res_sf_.getScaleFactor(jerParamSF,Variation::UP);
+            jerSFDown_[n]   = res_sf_.getScaleFactor(jerParamSF,Variation::DOWN);
             
          }
          else
@@ -851,9 +851,9 @@ void Candidates<T>::Fill(const edm::Event& event, const edm::EventSetup& setup)
       else
       {
          std::string label_pt = jerRecord_ + "_pt";
-         res_    = JME::JetResolution::get(setup,label_pt);
+         res_    = JME::JetResolution::get(setup, res_tokens_.resolutionsToken);
          std::string label_sf = jerRecord_;
-         res_sf_    = JME::JetResolutionScaleFactor::get(setup,label_sf);
+         res_sf_    = JME::JetResolutionScaleFactor::get(setup, res_tokens_.scaleFactorsToken);
       }
 
       edm::Handle<double> rhoHandler;
@@ -1089,6 +1089,15 @@ void Candidates<T>::AddJerInfo( const std::string & jer, const edm::InputTag & r
 {
    // Will use confDB
    jerRecord_ = jer;
+   rho_collection_ = rho;
+}
+
+template <typename T>
+void Candidates<T>::AddJerInfo( const JerESTokens & jer, const edm::InputTag & rho )
+{
+   // Will use confDB
+   jerRecord_ = jer.record;
+   res_tokens_ = jer;
    rho_collection_ = rho;
 }
 
