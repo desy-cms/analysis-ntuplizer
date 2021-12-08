@@ -404,10 +404,10 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
          fullname = name + "_" + inst + "_" + proc;
          name += inputTags == "L1ExtraJets" && ! use_full_name_ ? "_" + inst : "";
          
-         if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" )
+         if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" && inputTags != "JetsTags" )
+         {
             tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
-
-         
+         }
          if ( inputTags == "L1ExtraJets" ) l1JetTokens_[collection_name] = consumes<l1extra::L1JetParticleCollection>(collection);
          if ( inputTags == "L1ExtraMuons" ) l1MuonTokens_[collection_name] = consumes<l1extra::L1MuonParticleCollection>(collection);
          if ( inputTags == "CaloJets" ) caloJetTokens_[collection_name] = consumes<reco::CaloJetCollection>(collection);
@@ -422,7 +422,12 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
          if ( inputTags == "TriggerObjectStandAlone"  ) triggerObjTokens_[collection_name] = consumes<pat::TriggerObjectStandAloneCollection>(collection);
          if ( inputTags == "TriggerEvent"  ) triggerEventTokens_[collection_name] = consumes<trigger::TriggerEvent>(collection);
          if ( inputTags == "PrimaryVertices"  ) primaryVertexTokens_[collection_name] = consumes<reco::VertexCollection>(collection);
-         if ( inputTags == "JetsTags" ) jetTagTokens_[collection_name] = consumes<reco::JetTagCollection>(collection);
+         if ( inputTags == "JetsTags" )
+         {
+            name = fullname;
+            tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
+            jetTagTokens_[collection_name] = consumes<reco::JetTagCollection>(collection);
+         }
          if ( inputTags == "L1TJets" ) l1tJetTokens_[collection_name] = consumes<l1t::JetBxCollection>(collection);
          if ( inputTags == "L1TMuons" ) l1tMuonTokens_[collection_name] = consumes<l1t::MuonBxCollection>(collection);
          if ( inputTags == "ChargedCandidates" ) chargedCandTokens_[collection_name] = consumes<reco::RecoChargedCandidateCollection>(collection);
@@ -494,7 +499,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
       }
       
    }
-   
+   std::cout << "end of constructor" << std::endl;
 }
 
 
@@ -820,6 +825,7 @@ Ntuplizer::beginJob()
       int patJetCounter = 0;
       for ( auto & collection : collections )
       {
+   
          // Names for the trees, from inputs
          std::string label = collection.label();
          std::string inst  = collection.instance();
@@ -836,7 +842,8 @@ Ntuplizer::beginJob()
          name += inputTags == "L1ExtraJets" && ! use_full_name_ ? "_" + inst : "";
          if ( collection.instance() != "" && collections.size() > 1 )
             name += "_" + inst;
-         if ( use_full_name_ ) name = fullname;
+         if ( use_full_name_ || inputTags == "JetsTags") name = fullname;
+         
          if ( inputTags == "L1TJets"  && l1tjets_collections_.size() == 0 )  name = "l1tJets";
          if ( inputTags == "L1TMuons" && l1tmuons_collections_.size() == 0 )  name = "l1tMuons";
 
