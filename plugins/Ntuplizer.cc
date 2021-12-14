@@ -227,6 +227,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       
       bool testmode_;
       
+      std::vector<std::string> trig_res_process_;
+      
       std::vector< std::string > inputTagsVec_;
       std::vector< std::string > inputTags_;
       std::vector< std::string > btagAlgos_;
@@ -369,6 +371,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
 
    
    do_triggeraccepts_   = config_.exists("TriggerResults");
+   trig_res_process_.clear();
    
    if ( config_.exists("ReadPrescale") )
    {
@@ -392,8 +395,15 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
          std::string label = collection.label();
          std::string inst  = collection.instance();
          std::string proc  = collection.process();
+         
          std::string collection_name = label+"_"+inst+"_"+proc;
          name = label;
+         
+         if ( inputTags == "TriggerResults" )
+         {
+            trig_res_process_.push_back(proc);
+         }
+         
          if ( find_first(inputTags,"L1Extra") )
          {
             // renaming tree for L1 jest as there is no explicit indication those are L1 jets objects
@@ -499,7 +509,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
       }
       
    }
-   std::cout << "end of constructor" << std::endl;
 }
 
 
@@ -1177,7 +1186,7 @@ void Ntuplizer::beginRun(edm::Run const& run, edm::EventSetup const& setup)
    std::cout << "========================== begin beginRun =========================" << std::endl;
    
    bool changed(true);
-   std::string proc = "HLT";
+   std::string proc = trig_res_process_[0];
    if (hltPrescaleProvider_->init(run, setup, proc, changed))
    {
       hltConfigProvider_ = hltPrescaleProvider_->hltConfigProvider();
