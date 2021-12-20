@@ -106,7 +106,7 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     L1TMuons        = cms.VInputTag(cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
     TriggerObjectStandAlone = cms.VInputTag(cms.InputTag('slimmedPatTrigger'), ),
 )
-   process.MssmHbb.MonteCarlo      = cms.bool((options.type == 'mc'))
+process.MssmHbb.MonteCarlo      = cms.bool((options.type == 'mc'))
 
    ## MC only
 if options.type == 'mc':
