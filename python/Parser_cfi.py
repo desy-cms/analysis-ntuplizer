@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import yaml
 
 import FWCore.ParameterSet.Config as cms
 import FWCore.ParameterSet.VarParsing as VarParsing
@@ -60,7 +61,7 @@ def parser(yml_file=None):
                     "files to process")
 
    options.register('json',
-                    'oioi.json',
+                    '',
                     VarParsing.VarParsing.multiplicity.singleton,
                     VarParsing.VarParsing.varType.string,
                     "JSON file (do not use with CRAB!)")
@@ -73,33 +74,26 @@ def parser(yml_file=None):
 
    options.parseArguments()
    
-   # default inputFiles (examples)
-   input_files = {}
-   input_files['data']= {}
-   input_files['data'][2017]='/store/data/Run2017D/BTagCSV/MINIAOD/UL2017_MiniAODv2-v1/270000/3A3DF494-008A-1D49-9A95-0D9E334783A2.root'
-   input_files['data'][2018]='/store/data/Run2018D/JetHT/MINIAOD/UL2018_MiniAODv2-v1/270000/0DEEC71E-980C-F945-8DB6-7CC0CFE862E2.root'
-   input_files['mc']= {}
-   input_files['mc'][2017]='/store/mc/RunIISummer20UL17MiniAODv2/SUSYGluGluToBBHToBB_M-450_TuneCP5_13TeV-powheg-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v2/2530000/5CD3FBB6-127F-9E45-B291-F5C40117D617.root'
-   input_files['mc'][2018]='/store/mc/RunIISummer20UL18MiniAODv2/QCD_bEnriched_HT300to500_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/120000/30FC1268-ABED-4140-95F0-0E1416F826D9.root'
-
-   # default triggerInfo
-   trigger_info = {}
-   trigger_info[2017]=cmssw_base+'/src/Analysis/Ntuplizer/data/ntuples/2017/v6/trigger_info.yml'
-   trigger_info[2018]=cmssw_base+'/src/Analysis/Ntuplizer/data/ntuples/2018/v6/trigger_info.yml'
-
-
-   # default globaTag
-   global_tag = {}
-   global_tag['data'] = {2017:'106X_dataRun2_v35'        , 2018:'106X_dataRun2_v35'}
-   global_tag['mc']   = {2017:'106X_mc2017_realistic_v9' , 2018:'106X_upgrade2018_realistic_v16_L1v1'}
-
+   ## default_info.yml
+   input_files = []
+   global_tag = ''
+   def_info = cmssw_base+'/src/Analysis/Ntuplizer/data/ntuples/'+str(options.year)+'/v'+str(options.version)+'/default_info.yml'
+   with open(def_info) as f:
+      def_info_data = yaml.safe_load(f)
+   for dttype,info in def_info_data.items():
+      if dttype != options.type:
+         continue
+      input_files = info['input_files']
+      global_tag = info['global_tag'][0]
+   trigger_info=cmssw_base+'/src/Analysis/Ntuplizer/data/ntuples/'+str(options.year)+'/v'+str(options.version)+'/trigger_info.yml'  
+   
    # set defaults
    if not options.inputFiles:
-      options.setDefault('inputFiles',input_files[options.type][options.year])
+      options.setDefault('inputFiles',input_files)
    if not options.globalTag:
-      options.setDefault('globalTag',global_tag[options.type][options.year])
+      options.setDefault('globalTag',global_tag)
    if not options.triggerInfo:
-      options.setDefault('triggerInfo',trigger_info[options.year])
+      options.setDefault('triggerInfo',trigger_info)
 
 
    ##
