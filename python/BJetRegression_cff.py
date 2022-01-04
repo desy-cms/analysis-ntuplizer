@@ -1,7 +1,16 @@
 import FWCore.ParameterSet.Config as cms
 
-from PhysicsTools.NanoAOD.jets_cff import bJetVars,updatedJetsWithUserData,bjetNN
+from PhysicsTools.NanoAOD.jets_cff import bJetVars,updatedJetsWithUserData,bjetNN,looseJetId,tightJetId,tightJetIdLepVeto
 
+looseJetId = looseJetId.clone(
+    src = cms.InputTag("updatedPatJets"),    
+)
+tightJetId = tightJetId.clone(
+    src = cms.InputTag("updatedPatJets"),    
+)
+tightJetIdLepVeto = tightJetIdLepVeto.clone(
+    src = cms.InputTag("updatedPatJets"),    
+)
 
 bJetVars = bJetVars.clone(
     src = cms.InputTag("updatedPatJets"),    
@@ -26,6 +35,9 @@ updatedJetsWithUserData = updatedJetsWithUserData.clone(
          genPtwNu = cms.InputTag("bJetVars:genPtwNu"),
          ),
     userInts = cms.PSet(
+        looseId = cms.InputTag("looseJetId"),
+        tightId = cms.InputTag("tightJetId"),
+        tightIdLepVeto = cms.InputTag("tightJetIdLepVeto"),
         vtxNtrk = cms.InputTag("bJetVars:vtxNtrk"),
         leptonPdgId = cms.InputTag("bJetVars:leptonPdgId"),
     ),
@@ -42,6 +54,9 @@ updatedJets = cms.EDProducer("PATJetUserDataEmbedder",
 )
 
 BJetRegression = cms.Task()
+BJetRegression.add(looseJetId)
+BJetRegression.add(tightJetId)
+BJetRegression.add(tightJetIdLepVeto)
 BJetRegression.add(bJetVars)
 BJetRegression.add(updatedJetsWithUserData)
 BJetRegression.add(bjetNN)

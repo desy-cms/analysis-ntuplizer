@@ -154,6 +154,9 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    id_vars_.push_back({"chargedMultiplicity",         "id_cMult"    });
    id_vars_.push_back({"muonEnergyFraction",          "id_muonFrac" });
    id_vars_.push_back({"puppiJetsSpecific",           "id_puppi"    });
+   id_vars_.push_back({"looseId",                     "id_loose"    });
+   id_vars_.push_back({"tightId",                     "id_tight"    });
+   id_vars_.push_back({"tightIdLepVeto",              "id_tightLepVeto"});
    
    // init
    btag_vars_.clear();
@@ -503,10 +506,17 @@ void Candidates<T>::Kinematics()
                jetid_[7][n] = -1.;
             }
             jetid_[6][n] = jet->muonEnergyFraction();
+            
+            jetid_[8][n]  = -1.;
+            jetid_[9][n]  = -1.;
+            jetid_[10][n] = -1.;
+            if ( jet->hasUserInt("looseId") ) jetid_[8][n] = jet->userInt("looseId");
+            if ( jet->hasUserInt("tightId") ) jetid_[9][n] = jet->userInt("tightId");
+            if ( jet->hasUserInt("tightIdLepVeto") )jetid_[10][n] = jet->userInt("tightIdLepVeto");
          }
          else  // set some dummy values
          {
-            for ( size_t ii = 0; ii < 7; ++ii )  jetid_[ii][n] = -1.;
+            for ( size_t ii = 0; ii < id_vars_.size(); ++ii )  jetid_[ii][n] = -1.;
          }
          flavour_        [n] = 0;
          hadronFlavour_  [n] = 0;
@@ -585,7 +595,9 @@ void Candidates<T>::Kinematics()
          }
          
          
-      }
+      } // end PAT::Jet
+      
+      // Reco::PFJet
       if ( is_pfjet_ )
       {
          reco::PFJet * jet = dynamic_cast<reco::PFJet*> (&candidates_[i]);
