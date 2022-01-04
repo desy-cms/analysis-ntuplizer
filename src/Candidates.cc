@@ -154,9 +154,10 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    id_vars_.push_back({"chargedMultiplicity",         "id_cMult"    });
    id_vars_.push_back({"muonEnergyFraction",          "id_muonFrac" });
    id_vars_.push_back({"puppiJetsSpecific",           "id_puppi"    });
-   id_vars_.push_back({"looseId",                     "id_loose"    });
-   id_vars_.push_back({"tightId",                     "id_tight"    });
-   id_vars_.push_back({"tightIdLepVeto",              "id_tightLepVeto"});
+   iid_vars_.clear();
+   iid_vars_.push_back({"looseId",                     "id_loose"    });
+   iid_vars_.push_back({"tightId",                     "id_tight"    });
+   iid_vars_.push_back({"tightIdLepVeto",              "id_tightLepVeto"});
    
    // init
    btag_vars_.clear();
@@ -507,12 +508,12 @@ void Candidates<T>::Kinematics()
             }
             jetid_[6][n] = jet->muonEnergyFraction();
             
-            jetid_[8][n]  = -1.;
-            jetid_[9][n]  = -1.;
-            jetid_[10][n] = -1.;
-            if ( jet->hasUserInt("looseId") ) jetid_[8][n] = jet->userInt("looseId");
-            if ( jet->hasUserInt("tightId") ) jetid_[9][n] = jet->userInt("tightId");
-            if ( jet->hasUserInt("tightIdLepVeto") )jetid_[10][n] = jet->userInt("tightIdLepVeto");
+            ijetid_[0][n]  = -1;
+            ijetid_[1][n]  = -1;
+            ijetid_[2][n]  = -1;
+            if ( jet->hasUserInt("looseId") ) ijetid_[0][n] = jet->userInt("looseId");
+            if ( jet->hasUserInt("tightId") ) ijetid_[1][n] = jet->userInt("tightId");
+            if ( jet->hasUserInt("tightIdLepVeto") ) ijetid_[2][n] = jet->userInt("tightIdLepVeto");
          }
          else  // set some dummy values
          {
@@ -981,6 +982,8 @@ void Candidates<T>::Branches()
       {
          for ( size_t it = 0 ; it < id_vars_.size() ; ++it )
             tree_->Branch(id_vars_[it].alias.c_str(), jetid_[it], (id_vars_[it].title+"[n]/F").c_str());
+         for ( size_t it = 0 ; it < iid_vars_.size() ; ++it )
+            tree_->Branch(iid_vars_[it].alias.c_str(), ijetid_[it], (iid_vars_[it].title+"[n]/I").c_str());
       }
       if ( is_patmet_ )
       {
