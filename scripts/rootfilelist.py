@@ -69,6 +69,7 @@ def crab_log(cdir,ntp_name):
    print("Getting finished jobs log files... ")
    cmd = "crab getlog -d "+cdir+" --short --jobids="+jobids+" >& /dev/null"
    os.system(cmd)
+   
    print("done!")
    job_log_list = glob.glob(cdir+"/results/job_out.*.*.txt")
    ntuples_list = {}
@@ -97,7 +98,7 @@ def crab_log(cdir,ntp_name):
          if not mytype and 'TYPE=' in line:
             mytype = line.split('=')[1].replace(' ','')
          if not myntpdir and 'NTUPLES_REPO_DIR=' in line:
-            myntpdir = line.split('=')[1].replace(' ','')
+            myntpdir = line.split('=')[1].replace(' ','')+'/'+mytype
    myinfodir = myntpdir+'/additional_info'
    if not os.path.exists(myinfodir):
       os.makedirs(myinfodir)
@@ -149,6 +150,27 @@ def crab_log(cdir,ntp_name):
    print
    print('See the rootFileList at:')
    print(rootfiles)
+   
+   
+   ## compression of logs
+   cmd_tar  = 'cd '+ cdir+'/results ; '
+   cmd_tar += 'tar -zcvf job_out.tgz job_out.*.txt >& /dev/null ; '
+   cmd_tar += 'rm -f job_out.*.txt ; '
+   cmd_tar += 'cd - >& /dev/null'
+   os.system(cmd_tar)
+   
+   ## json format improve
+   cmd_json  = 'cd '+ cdir+'/results'
+   os.system(cmd_json)
+   json_list = glob.glob(cdir+'/results/*.json')
+   json_list = [os.path.basename(x) for x in json_list]
+   for j in json_list:
+      jt = j+'_tmp'
+      cmd_json  = 'cd '+ cdir+'/results ;'
+      cmd_json += 'mv '+j+' '+jt+' ; '
+      cmd_json += 'printJSON.py '+jt+' > '+j+' ; '
+      cmd_json += 'rm -f '+jt+' ; cd - >& /dev/null'
+      os.system(cmd_json)
 
    cmd = 'cp -pRd '+cdir+'/results ' + outreport
    os.system(cmd)
