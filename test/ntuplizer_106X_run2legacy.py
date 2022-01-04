@@ -67,7 +67,7 @@ triggerInfo = triggerInfo(options.triggerInfo)
 process.load('Analysis.Ntuplizer.JetCorrections_cff')
 
 ## Retrieve b jet regression correction factors
-process.load('Analysis.Ntuplizer.BJetRegression_cff')
+process.load('Analysis.Ntuplizer.JetWithUserData_cff')
 
 ## Trigger filter: FOR DATA ONLY!!!
 process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
@@ -124,13 +124,13 @@ process.path_data = cms.Path(process.TotalEvents +
                      process.triggerSelection +
                      process.FilteredEvents +
                      process.MssmHbb,
-                     process.BJetRegression,
+                     process.JetWithUserData,
                      process.AK4Jets,
                     )
 process.path_mc   = cms.Path(process.TotalEvents +
                      process.FilteredEvents +
                      process.MssmHbb,
-                     process.BJetRegression,
+                     process.JetWithUserData,
                      process.AK4Jets,
                     )
 
