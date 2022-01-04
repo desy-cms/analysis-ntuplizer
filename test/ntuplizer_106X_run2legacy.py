@@ -1,8 +1,6 @@
 # To be used with the following installation
 #
-# cmsrel CMSSW_10_6_20
-# cd CMSSW_10_6_20/src
-# cmsenv
+# https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmVRun2LegacyAnalysis
 #
 #
 # git clone git@github.com:robervalwalsh/analysis-ntuplizer.git Analysis/Ntuplizer
