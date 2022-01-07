@@ -4,7 +4,7 @@ Ntuple production for CMS data analysis
 
 ## Contents
 
-* [RunII Legacy Production v5](#RunII-Legacy-Production-v6)
+* [RunII Legacy Production v6](#RunII-Legacy-Production-v6)
   * [Cheat sheet](#Cheat-sheet)
   * [Installation](#Installation)
   * [Execution](#Execution)
