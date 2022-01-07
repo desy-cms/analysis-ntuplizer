@@ -4,13 +4,13 @@ Ntuple production for CMS data analysis
 
 ## Contents
 
-* [RunII Legacy Production v5](#RunII-Legacy-Production-v5)
+* [RunII Legacy Production v5](#RunII-Legacy-Production-v6)
   * [Cheat sheet](#Cheat-sheet)
   * [Installation](#Installation)
   * [Execution](#Execution)
   * [CRAB submission](#CRAB-submission) 
 
-## RunII Legacy Production v5
+## RunII Legacy Production v6
 
 **For ntuple production of years 2017 and 2018**
 
@@ -31,15 +31,15 @@ source /cvmfs/cms.cern.ch/common/crab-setup.sh
 voms-proxy-init -rfc -valid 192:00 -voms cms:/cms/dcms
 ```
 
-E.g., submitting BTagCSV 2017 datasets for ntuple production version 5
+E.g., submitting BTagCSV 2017 datasets for ntuple production version 6
 
 ```bash
 cd $CMSSW_BASE/src/Analysis/Ntuplizer/test
-ntuples_production.py crab -y 2017 -t data -v 5 -d BTagCSV_UL2017 -c ntuplizer_106X_run2legacy_v5.py
+ntuples_production.py crab -y 2017 -t data -v 6 -d BTagCSV_UL2017 -c ntuplizer_106X_run2legacy.py
 ```
 For other datasets, option `-d`, see the `datasets.yml` files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v5
-- [datasets.yml for data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
-- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/mc/datasets.yml)
+- [datasets.yml for data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v6/data/datasets.yml)
+- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v6/mc/datasets.yml)
 
 #### preparing rootFileList.txt (cs)
 
@@ -53,12 +53,12 @@ rootfilelist.py crab_projects_BTagCSV_UL2017/crab_BTagCSV_Run2017C-UL2017_MiniAO
 
 #### CMSSW
 
-Recommended CMSSW release is CMSSW_10_6_X (X=20, maybe higher)
+Recommended CMSSW release is CMSSW_10_6_29
 
 ```bash
 export SCRAM_ARCH=slc7_amd64_gcc700
-cmsrel CMSSW_10_6_20
-cd CMSSW_10_6_20/src
+cmsrel CMSSW_10_6_29
+cd CMSSW_10_6_29/src
 cmsenv
 ```
 
@@ -77,47 +77,54 @@ scram b -j4
 
 The CMSRun python configuration file used in this production is
 
-[ntuplizer_106X_run2legacy_v5.py](/test/ntuplizer_106X_run2legacy_v5.py)
+[ntuplizer_106X_run2legacy.py](/test/ntuplizer_106X_run2legacy.py)
 
 This configuration accepts parameters at the command line, e.g.
 
 ```bash
-cmsRun ntuplizer_106X_run2legacy_v5.py \
-       globalTag=106X_dataRun2_v33 \
+cmsRun ntuplizer_106X_run2legacy.py \
+       version=6 \
+       globalTag=106X_dataRun2_v35 \
        maxEvents=100 \
        year=2017 \
        type=data \
        inputFiles=/store/data/Run2017D/BTagCSV/MINIAOD/UL2017_MiniAODv2-v1/270000/3A3DF494-008A-1D49-9A95-0D9E334783A2.root \
        outputFile=ntuple.root \
-       triggerInfo=/afs/desy.de/user/w/walsh/cms/ntuplizer/run2_ul/CMSSW_10_6_20/src/Analysis/Ntuplizer/data/ntuples/2017/v5/trigger_info.yml
+       triggerInfo=/afs/desy.de/user/w/walsh/cms/ntuplizer/run2_ul/CMSSW_10_6_29/src/Analysis/Ntuplizer/data/ntuples/2017/v6/trigger_info.yml
 ```
 
 It can also be executed with default parameters, which one can see in the configuration file, or from the output when running without passing any parameters
 e.g.
+
+⚠️ `version` is a required parameter!!! ⚠️
+
 ```bash
-cmsRun ntuplizer_106X_run2legacy_v5.py
+cmsRun ntuplizer_106X_run2legacy.py version=6
 ```
+
 yields in stdout
 ```
 Python Configuration Options
 ----------------------------
-globalTag         :  106X_dataRun2_v33
+version           :  6
+globalTag         :  106X_dataRun2_v35
 maxEvents         :  100
 year              :  2017
 type              :  data
 inputFiles        :  ['/store/data/Run2017D/BTagCSV/MINIAOD/UL2017_MiniAODv2-v1/270000/3A3DF494-008A-1D49-9A95-0D9E334783A2.root']
 outputFile        :  ntuple.root
-triggerInfo       :  /afs/desy.de/user/w/walsh/cms/ntuplizer/run2_ul/CMSSW_10_6_20/src/Analysis/Ntuplizer/data/ntuples/2017/v5/trigger_info.yml
+triggerInfo       :  /afs/desy.de/user/w/walsh/cms/ntuplizer/run2_ul/CMSSW_10_6_20/src/Analysis/Ntuplizer/data/ntuples/2017/v6/trigger_info.yml
 ----------------------------
 ```
-Notice that some parameters default values may depend on the year and type, e.g.
+Notice that some parameters default values, such as `inputFiles`, `globalTag` and `triggerInfo`, may depend on the given `version`, `year` and `type`, e.g.
 ```bash
-cmsRun ntuplizer_106X_run2legacy_v5.py year=2018 type=mc
+cmsRun ntuplizer_106X_run2legacy.py version=6 year=2018 type=mc
 ```
 has default parameters
 ```
 Python Configuration Options
 ----------------------------
+version           :  6
 globalTag         :  106X_upgrade2018_realistic_v16_L1v1
 maxEvents         :  100
 year              :  2018
@@ -125,7 +132,7 @@ type              :  mc
 xsection          :  -1.0
 inputFiles        :  ['/store/mc/RunIISummer20UL18MiniAODv2/QCD_Pt_470to600_TuneCP5_13TeV_pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/100000/01F9363E-5BB5-534B-AF6A-B771B601FFA3.root']
 outputFile        :  ntuple.root
-triggerInfo       :  /afs/desy.de/user/w/walsh/cms/ntuplizer/run2_ul/CMSSW_10_6_20/src/Analysis/Ntuplizer/data/ntuples/2018/v5/trigger_info.yml
+triggerInfo       :  /afs/desy.de/user/w/walsh/cms/ntuplizer/run2_ul/CMSSW_10_6_20/src/Analysis/Ntuplizer/data/ntuples/2018/v6/trigger_info.yml
 ----------------------------
 ```
 
@@ -147,13 +154,13 @@ cd $CMSSW_BASE/src/Analysis/Ntuplizer/test
 
 To know which samples(*) are available the user can run the script below giving a few parameters, such as year (`-y`), type (`-t`), version (`-v`)
 ```bash
-ntuples_production.py info -y 2017 -t data -v 5
+ntuples_production.py info -y 2017 -t data -v 6
 ```
 (*) a sample is a block of primary datasets
 
 With the information given by the command above, one can list the primary datasets in each sample
 ```bash
-ntuples_production.py info -y 2017 -t data -v 5 -d BTagCSV_UL2017
+ntuples_production.py info -y 2017 -t data -v 6 -d BTagCSV_UL2017
 ```
 which yields
 ```
@@ -164,18 +171,18 @@ Available datasets in the list
      - /BTagCSV/Run2017D-UL2017_MiniAODv2-v1/MINIAOD
      - /BTagCSV/Run2017E-UL2017_MiniAODv2-v1/MINIAOD
 Info from file: 
-$CMSSW_BASE/src/Analysis/Ntuplizer/data/ntuples/2017/v5/data/datasets.yml
+$CMSSW_BASE/src/Analysis/Ntuplizer/data/ntuples/2017/v6/data/datasets.yml
 ```
-The samples and datasets can also be found in the yaml files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v5
-- [datasets.yml for data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/data/datasets.yml)
-- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v5/mc/datasets.yml)
+The samples and datasets can also be found in the yaml files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v6
+- [datasets.yml for data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v6/data/datasets.yml)
+- [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v6/mc/datasets.yml)
 
 
 #### Submitting to CRAB
 
 The crab submission script is the same as above, but instead of `info` the user must use `crab` as first argument and give the cmsRun python configuration file to be used via option `-c`, e.g.
 ```bash
-ntuples_production.py crab -y 2017 -t data -v 5 -d BTagCSV_UL2017 -c ntuplizer_106X_run2legacy_v5.py
+ntuples_production.py crab -y 2017 -t data -v 6 -d BTagCSV_UL2017 -c ntuplizer_106X_run2legacy.py
 ```
 Jobs for all the datasets in `BTagCSV_UL2017` will be created.
 
@@ -198,7 +205,7 @@ rootfilelist.py test/crab_projects_BTagCSV_UL2017/crab_BTagCSV_Run2017C-UL2017_M
 ```
 You will find the `BTagCSV_Run2017C_rootFileList.txt` in
 ```bash
-cd data/ntuples/2017/v5/data
+cd data/ntuples/2017/v6/data
 ``` 
 where a directory with `additional_info` contains information produced by crab.
 
