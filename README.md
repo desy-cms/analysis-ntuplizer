@@ -37,7 +37,7 @@ E.g., submitting BTagCSV 2017 datasets for ntuple production version 6
 cd $CMSSW_BASE/src/Analysis/Ntuplizer/test
 ntuples_production.py crab -y 2017 -t data -v 6 -d BTagCSV_UL2017 -c ntuplizer_106X_run2legacy.py
 ```
-For other datasets, option `-d`, see the `datasets.yml` files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v5
+For other datasets, option `-d`, see the `datasets.yml` files in [analysis-ntuples](https://github.com/desy-cms/analysis-ntuples), e.g. for 2017, production v6
 - [datasets.yml for data](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v6/data/datasets.yml)
 - [datasets.yml for monte carlo](https://github.com/desy-cms/analysis-ntuples/blob/master/2017/v6/mc/datasets.yml)
 
