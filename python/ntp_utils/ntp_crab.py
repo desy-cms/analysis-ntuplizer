@@ -71,6 +71,12 @@ class ntp_crab:
       config = crabConfig()
       config.General.workArea += '_' + self.__process        
       config.Data.outLFNDirBase   = self.__baseoutdir + '/'
+      
+      if self.__opts.run_range:
+         config.Data.runRange = self.__opts.run_range
+      if self.__opts.lumi_mask:
+         config.Data.lumiMask = self.__opts.lumi_mask
+         
       config.JobType.psetName = self.__opts.config             
       config.JobType.numCores = 4                       
       config.JobType.maxMemoryMB = 10000
