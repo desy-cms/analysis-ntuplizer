@@ -80,7 +80,10 @@ class ntp_crab:
       if info:
          for var,value in info.iteritems():
             if var=='xsection_pb':
-               config.JobType.pyCfgParams += ["xsection="+str(value)]
+               xs = value
+               if not value:
+                  xs = -1
+               config.JobType.pyCfgParams += ["xsection="+str(xs)]
             if var=='parent_dataset':
                config.Data.useParent = True
                config.Data.secondaryInputDataset = value
