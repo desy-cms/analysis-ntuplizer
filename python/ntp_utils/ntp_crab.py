@@ -117,12 +117,23 @@ class ntp_crab:
       for cfg in self.__configs:
          dataset = self.__crab_dataset(cfg)
          outtext = " * Submitting dataset " + dataset + "..."
-         print (Y+str(outtext)+W) 
+         print (Y+str(outtext)+W)
+         if self.__opts.type == 'mc':
+            units = 0
+            if self.__opts.units:
+               units = self.__opts.units
+            if units > 0:  # if units <= 0 the default splitting (Automatic) will be used
+               cfg.Data.splitting = 'FileBased'
+               cfg.Data.unitsPerJob = units
+         
          
          if opt=='dryrun':
             if self.__opts.type == 'mc':
+               units = 10
+               if self.__opts.units:
+                  units = self.__opts.units
                cfg.Data.splitting = 'FileBased'
-               cfg.Data.unitsPerJob = 10
+               cfg.Data.unitsPerJob = units
             else:
                cfg.Data.splitting = 'LumiBased'
                cfg.Data.unitsPerJob = 2
