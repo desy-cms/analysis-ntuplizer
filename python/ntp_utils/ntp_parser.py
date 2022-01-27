@@ -42,7 +42,7 @@ def ntp_parser():
 #   crab_req.add_argument("-l"  , dest="label"   , required=True                       , help=R+"a label, e.g. Legacy"+W)
    crab_req.add_argument("-v"  , dest="version" , required=True                       , help=R+"production version"+W)
    crab_req.add_argument("-y"  , dest="year"    , required=True                       , help=R+"data taking year"+W)
-   crab_opt.add_argument("-n"  , dest="units"                    , type=int           , help=C+"number of units per job/events"+W)
+   crab_opt.add_argument("-u"  , dest="units"                    , type=int           , help=C+"number of units per job; MC if > 0, FileBased splitting"+W)
    crab_opt.add_argument("-r"  , dest="run_range"                                     , help=C+"run range (e.g. 193093-193999,198050,199564) - data only"+W)
    crab_opt.add_argument("-j"  , dest="lumi_mask"                                     , help=C+"URL address or the path to a JSON file on disk  - data only"+W)
 
