@@ -270,6 +270,10 @@ class Ntuplizer : public edm::EDAnalyzer {
       edm::InputTag lumiScalers_;
       
       edm::InputTag fixedGridRhoAll_;
+
+      edm::InputTag prefWeight_;
+      edm::InputTag prefWeightUp_;
+      edm::InputTag prefWeightDown_;
      
       edm::EDGetTokenT<GenFilterInfo> genFilterInfoToken_;      
       edm::EDGetTokenT<edm::MergeableCounter> totalEventsToken_;      
@@ -282,6 +286,10 @@ class Ntuplizer : public edm::EDAnalyzer {
       edm::EDGetTokenT<LumiScalersCollection> lumiScalersToken_;      
       
       edm::EDGetTokenT<double> fixedGridRhoAllToken_;
+
+      edm::EDGetTokenT< double > prefWeightToken_;
+      edm::EDGetTokenT< double > prefWeightUpToken_;
+      edm::EDGetTokenT< double > prefWeightDownToken_;
 
       
       InputTags eventCounters_;
@@ -403,6 +411,11 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
       if ( inputTag == "GenEventInfo" )   { genEventInfoToken_     = consumes<GenEventInfoProduct>(collection);               genEventInfo_    = collection;}
       if ( inputTag == "LumiScalers" )    { lumiScalersToken_      = consumes<LumiScalersCollection>(collection);             lumiScalers_     = collection;}
       if ( inputTag == "FixedGridRhoAll" ){ fixedGridRhoAllToken_  = consumes<double>(collection);                            fixedGridRhoAll_ = collection;}
+
+      // this can be done as a VInputTag
+      if ( inputTag == "PrefiringWeight"     ){ prefWeightToken_        = consumes<double>(collection);                       prefWeight_     = collection;}
+      if ( inputTag == "PrefiringWeightUp"   ){ prefWeightUpToken_      = consumes<double>(collection);                       prefWeightUp_   = collection;}
+      if ( inputTag == "PrefiringWeightDown" ){ prefWeightDownToken_    = consumes<double>(collection);                       prefWeightDown_ = collection;}
  
    }
 
@@ -677,6 +690,12 @@ Ntuplizer::beginJob()
    if ( do_lumiscalers_ )
       eventinfo_ -> LumiScalersInfo(config_.getParameter<edm::InputTag>("LumiScalers"));
    
+   if ( config_.exists("PrefiringWeight") &&  config_.exists("PrefiringWeightUp") && config_.exists("PrefiringWeightDown"))
+   {
+
+      eventinfo_ -> PrefiringWeightInfo(prefWeight_, prefWeightUp_, prefWeightDown_);
+   }
+
     // Metadata 
    metadata_ = pMetadata (new Metadata(fs,is_mc_));
    metadata_ -> AddDefinitions(btagVars_,"btagging");

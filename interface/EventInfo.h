@@ -58,6 +58,8 @@ namespace analysis {
             void ReadLumiScalers(const edm::Event&);
             void FixedGridRhoInfo(const edm::InputTag&);
             void ReadFixedGridRhoInfo(const edm::Event&);
+            void PrefiringWeightInfo(const edm::InputTag &, const edm::InputTag &, const edm::InputTag & );
+            void ReadPrefiringWeight(const edm::Event&);
             TTree * Tree();
       
          private:
@@ -99,6 +101,16 @@ namespace analysis {
             bool do_rho_;
             edm::InputTag rho_collection_;
             double rho_;
+
+            // L1 prefiring weight
+            bool do_prefw_;
+            edm::InputTag prefweight_collection_;
+            edm::InputTag prefweight_up_collection_;
+            edm::InputTag prefweight_down_collection_;
+            double prefw_;
+            double prefw_up_;
+            double prefw_down_;
+
       };
    }
 }

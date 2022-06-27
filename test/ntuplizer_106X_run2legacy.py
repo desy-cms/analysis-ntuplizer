@@ -69,6 +69,9 @@ process.load('Analysis.Ntuplizer.JetCorrections_cff')
 ## Retrieve b jet regression correction factors
 process.load('Analysis.Ntuplizer.JetWithUserData_cff')
 
+## Event extras
+process.load('Analysis.Ntuplizer.EventExtras_cff')
+
 ## Trigger filter: FOR DATA ONLY!!!
 process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
     triggerInfo['triggerResultsFilter'],
@@ -103,6 +106,10 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     L1TJets         = cms.VInputTag(cms.InputTag('caloStage2Digis','Jet','RECO'), ),
     L1TMuons        = cms.VInputTag(cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
     TriggerObjectStandAlone = cms.VInputTag(cms.InputTag('slimmedPatTrigger'), ),
+    # this can also be done as VInputTag
+    PrefiringWeight    =cms.InputTag('prefiringweight','nonPrefiringProb','MssmHbb'),
+    PrefiringWeightUp  =cms.InputTag('prefiringweight','nonPrefiringProbUp','MssmHbb'),
+    PrefiringWeightDown=cms.InputTag('prefiringweight','nonPrefiringProbDown','MssmHbb'),
 )
 process.MssmHbb.MonteCarlo      = cms.bool((options.type == 'mc'))
 
@@ -117,6 +124,7 @@ if options.type == 'mc':
    process.MssmHbb.PileupInfo      = cms.InputTag("slimmedAddPileupInfo")
 
 
+
 #########
 
 ## Do the stuff!
@@ -124,19 +132,34 @@ process.path_data = cms.Path(process.TotalEvents +
                      process.triggerSelection +
                      process.FilteredEvents +
                      process.MssmHbb,
+                     process.EventExtras,
                      process.JetWithUserData,
                      process.AK4Jets,
                     )
 process.path_mc   = cms.Path(process.TotalEvents +
                      process.FilteredEvents +
                      process.MssmHbb,
+                     process.EventExtras,
                      process.JetWithUserData,
                      process.AK4Jets,
                     )
 
-process.schedule = cms.Schedule(process.path_mc)
+# 
+# process.schedule = cms.Schedule(process.path_mc)
+# if options.type == 'data':
+#     process.schedule = cms.Schedule(process.path_data)
+
+# ============ Output MiniAOD ======================
+process.out = cms.OutputModule("PoolOutputModule",
+                               fileName = cms.untracked.string('patTuple.root'),
+                               outputCommands = cms.untracked.vstring('keep *' )
+                               )
+process.outpath = cms.EndPath(process.out)
+
+process.schedule = cms.Schedule(process.path_mc,process.outpath)
 if options.type == 'data':
-    process.schedule = cms.Schedule(process.path_data)
+    process.schedule = cms.Schedule(process.path_data,process.outpath)
+
 
 
 ## ============ JSON Certified data ===============   BE CAREFUL!!!
