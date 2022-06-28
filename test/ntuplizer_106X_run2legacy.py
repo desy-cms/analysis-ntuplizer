@@ -25,7 +25,7 @@ from Analysis.Ntuplizer.Parser_cfi import parser
 options = parser()
 
 
-### Run2 Legacy specifics for cms.Process 
+### Run2 Legacy specifics for cms.Process
 # need to find a better way to init cms.Process, outside this config
 if options.year == 2017:
    process = cms.Process('MssmHbb',eras.Run2_2017)
@@ -144,30 +144,30 @@ process.path_mc   = cms.Path(process.TotalEvents +
                      process.AK4Jets,
                     )
 
-# 
-# process.schedule = cms.Schedule(process.path_mc)
-# if options.type == 'data':
-#     process.schedule = cms.Schedule(process.path_data)
 
-# ============ Output MiniAOD ======================
-process.out = cms.OutputModule("PoolOutputModule",
-                               fileName = cms.untracked.string('patTuple.root'),
-                               outputCommands = cms.untracked.vstring('keep *' )
-                               )
-process.outpath = cms.EndPath(process.out)
-
-process.schedule = cms.Schedule(process.path_mc,process.outpath)
+process.schedule = cms.Schedule(process.path_mc)
 if options.type == 'data':
-    process.schedule = cms.Schedule(process.path_data,process.outpath)
+    process.schedule = cms.Schedule(process.path_data)
+
+# # ============ Output MiniAOD ======================
+# process.out = cms.OutputModule("PoolOutputModule",
+#                                fileName = cms.untracked.string('patTuple.root'),
+#                                outputCommands = cms.untracked.vstring('keep *' )
+#                                )
+# process.outpath = cms.EndPath(process.out)
+#
+# process.schedule = cms.Schedule(process.path_mc,process.outpath)
+# if options.type == 'data':
+#     process.schedule = cms.Schedule(process.path_data,process.outpath)
+#
 
 
-
-## ============ JSON Certified data ===============   BE CAREFUL!!!
-## Don't use with CRAB!!!
-if options.json != '':
-   import FWCore.PythonUtilities.LumiList as LumiList
-   import FWCore.ParameterSet.Types as CfgTypes
-   process.source.lumisToProcess = CfgTypes.untracked(CfgTypes.VLuminosityBlockRange())
-   JSONfile = options.json
-   myLumis = LumiList.LumiList(filename = JSONfile).getCMSSWString().split(',')
-   process.source.lumisToProcess.extend(myLumis)
+# ## ============ JSON Certified data ===============   BE CAREFUL!!!
+# ## Don't use with CRAB!!!
+# if options.json != '':
+#    import FWCore.PythonUtilities.LumiList as LumiList
+#    import FWCore.ParameterSet.Types as CfgTypes
+#    process.source.lumisToProcess = CfgTypes.untracked(CfgTypes.VLuminosityBlockRange())
+#    JSONfile = options.json
+#    myLumis = LumiList.LumiList(filename = JSONfile).getCMSSWString().split(',')
+#    process.source.lumisToProcess.extend(myLumis)
