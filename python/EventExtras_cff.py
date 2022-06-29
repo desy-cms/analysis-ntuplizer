@@ -1,5 +1,4 @@
 import FWCore.ParameterSet.Config as cms
-from Configuration.Eras.Modifier_run2_jme_2016_cff import run2_jme_2016
 from Configuration.Eras.Modifier_run2_jme_2017_cff import run2_jme_2017
 
 ## L1 Prefiring
@@ -19,5 +18,5 @@ run2_jme_2017.toModify(prefiringweight,
 )
 
 
-EventExtras = cms.Task()
-EventExtras.add(prefiringweight)
+L1PrefiringWeight = cms.Task()
+L1PrefiringWeight.add(prefiringweight)

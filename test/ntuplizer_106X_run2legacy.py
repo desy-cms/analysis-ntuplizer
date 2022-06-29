@@ -132,14 +132,14 @@ process.path_data = cms.Path(process.TotalEvents +
                      process.triggerSelection +
                      process.FilteredEvents +
                      process.MssmHbb,
-                     process.EventExtras,
+                     process.L1PrefiringWeight,
                      process.JetWithUserData,
                      process.AK4Jets,
                     )
 process.path_mc   = cms.Path(process.TotalEvents +
                      process.FilteredEvents +
                      process.MssmHbb,
-                     process.EventExtras,
+                     process.L1PrefiringWeight,
                      process.JetWithUserData,
                      process.AK4Jets,
                     )
