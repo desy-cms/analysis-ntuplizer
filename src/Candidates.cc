@@ -832,12 +832,17 @@ void Candidates<T>::Fill(const edm::Event& event, const edm::EventSetup& setup)
       {
          jecUnc_ = std::unique_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(jecFile_));
       }
-      else
+      else // conddb - see example: https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/PatUtils/plugins/ShiftedPFCandidateProducerForNoPileUpPFMEt.cc
+
       {
-         edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
-         setup.get<JetCorrectionsRecord>().get(jecRecord_,JetCorParColl); 
-         JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
-         jecUnc_ = std::unique_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(JetCorPar));
+         const JetCorrectorParametersCollection& jetCorrParameterSet = setup.getData(jec_tokens_.jecToken);
+         const JetCorrectorParameters& jetCorrParameters = (jetCorrParameterSet)["Uncertainty"];
+         jecUnc_ = std::make_unique<JetCorrectionUncertainty>(jetCorrParameters);
+         
+//         edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
+//         setup.get<JetCorrectionsRecord>().get(jecRecord_,JetCorParColl); 
+//         JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
+//         jecUnc_ = std::unique_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(JetCorPar));
       }
    }
 
@@ -1074,6 +1079,13 @@ void Candidates<T>::AddJecInfo( const std::string & jec )
 {
    // Will use confDB
    jecRecord_ = jec;
+}
+
+template <typename T>
+void Candidates<T>::AddJecInfo( const JecESTokens & jec )
+{
+   // Will use confDB
+   jec_tokens_ = jec;
 }
 
 template <typename T>

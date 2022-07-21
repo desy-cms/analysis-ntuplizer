@@ -259,7 +259,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       std::map<std::string, edm::EDGetTokenT<l1t::JetBxCollection> > l1tJetTokens_;
       std::map<std::string, edm::EDGetTokenT<l1t::MuonBxCollection> > l1tMuonTokens_;
       std::map<std::string, edm::EDGetTokenT<reco::RecoChargedCandidateCollection> > chargedCandTokens_;
-
+      
       std::shared_ptr<HLTPrescaleProvider> hltPrescaleProvider_;
       HLTConfigProvider hltConfigProvider_;
 
@@ -333,6 +333,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       
       // ESTokens
       std::vector<analysis::ntuple::JerESTokens> jer_es_tokens_;
+      std::vector<analysis::ntuple::JecESTokens> jec_es_tokens_;
+
       
       // JER
       std::vector<std::string > jer_files_;
@@ -509,6 +511,24 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
       }
       
    }
+   // JEC record (from CondDB)
+   // see example: https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/PatUtils/plugins/ShiftedPFCandidateProducerForNoPileUpPFMEt.cc
+   jecRecords_.clear();
+   if ( do_patjets_ && config_.exists("JECRecords") )
+   {
+      jecRecords_ = config_.getParameter< std::vector<std::string> >("JECRecords");
+      for ( auto & rcd : jecRecords_ )
+      {
+         if ( rcd != "" )
+         {
+            analysis::ntuple::JecESTokens est;
+            est.record = rcd;
+            est.jecToken = esConsumes(edm::ESInputTag("", rcd));
+            jec_es_tokens_.push_back(est);
+         }
+      }
+   }
+   
 }
 
 
@@ -720,10 +740,8 @@ Ntuplizer::beginJob()
    // JEC Record (from TXT files)
    std::vector<std::string > jec_files;
    // JEC Record (from CondDB)
-   jecRecords_.clear();
    if ( do_patjets_ && config_.exists("JECRecords") )
    {
-      jecRecords_ = config_.getParameter< std::vector<std::string> >("JECRecords");
       if(config_.exists("JECUncertaintyFiles"))
       {
          jec_files = config_.getParameter< std::vector<std::string > >("JECUncertaintyFiles");
@@ -913,7 +931,8 @@ Ntuplizer::beginJob()
                if ( jec_files.size() > 0 && jec_files[patJetCounter] != "" )
                   patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter],jec_files[patJetCounter]);  // use txt file
                else
-                  patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter]);                           // use confdb
+//                  patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter]);                           // use confdb
+                  patjets_collections_.back() -> AddJecInfo(jec_es_tokens_[patJetCounter]);                           // use confdb
 
             }
             
