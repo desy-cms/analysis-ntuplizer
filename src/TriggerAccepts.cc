@@ -18,7 +18,7 @@
 // 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
+//#include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
  
@@ -127,23 +127,24 @@ void TriggerAccepts::Fill(const edm::Event& event, const edm::EventSetup & setup
             // get prescale info if requested
             if ( psinfo_ )
             {
-               const std::pair<std::vector<std::pair<std::string,int> >,int> ps = hlt_prescale_->prescaleValuesInDetail(event,setup,hlt_config_->triggerName(j));
-               // HLT prescale
-               pshlt_[i] = ps.second;
-               // Get L1 prescale of all seeds of the path
-               for ( size_t k = 0; k < ps.first.size(); ++k ) // loop over seeds of the path
-               {
-                  for ( size_t l = 0; l < seeds_.size(); ++l ) // loop over seeds passed by python config
-                  {
-                     if ( ! l1done[seeds_[l]] && ps.first[k].first == seeds_[l] )  // if prescale of L1 seed not read and seed is in path
-                     {
-                        psl1_[l] = ps.first[k].second;
-                        l1done[seeds_[l]] = true;
-                        hlt_prescale_->l1tGlobalUtil().getFinalDecisionByName (seeds_[l], l1accept_[l]);
-                        break;
-                     }
-                  }
-               }
+               // // const std::pair<std::vector<std::pair<std::string,int> >,int> ps = hlt_prescale_->prescaleValuesInDetail(event,setup,hlt_config_->triggerName(j));
+               // auto ps = hlt_prescale_->prescaleValuesInDetail(event,setup,hlt_config_->triggerName(j));
+               // // HLT prescale
+               // pshlt_[i] = ps.second;
+               // // Get L1 prescale of all seeds of the path
+               // for ( size_t k = 0; k < ps.first.size(); ++k ) // loop over seeds of the path
+               // {
+               //    for ( size_t l = 0; l < seeds_.size(); ++l ) // loop over seeds passed by python config
+               //    {
+               //       if ( ! l1done[seeds_[l]] && ps.first[k].first == seeds_[l] )  // if prescale of L1 seed not read and seed is in path
+               //       {
+               //          psl1_[l] = ps.first[k].second;
+               //          l1done[seeds_[l]] = true;
+               //          hlt_prescale_->l1tGlobalUtil().getFinalDecisionByName (seeds_[l], l1accept_[l]);
+               //          break;
+               //       }
+               //    }
+               // }
             }
             else
             {
