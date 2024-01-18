@@ -138,6 +138,10 @@ namespace analysis {
             int   physicsFlavour_[maxCandidates];
             
             float jetid_[15][maxCandidates];
+            int   ijetid_[15][maxCandidates];
+            std::vector<TitleAlias>  id_vars_;
+            std::vector<TitleAlias>  iid_vars_;
+
             
             // Jet energy resolution and scale correction
             float jecUncert_[maxCandidates];
@@ -250,7 +254,6 @@ namespace analysis {
                       
             int higgs_pdg_;
             
-            std::vector<TitleAlias>  id_vars_;
             std::vector<TitleAlias>  btag_vars_;
             
             std::string trigobj_type_;

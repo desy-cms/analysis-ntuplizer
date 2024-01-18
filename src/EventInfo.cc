@@ -139,9 +139,13 @@ void EventInfo::Fill(const edm::Event& event)
       ReadFixedGridRhoInfo(event);
    }
       
+   if ( do_prefw_ )
+   {
+      ReadPrefiringWeight(event);
+   }
+      
    tree_ -> Fill();
-
-   
+  
 }
 
 // ------------ method called once each job just before starting event loop  ------------
@@ -258,3 +262,34 @@ void EventInfo::ReadFixedGridRhoInfo(const edm::Event& event)
    rho_ = *(rhoHandler.product());
    
 }
+
+void EventInfo::PrefiringWeightInfo(const edm::InputTag & tag, const edm::InputTag & tag_up ,const edm::InputTag & tag_down)
+{
+   do_prefw_ = true;
+   
+   prefweight_collection_ = tag;
+   prefweight_up_collection_ = tag_up;
+   prefweight_down_collection_ = tag_down;
+      
+   tree_->Branch("nonPrefiringProb"     , &prefw_      , "nonPrefiringProb/D");
+   tree_->Branch("nonPrefiringProbUp"   , &prefw_up_   , "nonPrefiringProbUp/D");
+   tree_->Branch("nonPrefiringProbDown" , &prefw_down_ , "nonPrefiringProbDown/D");
+   
+   
+}
+void EventInfo::ReadPrefiringWeight(const edm::Event& event)
+{
+   edm::Handle<double> prefwHandler;
+   edm::Handle<double> prefwUpHandler;
+   edm::Handle<double> prefwDownHandler;
+
+   event.getByLabel(prefweight_collection_, prefwHandler);
+   event.getByLabel(prefweight_up_collection_, prefwUpHandler);
+   event.getByLabel(prefweight_down_collection_, prefwDownHandler);
+
+   prefw_ = *(prefwHandler.product());
+   prefw_up_ = *(prefwUpHandler.product());
+   prefw_down_ = *(prefwDownHandler.product());
+
+}
+

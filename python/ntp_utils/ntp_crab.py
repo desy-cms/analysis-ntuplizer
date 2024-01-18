@@ -71,16 +71,26 @@ class ntp_crab:
       config = crabConfig()
       config.General.workArea += '_' + self.__process        
       config.Data.outLFNDirBase   = self.__baseoutdir + '/'
+      
+      if self.__opts.type == 'data':
+         if self.__opts.run_range:
+            config.Data.runRange = self.__opts.run_range
+         if self.__opts.lumi_mask:
+            config.Data.lumiMask = self.__opts.lumi_mask
+         
       config.JobType.psetName = self.__opts.config             
       config.JobType.numCores = 4                       
       config.JobType.maxMemoryMB = 10000
       config.JobType.inputFiles = [self.__versiondir+'/trigger_info.yml']
       # Passing cmsRun parameters
-      config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type,"triggerInfo="+self.__versiondir+"/trigger_info.yml"]
+      config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type,"triggerInfo="+self.__versiondir+"/trigger_info.yml","version="+self.__opts.version]
       if info:
          for var,value in info.iteritems():
             if var=='xsection_pb':
-               config.JobType.pyCfgParams += ["xsection="+str(value)]
+               xs = value
+               if not value:
+                  xs = -1
+               config.JobType.pyCfgParams += ["xsection="+str(xs)]
             if var=='parent_dataset':
                config.Data.useParent = True
                config.Data.secondaryInputDataset = value
@@ -107,12 +117,23 @@ class ntp_crab:
       for cfg in self.__configs:
          dataset = self.__crab_dataset(cfg)
          outtext = " * Submitting dataset " + dataset + "..."
-         print (Y+str(outtext)+W) 
+         print (Y+str(outtext)+W)
+         if self.__opts.type == 'mc':
+            units = 0
+            if self.__opts.units:
+               units = self.__opts.units
+            if units > 0:  # if units <= 0 the default splitting (Automatic) will be used
+               cfg.Data.splitting = 'FileBased'
+               cfg.Data.unitsPerJob = units
+         
          
          if opt=='dryrun':
             if self.__opts.type == 'mc':
+               units = 10
+               if self.__opts.units:
+                  units = self.__opts.units
                cfg.Data.splitting = 'FileBased'
-               cfg.Data.unitsPerJob = 10
+               cfg.Data.unitsPerJob = units
             else:
                cfg.Data.splitting = 'LumiBased'
                cfg.Data.unitsPerJob = 2

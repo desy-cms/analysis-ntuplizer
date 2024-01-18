@@ -34,6 +34,8 @@ class ntp_common:
       if not self.__opts.dataset.startswith('/'):
          return self.__opts.dataset
       for alias,datasets in self.__datasetsdict.iteritems():
+         if not datasets: # for some reason datasets = None appears!!!???
+            continue
          for dataset,values in datasets.iteritems():
             if dataset == self.__opts.dataset:
                # get the alias of the existing dataset block
