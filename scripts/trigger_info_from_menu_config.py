@@ -1,14 +1,17 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 
-# hlt_paths.txt is a file containing in the first line the name of the hlt menu config file (w/o .py),
-# which should be present at the same directory(*), and the other lines should contain each the name of
+# hlt_paths.txt is a file whose lines contain each the name of
 # the HLT paths the will go into the trigger_info.yml
-# (*) add the directory to your PYTHONPATH
+# User will be asked to give the configuration of the trigger menu
+# The configuration file containing the menu should be put in
+# Analysis/Ntuplizer/python
 
 import re
 import sys
 import importlib
+
+from pathlib import Path
 
 # 
 def processing(process,hlt_path_nov):
@@ -17,12 +20,10 @@ def processing(process,hlt_path_nov):
    path_names = process.pathNames().split(" ")
    path_names = [x for x in path_names if x.startswith("HLT_")]
 
-   hlt_paths = [ x for x in path_names if hlt_path_nov in x ]
-   if len(hlt_paths) < 1:
+   hlt_paths = [x for x in path_names if x.startswith(hlt_path_nov)]
+   if not hlt_paths:
       print("WARNING: "+hlt_path_nov+" not in this menu! Skipping!")
-      print
       return output
-    
    hlt_path = hlt_paths[0]
    # cms path
    cms_path = eval("process."+hlt_path+".dumpPythonNoNewline()")
@@ -38,7 +39,6 @@ def processing(process,hlt_path_nov):
    
    # trigger objects and L1 seeds of the path
    trg_objs = []
-#   print(process_modules)
    for mod_name  in process_modules:
       mod = eval("process."+mod_name+".dumpPython()")
       # HLT EDFilters with saveTags - trigger objects
@@ -71,10 +71,6 @@ def processing(process,hlt_path_nov):
          
    trg_objs = trg_objs_order
    
-   # remove the version number from the path
-#   hlt_path_nov = hlt_path.split("_")
-#   hlt_path_nov = "_".join(hlt_path_nov[:-1])+"_v"
-   
    # prepare output
    output += hlt_path+":\n"
    output += " l1seeds:\n"
@@ -87,31 +83,38 @@ def processing(process,hlt_path_nov):
       
    return output
 
-def main():
+def main(config):
+   config = Path(config).stem
    # read file with hlt config and hlt paths
    with open('hlt_paths.txt') as menu_config:
       paths = menu_config.readlines()
-   config = paths[0].replace("\n","")
+   # in case path is repeated in hlt_paths.txt
+   unique_paths = [] 
+   [unique_paths.append(x) for x in paths if x not in unique_paths] 
+
    # importing module using string with importlib.import_module
-   #from hlt_10_1_0_grun_v1 import process
-   loaded_process = importlib.import_module(config)
-   process = loaded_process.process
+   loaded_config = importlib.import_module('Analysis.Ntuplizer.'+config)
+   process = loaded_config.process
    
    # menu version
    print("# Menu version: " + process.HLTConfigVersion.tableName.value() + "\n")
-   #loop over paths
    with open(config+".yml", "w") as f:
    # menu version
       f.write("# Menu version: " + process.HLTConfigVersion.tableName.value() + "\n")
       f.write("\n")
-      for hlt_path in sorted(paths[1:]):
+      #loop over paths
+      for hlt_path in unique_paths:
          hlt_path = hlt_path.replace("\n","").strip()
-#         if not "HLT_Mu12_DoublePFJets54MaxDeta1p6_DoubleCaloBTagDeepCSV_p71_v" in hlt_path:
-#            continue 
-         output = processing(process,hlt_path)
+         if not hlt_path: # remove empty lines
+            continue
+         # remove version if any given
+         hlt_path_nov = hlt_path.split("_")
+         hlt_path_nov = "_".join(hlt_path_nov[:-1])+"_v"
+         output = processing(process,hlt_path_nov)
          if output:
             f.write(output)
 
 if __name__ == "__main__":
    # HLT Path (process uses VarParsing, which prevents using command line parameters directly. TO DO: find a solution, or workaround)
-   main()
+   config = input("Enter the name of the menu config file: ") 
+   main(config)

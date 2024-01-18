@@ -561,8 +561,8 @@ void Candidates<T>::Kinematics()
             jerParamSF.set(JME::Binning::Rho, rho_);
 
             jerSF_[n]       = res_sf_.getScaleFactor(jerParamSF);
-            jerSFUp_[n]     = res_sf_. getScaleFactor(jerParamSF,Variation::UP);
-            jerSFDown_[n]   = res_sf_. getScaleFactor(jerParamSF,Variation::DOWN);
+            jerSFUp_[n]     = res_sf_.getScaleFactor(jerParamSF,Variation::UP);
+            jerSFDown_[n]   = res_sf_.getScaleFactor(jerParamSF,Variation::DOWN);
             
          }
          else
@@ -845,12 +845,17 @@ void Candidates<T>::Fill(const edm::Event& event, const edm::EventSetup& setup)
       {
          jecUnc_ = std::unique_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(jecFile_));
       }
-      else
+      else // conddb - see example: https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/PatUtils/plugins/ShiftedPFCandidateProducerForNoPileUpPFMEt.cc
+
       {
-         edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
-         setup.get<JetCorrectionsRecord>().get(jecRecord_,JetCorParColl); 
-         JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
-         jecUnc_ = std::unique_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(JetCorPar));
+         const JetCorrectorParametersCollection& jetCorrParameterSet = setup.getData(jec_tokens_.jecToken);
+         const JetCorrectorParameters& jetCorrParameters = (jetCorrParameterSet)["Uncertainty"];
+         jecUnc_ = std::make_unique<JetCorrectionUncertainty>(jetCorrParameters);
+         
+//         edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
+//         setup.get<JetCorrectionsRecord>().get(jecRecord_,JetCorParColl); 
+//         JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
+//         jecUnc_ = std::unique_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(JetCorPar));
       }
    }
 
@@ -864,9 +869,9 @@ void Candidates<T>::Fill(const edm::Event& event, const edm::EventSetup& setup)
       else
       {
          std::string label_pt = jerRecord_ + "_pt";
-         res_    = JME::JetResolution::get(setup,label_pt);
+         res_    = JME::JetResolution::get(setup, res_tokens_.resolutionsToken);
          std::string label_sf = jerRecord_;
-         res_sf_    = JME::JetResolutionScaleFactor::get(setup,label_sf);
+         res_sf_    = JME::JetResolutionScaleFactor::get(setup, res_tokens_.scaleFactorsToken);
       }
 
       edm::Handle<double> rhoHandler;
@@ -1092,6 +1097,13 @@ void Candidates<T>::AddJecInfo( const std::string & jec )
 }
 
 template <typename T>
+void Candidates<T>::AddJecInfo( const JecESTokens & jec )
+{
+   // Will use confDB
+   jec_tokens_ = jec;
+}
+
+template <typename T>
 void Candidates<T>::AddJecInfo( const std::string & jec , const std::string & jec_file )
 {
    // Will use txt file
@@ -1104,6 +1116,15 @@ void Candidates<T>::AddJerInfo( const std::string & jer, const edm::InputTag & r
 {
    // Will use confDB
    jerRecord_ = jer;
+   rho_collection_ = rho;
+}
+
+template <typename T>
+void Candidates<T>::AddJerInfo( const JerESTokens & jer, const edm::InputTag & rho )
+{
+   // Will use confDB
+   jerRecord_ = jer.record;
+   res_tokens_ = jer;
    rho_collection_ = rho;
 }
 

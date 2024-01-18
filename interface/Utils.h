@@ -23,6 +23,12 @@
 #include <string>
 // 
 // user include files
+#include "JetMETCorrections/Modules/interface/JetResolution.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
+
+
 //
 // class declaration
 //
@@ -37,6 +43,17 @@ namespace analysis {
       struct TitleAlias {
          std::string title;
          std::string alias;
+      };
+      
+      struct JerESTokens {
+         std::string record;
+         JME::JetResolution::Token resolutionsToken;
+         JME::JetResolutionScaleFactor::Token scaleFactorsToken;
+      };
+      
+      struct JecESTokens {
+         std::string record;
+         edm::ESGetToken<JetCorrectorParametersCollection, JetCorrectionsRecord> jecToken;
       };
    }
 }   

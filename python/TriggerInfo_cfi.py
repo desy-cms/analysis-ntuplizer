@@ -47,8 +47,8 @@ def triggerInfo(info_file):
                   trgObjL1MuJet.append(objstr)
                   trgObjL1MuJetType.append('l1muon:l1jet')
    else:
-      print '>>>>>>>> Msg-W: The given YAML file with trigger info does not exist <<<<<<<<'
-      print ''
+      print ('>>>>>>>> Msg-W: The given YAML file with trigger info does not exist <<<<<<<<')
+      print ('')
       
    # sort lists
    triggerPaths.sort()
