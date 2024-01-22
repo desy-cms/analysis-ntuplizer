@@ -2,8 +2,9 @@ import os
 import sys
 import yaml
 from glob import glob
-from ntp_common import ntp_common
-from colors import tcolors
+from Analysis.Ntuplizer.ntp_utils.ntp_common import ntp_common
+#from colors import tcolors
+from Analysis.Ntuplizer.ntp_utils.colors import tcolors
 
 W  = tcolors.W
 R  = tcolors.R

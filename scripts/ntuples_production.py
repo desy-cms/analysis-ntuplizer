@@ -1,10 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import os
 import sys
 
-from Analysis.Ntuplizer.ntp_utils import ntp_parser
-from Analysis.Ntuplizer.ntp_utils import ntp_info
-from Analysis.Ntuplizer.ntp_utils import ntp_crab 
+from Analysis.Ntuplizer.ntp_utils.ntp_parser import ntp_parser
+from Analysis.Ntuplizer.ntp_utils.ntp_info import ntp_info
+from Analysis.Ntuplizer.ntp_utils.ntp_crab import ntp_crab 
 
 
 # -----
@@ -18,7 +18,7 @@ def main():
       info.print_info()
    
    if opts.which == 'crab':
-      crab = ntp_crab(opts)
+      crab = ntp_crab(opts) 
       crab.submit()
       sys.exit()
    

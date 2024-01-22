@@ -1,7 +1,8 @@
 import os
 import sys
 import yaml
-from colors import tcolors
+#from colors import tcolors
+from Analysis.Ntuplizer.ntp_utils.colors import tcolors
 W  = tcolors.W
 R  = tcolors.R
 G  = tcolors.G
@@ -22,12 +23,12 @@ if not 'crab' in os.getenv('PYTHONPATH'):
 
 from CRABAPI.RawCommand import crabCommand
 from CRABClient.ClientExceptions import ClientException
-from httplib import HTTPException
+from http.client import HTTPException
     
 from Analysis.Ntuplizer.crabConfig import crabConfig
 import subprocess
 
-from ntp_common import ntp_common
+from Analysis.Ntuplizer.ntp_utils.ntp_common import ntp_common
 
 
 def short_requestname(reqname):
@@ -60,7 +61,7 @@ class ntp_crab:
       self.__mypath = '/store/user/'+self.__username
       self.__baseoutdir = self.__mypath+common.base_outdir()
       self.__configs = []
-      for dataset, info in self.__datasets.iteritems():
+      for dataset, info in self.__datasets.items():
          # get cross sections if available
          self.__configs.append(self.__crab_config(dataset,info))
 
@@ -77,15 +78,16 @@ class ntp_crab:
             config.Data.runRange = self.__opts.run_range
          if self.__opts.lumi_mask:
             config.Data.lumiMask = self.__opts.lumi_mask
-         
+      
+      config.JobType.outputFiles = [self.__opts.output_file]
       config.JobType.psetName = self.__opts.config             
       config.JobType.numCores = 4                       
       config.JobType.maxMemoryMB = 10000
       config.JobType.inputFiles = [self.__versiondir+'/trigger_info.yml']
       # Passing cmsRun parameters
-      config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type,"triggerInfo="+self.__versiondir+"/trigger_info.yml","version="+self.__opts.version]
+      config.JobType.pyCfgParams = ["year="+str(self.__opts.year),"type="+self.__opts.type,"triggerInfo="+self.__versiondir+"/trigger_info.yml","version="+self.__opts.version,"outputFile="+self.__opts.output_file]
       if info:
-         for var,value in info.iteritems():
+         for var,value in info.items():
             if var=='xsection_pb':
                xs = value
                if not value:
@@ -149,13 +151,14 @@ class ntp_crab:
             os.remove(pyc)
         
          proj_dir =cfg.General.workArea+"/crab_"+cfg.General.requestName
+         
          crabCommand('submit',config=cfg)
          
          # ntuple_crab log file
          import subprocess
          cmd = ['crab', '--version']
          p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-         crab_version = p.stdout.read()
+         crab_version = p.stdout.read().decode('utf-8').replace(' ','').replace('\n','')
          if os.path.exists(proj_dir):
             with open(proj_dir+"/ntuple_crab.log","w") as f:
                f.write("DATASET = "+dataset+"\n")

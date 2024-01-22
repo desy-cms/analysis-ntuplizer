@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
 import ast
@@ -8,7 +8,7 @@ import glob
 def crab_status(cdir):
    status = subprocess.Popen(['crab','status','-d',cdir],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
    stdout,stderr = status.communicate()
-   stdout = stdout.split('\n')
+   stdout = stdout.decode('utf-8').split('\n')
    finished = ''
    for line in stdout:
       if not finished and 'Jobs status:                    finished' in line:
@@ -50,7 +50,7 @@ def crab_log(cdir,ntp_name):
    status = subprocess.Popen(['crab','report','-d',cdir],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
    stdout,stderr = status.communicate()
    print("done!")
-   report = stdout
+   report = stdout.decode('utf-8')
    crablog = cdir+'/crab.log'
    ntplog = cdir+"/ntuple_crab.log"
    myline = ''
@@ -78,7 +78,7 @@ def crab_log(cdir,ntp_name):
       crab_dest = subprocess.Popen(['grep','CRAB_Destination','-d',cdir],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
       grep_ntuple_path = subprocess.Popen(['grep','CRAB_Destination',jlog ],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
       stdout_grep,stderr_grep = grep_ntuple_path.communicate()
-      grep_ntp = stdout_grep.split(",")[-1]
+      grep_ntp = stdout_grep.decode('utf-8').split(",")[-1]
       grep_ntp = grep_ntp.replace('"','')
       grep_ntp = grep_ntp.replace(' ','')
       root_pos = grep_ntp.find("ntuple_"+jid+".root")
@@ -132,9 +132,9 @@ def crab_log(cdir,ntp_name):
    results = ast.literal_eval(myline.split('Result: ')[1])
    randl = results['result'][0]['runsAndLumis']
    
-   fileslist = [value.replace("\n","") for key,value in ntuples_list.iteritems()]
+   fileslist = [value.replace("\n","") for key,value in ntuples_list.items()]
 #    fileslist = []
-#    for key,value in randl.iteritems():
+#    for key,value in randl.items():
 #       if key.startswith('0-'):
 #          continue
 #       filename = value[0]['lfn']
@@ -203,7 +203,7 @@ def finished_jobs(cdir):
    print("Getting list of finished jobs... ")
    status = subprocess.Popen(['crab','status','-d',cdir,'--long'],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
    stdout,stderr = status.communicate()
-   stdout = stdout.split('\n')
+   stdout = stdout.decode('utf-8').split('\n')
    # check whether lines are from the job status table
    jobs_table = False
    job_status = {}
@@ -225,7 +225,7 @@ def finished_jobs(cdir):
       # get the job id and its status
       job_status[line_split[0]] = line_split[1]
       
-   runs_done = [ job for job, status in job_status.iteritems() if status=="finished"]
+   runs_done = [ job for job, status in job_status.items() if status=="finished"]
    print("done!")
    return runs_done
 

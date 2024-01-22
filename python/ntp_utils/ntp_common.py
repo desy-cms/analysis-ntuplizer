@@ -2,7 +2,8 @@ import os
 import sys
 import yaml
 from glob import glob
-from colors import tcolors
+#from colors import tcolors
+from Analysis.Ntuplizer.ntp_utils.colors import tcolors
 import subprocess
 
 W  = tcolors.W
@@ -33,10 +34,10 @@ class ntp_common:
          return dsa
       if not self.__opts.dataset.startswith('/'):
          return self.__opts.dataset
-      for alias,datasets in self.__datasetsdict.iteritems():
+      for alias,datasets in self.__datasetsdict.items():
          if not datasets: # for some reason datasets = None appears!!!???
             continue
-         for dataset,values in datasets.iteritems():
+         for dataset,values in datasets.items():
             if dataset == self.__opts.dataset:
                # get the alias of the existing dataset block
                dsa = alias
@@ -141,7 +142,7 @@ class ntp_common:
       dss = {}
       if not self.__datasetyml:
          return dss
-      version = self.__versions[-1] if self.__opts.version<0 else self.__opts.version
+      # version = self.__versions[-1] if self.__opts.version<0 else self.__opts.version
       with open(self.__datasetyml) as f:
          dss = yaml.load(f, Loader=yaml.FullLoader)
       if len(dss)==0:
@@ -167,11 +168,11 @@ class ntp_common:
          return
       print('Available datasets in the list')
       print(' -> '+C+self.__datasetalias+W)
-      for dataset,info in ds.iteritems():
+      for dataset,info in ds.items():
          print('     - '+G+dataset+W)
          if not info:
             continue
-         for var, value in info.iteritems():
+         for var, value in info.items():
             print('       * ' + var + ' = ' +str(value))
       self.print_yaml()
 
@@ -182,7 +183,8 @@ class ntp_common:
    def username(self):
       checkusername = subprocess.Popen(['crab', 'checkusername'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
       stdout,stderr = checkusername.communicate()
-      return stdout.split('Username is: ')[1].rstrip()
+      the_name = stdout.decode('utf-8').split(':')[1].replace(' ','').replace('\n','')
+      return the_name
       
    def base_outdir(self):
       bo = ''

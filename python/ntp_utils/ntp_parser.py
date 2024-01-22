@@ -2,7 +2,8 @@
 from argparse import ArgumentParser
 from argparse import HelpFormatter
 
-from colors import tcolors
+from Analysis.Ntuplizer.ntp_utils.colors import tcolors
+
 W  = tcolors.W
 R  = tcolors.R
 G  = tcolors.G
@@ -45,6 +46,7 @@ def ntp_parser():
    crab_opt.add_argument("-u"  , dest="units"                    , type=int           , help=C+"number of units per job; MC if > 0, FileBased splitting"+W)
    crab_opt.add_argument("-r"  , dest="run_range"                                     , help=C+"run range (e.g. 193093-193999,198050,199564) - data only"+W)
    crab_opt.add_argument("-j"  , dest="lumi_mask"                                     , help=C+"URL address or the path to a JSON file on disk  - data only"+W)
+   crab_opt.add_argument("-o"  , dest="output_file", default="ntuple.root"            , help=C+"Name of the output rootfile"+W)
 
    ## suboption info
    info_opt = suboptions.add_parser('info',\
