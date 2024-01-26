@@ -1,7 +1,6 @@
 import FWCore.ParameterSet.Config as cms
-import FWCore.ParameterSet.Config as cms
 
-btagAlgorithms = cms.PSet(
+BTagAlgorithms_AK4CHS = cms.PSet(
     BTagAlgorithms = cms.vstring   (
                 'pfDeepCSVJetTags:probudsg',
                 'pfDeepCSVJetTags:probc',
@@ -14,6 +13,12 @@ btagAlgorithms = cms.PSet(
                 'pfDeepFlavourJetTags:probb',
                 'pfDeepFlavourJetTags:probbb',
                 'pfDeepFlavourJetTags:problepb',
+                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probb',
+                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probc',
+                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probuds',
+                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probg',
+                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probmu',
+                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probele',
     ),
     BTagAlgorithmsAlias = cms.vstring   (
                 'btag_deepcsv_light',
@@ -27,6 +32,31 @@ btagAlgorithms = cms.PSet(
                 'btag_deepjet_b',
                 'btag_deepjet_bb',
                 'btag_deepjet_lepb',
+                'btag_pnet_b',
+                'btag_pnet_c',
+                'btag_pnet_uds',
+                'btag_pnet_g',
+                'btag_pnet_mu',
+                'btag_pnet_ele',
+    ),
+)
+
+BTagAlgorithms_AK4Puppi = cms.PSet(
+    BTagAlgorithms = cms.vstring   (
+                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probb',
+                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probc',
+                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probuds',
+                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probg',
+                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probmu',
+                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probele',
+    ),
+    BTagAlgorithmsAlias = cms.vstring   (
+                'btag_pnet_b',
+                'btag_pnet_c',
+                'btag_pnet_uds',
+                'btag_pnet_g',
+                'btag_pnet_mu',
+                'btag_pnet_ele',
     ),
 )
 
