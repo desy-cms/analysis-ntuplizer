@@ -4,7 +4,7 @@ from WMCore.Configuration import Configuration
 # Used in a main script the default values can be changed accordingly.
 # The idea is to avoid a large main script.
 
-def crabConfig():
+def crab_config():
    config = Configuration()
    
    # -- General

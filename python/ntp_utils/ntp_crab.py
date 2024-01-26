@@ -25,7 +25,7 @@ from CRABAPI.RawCommand import crabCommand
 from CRABClient.ClientExceptions import ClientException
 from http.client import HTTPException
     
-from Analysis.Ntuplizer.crabConfig import crabConfig
+from Analysis.Ntuplizer.CrabConfig import crab_config
 import subprocess
 
 from Analysis.Ntuplizer.ntp_utils.ntp_common import ntp_common
@@ -69,7 +69,7 @@ class ntp_crab:
       dataset_pd = dataset.split('\n')[0]
       dataset_name = dataset_pd.split('/')[1]
       dataset_cond = dataset_pd.split('/')[2]
-      config = crabConfig()
+      config = crab_config()
       config.General.workArea += '_' + self.__process        
       config.Data.outLFNDirBase   = self.__baseoutdir + '/'
       
