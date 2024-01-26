@@ -8,7 +8,7 @@ import FWCore.ParameterSet.Config as cms
 import os
 import yaml
 
-def triggerInfo(info_file):
+def trigger_info_reader(info_file):
    info = dict()
    triggerConditions = cms.vstring()     # paths trigger results filter
    triggerPaths = cms.vstring()          # paths for the ntuplizer

@@ -1,5 +1,9 @@
 import FWCore.ParameterSet.Config as cms
 
+# Why these do not appear in the ntuple???
+# pfParticleNetFromMiniAODAK4CHSCentralJetTags:probmu',
+# pfParticleNetFromMiniAODAK4CHSCentralJetTags:probele',
+
 BTagAlgorithms_AK4CHS = cms.PSet(
     BTagAlgorithms = cms.vstring   (
                 'pfDeepCSVJetTags:probudsg',

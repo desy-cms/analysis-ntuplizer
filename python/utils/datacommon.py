@@ -3,7 +3,7 @@ import sys
 import yaml
 from glob import glob
 #from colors import tcolors
-from Analysis.Ntuplizer.ntp_utils.colors import tcolors
+from Analysis.Ntuplizer.utils.colors import tcolors
 import subprocess
 
 W  = tcolors.W
@@ -16,7 +16,7 @@ Y  = tcolors.Y
 BOLD = tcolors.BOLD
 UNDERLINE = tcolors.UNDERLINE
 
-class ntp_common:
+class DataCommon:
    def __init__(self,opts):
       self.__opts = opts
       self.__ntuplesdir = self.__ntuples_dir()

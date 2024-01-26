@@ -1,8 +1,10 @@
 import os
 import sys
 import yaml
+import subprocess
+
 #from colors import tcolors
-from Analysis.Ntuplizer.ntp_utils.colors import tcolors
+from Analysis.Ntuplizer.utils.colors import tcolors
 W  = tcolors.W
 R  = tcolors.R
 G  = tcolors.G
@@ -25,10 +27,9 @@ from CRABAPI.RawCommand import crabCommand
 from CRABClient.ClientExceptions import ClientException
 from http.client import HTTPException
     
-from Analysis.Ntuplizer.CrabConfig import crab_config
-import subprocess
+from Analysis.Ntuplizer.utils.crab_config import crab_config
 
-from Analysis.Ntuplizer.ntp_utils.ntp_common import ntp_common
+from Analysis.Ntuplizer.utils.datacommon import DataCommon
 
 
 def short_requestname(reqname):
@@ -43,9 +44,9 @@ def short_requestname(reqname):
 
 # Class for ntuples production crab submission
 # (not sure this is way for the constructor is a good way)
-class ntp_crab:
+class CrabJob:
    def __init__(self,opts):
-      common = ntp_common(opts)
+      common = DataCommon(opts)
       self.__opts = opts
       self.__basedir = common.ntuples_dir()
       self.__datasetdir = common.dataset_dir()

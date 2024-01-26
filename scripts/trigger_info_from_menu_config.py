@@ -14,7 +14,7 @@ import argparse
 
 from pathlib import Path
 
-from Analysis.Ntuplizer.hlt_paths_info import hlt_paths_info
+from Analysis.Ntuplizer.utils.hlt_paths_info import hlt_paths_info
 
 def main(config_module_name,paths_filename):
    config = config_module_name

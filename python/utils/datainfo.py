@@ -2,9 +2,9 @@ import os
 import sys
 import yaml
 from glob import glob
-from Analysis.Ntuplizer.ntp_utils.ntp_common import ntp_common
+from Analysis.Ntuplizer.utils.datacommon import DataCommon
 #from colors import tcolors
-from Analysis.Ntuplizer.ntp_utils.colors import tcolors
+from Analysis.Ntuplizer.utils.colors import tcolors
 
 W  = tcolors.W
 R  = tcolors.R
@@ -19,9 +19,9 @@ UNDERLINE = tcolors.UNDERLINE
 
 # Class for ntuples production info
 # (not sure this is way for the constructor is a good way)
-class ntp_info:
+class DataInfo:
    def __init__(self,opts):
-      self.__common = ntp_common(opts)
+      self.__common = DataCommon(opts)
       self.__opts = opts
       
    def print_info(self):
