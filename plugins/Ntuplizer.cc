@@ -562,17 +562,7 @@ Ntuplizer::~Ntuplizer()
 void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup)
 {
    using namespace edm;
-   
-//    typedef std::vector<Provenance const*> Provenances;
-//    Provenances provenances;
-//    event.getAllProvenance(provenances);
-//    
-//    for(Provenances::iterator itProv = provenances.begin(), itProvEnd = provenances.end();
-//                              itProv != itProvEnd;
-//                            ++itProv) {
-//       std::cout << (*itProv)->moduleLabel() << std::endl;
-//                            }
-//    
+
    // Event info
    eventinfo_ -> Fill(event);
    
@@ -1280,6 +1270,8 @@ Ntuplizer::endRun(edm::Run const& run, edm::EventSetup const& setup)
 
 void  Ntuplizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup)
 {
+
+   std::cout << "========================== start beginLuminosityBlock =========================" << std::endl;   
 //    // Initialize HLTConfig every lumi block
 //    if ( do_triggeraccepts_ )
 //    {
@@ -1288,6 +1280,7 @@ void  Ntuplizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::Eve
 //          triggeraccepts_collections_[i]  -> LumiBlock(lumi,setup);
 //       }
 //    }
+   std::cout << "========================== finish beginLuminosityBlock =========================" << std::endl;   
 }
 
 

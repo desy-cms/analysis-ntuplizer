@@ -58,6 +58,7 @@ EventInfo::EventInfo(edm::Service<TFileService> & fs)
    do_gen_  = false;
    do_lumi_ = false;
    do_rho_  = false;
+   do_prefw_ = false;
    
    
 }
@@ -77,6 +78,7 @@ EventInfo::EventInfo(TFileDirectory & dir)
    do_pu_   = false;
    do_gen_  = false;
    do_lumi_ = false;
+   do_prefw_ = false;
    
 }
 
@@ -97,13 +99,13 @@ void EventInfo::Fill(const edm::Event& event)
    using namespace edm;
    
    const edm::EventAuxiliary evt = event.eventAuxiliary();
-   
+
    event_ = evt.event();
    run_   = evt.run();
    lumi_  = evt.luminosityBlock();
    orbit_ = evt.orbitNumber();
    bx_    = evt.bunchCrossing();
-   
+
    if ( do_pu_ )
    {
       ReadPileupInfo(event);
@@ -113,7 +115,7 @@ void EventInfo::Fill(const edm::Event& event)
       n_pu_ = -1;
       n_true_pu_ = -1;
    }
-      
+
    if ( do_gen_ )
    {
       ReadGenEventInfo(event);
@@ -128,7 +130,7 @@ void EventInfo::Fill(const edm::Event& event)
       pdfx2_      = -1.;
               
    }
-   
+
    if ( do_lumi_ )
    {
       ReadLumiScalers(event);
