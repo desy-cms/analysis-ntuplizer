@@ -12,7 +12,7 @@ import FWCore.ParameterSet.Config as cms
 from Configuration.StandardSequences.Eras import eras
 from Configuration.AlCa.GlobalTag import GlobalTag
 
-from Analysis.Ntuplizer.BTagAlgorithms_cfi import BTagAlgorithms_AK4CHS
+from Analysis.Ntuplizer.btag_algorithms_cfi import BTagAlgorithms_AK4CHS
 
 from Analysis.Ntuplizer.utils.trigger_info import trigger_info_reader
 from Analysis.Ntuplizer.utils.ntuplizer_parser import ntuplizer_parser
@@ -48,13 +48,13 @@ process.TFileService = cms.Service('TFileService',
 trigger_info = trigger_info_reader(command_line_options.triggerInfo)
 
 # Apply JES corrections
-process.load('Analysis.Ntuplizer.JetCorrections_cff')
+process.load('Analysis.Ntuplizer.jet_corrections_cff')
 
 # # Retrieve b jet regression correction factors
 # process.load('Analysis.Ntuplizer.BJetRegression_cff')
 
 ## Event extras
-# process.load('Analysis.Ntuplizer.EventExtras_cff')
+# process.load('Analysis.Ntuplizer.event_extras_cff')
 
 # Trigger filter: FOR DATA ONLY!!!
 process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
