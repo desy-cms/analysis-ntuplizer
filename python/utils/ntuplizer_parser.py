@@ -13,19 +13,19 @@ def ntuplizer_parser(yml_file=None):
    command_line_parser = VarParsing.VarParsing()
 
    command_line_parser.register('maxEvents',
-                  100,
+                 100,
                   VarParsing.VarParsing.multiplicity.singleton,
                   VarParsing.VarParsing.varType.int,
                   "maximum number of events")
 
    command_line_parser.register('globalTag',
-                  '130X_dataRun3_PromptAnalysis_v1',
+                  '150X_dataRun3_v2',
                   VarParsing.VarParsing.multiplicity.singleton,
                   VarParsing.VarParsing.varType.string,
-                  "condition global tag for the job (\"130X_dataRun3_PromptAnalysis_v1\" is default)")
+                  "condition global tag for the job (\"150X_dataRun3_v2\" is default)")
                   
    command_line_parser.register('year',
-                  2023,
+                  2024,
                   VarParsing.VarParsing.multiplicity.singleton,
                   VarParsing.VarParsing.varType.int,
                   "year of data taking")
@@ -55,7 +55,7 @@ def ntuplizer_parser(yml_file=None):
                   "name for the output root file (\"ntuple.root\" is default)")
 
    command_line_parser.register('inputFiles',
-                  '/store/data/Run2023D/JetMET0/MINIAOD/22Sep2023_v2-v1/2540000/012f384f-443c-4ba1-af3e-86d5ef25afc8.root',
+                  '/store/data/Run2024G/JetMET0/MINIAOD/PromptReco-v1/000/385/801/00000/0302af56-b957-4ae2-a4a8-685177661997.root',
                   VarParsing.VarParsing.multiplicity.list,
                   VarParsing.VarParsing.varType.string,
                   "files to process")
@@ -67,7 +67,7 @@ def ntuplizer_parser(yml_file=None):
                   "JSON file (do not use with CRAB!)")
 
    command_line_parser.register('version',
-                    '1',
+                    None,
                     VarParsing.VarParsing.multiplicity.singleton,
                     VarParsing.VarParsing.varType.int,
                     "ntuple production version")
