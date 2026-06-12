@@ -29,7 +29,7 @@ import argparse
 import csv
 import os
 import subprocess
-
+import sys
 
 def parse_args():
     """Parse command-line arguments."""
@@ -68,7 +68,8 @@ def main():
     unique_keys = set()
 
     with open(args.csv_file, newline="", encoding="utf-8") as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
+        filtered_lines = (line for line in csvfile if not line.lstrip().startswith('#'))
+        reader = csv.DictReader(filtered_lines, delimiter=',', quotechar='"')
         if "hlt_key" not in reader.fieldnames:
             raise ValueError("Input CSV must contain a column named 'hlt_key'.")
         for row in reader:
@@ -89,19 +90,33 @@ def main():
             for hlt_menu in unique_list:
                 writer.writerow([hlt_menu])
 
+    config_hlt_paths = {}
+    unique_hlt_paths = set()
     for hlt_menu in unique_list:
         # Generate a consistent output filename for each matching HLT menu key.
-        hlt_config_py = hlt_menu.lstrip('/').replace('/', '_').replace('.', 'p').lower() + '.py'
-        hlt_config_path = os.path.join(args.output_dir, hlt_config_py)
+        hlt_config = hlt_menu.lstrip('/').replace('/', '_').replace('.', 'p').lower()
+        hlt_config_file = os.path.join(args.output_dir, hlt_config + '.py')
 
-        with open(hlt_config_path, "w", encoding="utf-8") as outfile:
+        with open(hlt_config_file, "w", encoding="utf-8") as outfile:
             # Execute commands sequentially; wait for each hltGetConfiguration to finish before continuing
             proc = subprocess.Popen(["hltGetConfiguration", f"adg:{hlt_menu}"], stdout=outfile)
             proc.wait()
             if proc.returncode != 0:
                 raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
-        print(f"Generated {hlt_config_py} from hlt_menu={hlt_menu}")
+        print(f"Generated {hlt_config_file} from hlt_menu={hlt_menu}")
+        
+        # looking at the HLT Paths in the generated config file
+        sys.argv = ['dummy.py']
+        namespace = {}
+        with open(hlt_config_file) as f:
+            code = f.read()
+        exec(compile(code, "dummy.py", "exec"), namespace)
+        process = namespace["process"]
+        config_hlt_paths[hlt_config] = [x.rsplit('_v', 1)[0]+'_v' for x in process.pathNames().split(" ") if x.startswith("HLT_")] # keeping _v at the end of the path name
+        for hlt_path in config_hlt_paths[hlt_config]:
+            unique_hlt_paths.add(hlt_path)
+    print(config_hlt_paths.keys())
 
 
 if __name__ == "__main__":
