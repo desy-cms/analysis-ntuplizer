@@ -113,8 +113,9 @@ def main():
             code = f.read()
         exec(compile(code, "dummy.py", "exec"), namespace)
         process = namespace["process"]
-        config_hlt_paths[hlt_config] = [x.rsplit('_v', 1)[0]+'_v' for x in process.pathNames().split(" ") if x.startswith("HLT_")] # keeping _v at the end of the path name
+        config_hlt_paths[hlt_config] = [x for x in process.pathNames().split(" ") if x.startswith("HLT_")]
         for hlt_path in config_hlt_paths[hlt_config]:
+            
             unique_hlt_paths.add(hlt_path)
     print(config_hlt_paths.keys())
 
