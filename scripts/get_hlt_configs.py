@@ -4,15 +4,30 @@ Read a CSV file, collect unique HLT menu keys matching a filter, and
 generate local python configuration files using the `hltGetConfiguration`
 utility.
 
+This script scans the CSV `hlt_key` column for values containing the
+requested substring filter. For each unique matching HLT menu key, it
+invokes `hltGetConfiguration adg:<hlt_menu>` and writes the resulting
+Python configuration to a local file.
+
 Each matching `hlt_key` value is normalized into a filename by:
 - stripping a leading '/'
 - replacing '/' with '_'
 - replacing '.' with 'p'
 - converting to lowercase
 - appending '.py'
+
+Example usage:
+    ./get_hlt_configs.py --csv menus.csv --filter /cdaq/physics/Run2024 --output-dir ./hlt_configs
+    ./get_hlt_configs.py --csv menus.csv --filter /cdaq/physics/Run2024 --output-dir ./hlt_configs --menus-csv matched_menus.csv
+
+The output files are written into the specified output directory with
+one generated Python configuration file per unique matching HLT menu.
+If `--menus-csv` is provided, the final list of matched HLT menus is also
+saved to the requested CSV file.
 """
 import argparse
 import csv
+import os
 import subprocess
 
 
@@ -33,8 +48,19 @@ def parse_args():
         required=True,
         help="Substring filter to apply to the hlt_key column",
     )
+    parser.add_argument(
+        "--output-dir",
+        dest="output_dir",
+        default="./hlt_configs",
+        help="Directory where generated HLT config python files will be saved",
+    )
+    parser.add_argument(
+        "--menus-csv",
+        dest="menus_csv",
+        default=None,
+        help="Optional CSV file to save the final list of matched HLT menus",
+    )
     return parser.parse_args()
-
 
 def main():
     """Process the input CSV and generate HLT configuration files."""
@@ -50,12 +76,25 @@ def main():
             if args.filter_string in hlt_key:
                 unique_keys.add(hlt_key)
 
+    os.makedirs(args.output_dir, exist_ok=True)
     unique_list = sorted(unique_keys)
+
+    if args.menus_csv is not None:
+        menu_csv_path = args.menus_csv
+        if not menu_csv_path.endswith('.csv'):
+            menu_csv_path += '.csv'
+        with open(menu_csv_path, 'w', newline='', encoding='utf-8') as menu_out:
+            writer = csv.writer(menu_out)
+            writer.writerow(['hlt_menu'])
+            for hlt_menu in unique_list:
+                writer.writerow([hlt_menu])
+
     for hlt_menu in unique_list:
         # Generate a consistent output filename for each matching HLT menu key.
         hlt_config_py = hlt_menu.lstrip('/').replace('/', '_').replace('.', 'p').lower() + '.py'
+        hlt_config_path = os.path.join(args.output_dir, hlt_config_py)
 
-        with open(hlt_config_py, "w", encoding="utf-8") as outfile:
+        with open(hlt_config_path, "w", encoding="utf-8") as outfile:
             # Execute commands sequentially; wait for each hltGetConfiguration to finish before continuing
             proc = subprocess.Popen(["hltGetConfiguration", f"adg:{hlt_menu}"], stdout=outfile)
             proc.wait()
