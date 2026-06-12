@@ -1,6 +1,14 @@
 import importlib
 import re
 
+# Perhaps the problem is this: VarParsing.parseArguments() expects to be run from cmsRun, where sys.argv has a very specific format - cmsRun config.py
+# But running here there is no python file being parsed. By using these lines below, things seem to run fine withing python
+# import sys
+# sys.argv = ['dummy.py']
+# import importlib
+# loaded_config = importlib.import_module("Analysis.Ntuplizer.cdaq_physics_run2024_2e34_v1p0p3_hlt_v2")
+
+
 def hlt_paths_info(config,hlt_paths):
     # importing module using string with importlib.import_module
     if config.endswith(".py"):
