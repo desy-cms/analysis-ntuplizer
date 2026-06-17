@@ -79,7 +79,7 @@ def main():
 
     config_hlt_paths = {}
     unique_hlt_paths = set()
-    for hlt_menu in unique_list:
+    for index, hlt_menu in enumerate(unique_list, start=1):
         # Generate a consistent output filename for each matching HLT menu key.
         hlt_config = hlt_menu.lstrip('/').replace('/', '_').replace('.', 'p').lower()
         hlt_config_file = os.path.join(args.output_dir, hlt_config + '.py')
@@ -91,7 +91,7 @@ def main():
             if proc.returncode != 0:
                 raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
-        print(f"Generated {hlt_config_file} from hlt_menu={hlt_menu}")
+        print(f"[{index}/{len(unique_list)}] Generated {hlt_config_file} from hlt_menu={hlt_menu}")
         
     #     # looking at the HLT Paths in the generated config file
     #     sys.argv = ['dummy.py']
