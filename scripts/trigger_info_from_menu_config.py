@@ -8,24 +8,30 @@
 # Analysis/Ntuplizer/python
 
 import sys
+import os
+import glob
 import argparse
 from Analysis.Ntuplizer.utils.hlt_paths_info import hlt_paths_info
 
 def main(args):
-   # Split the values into a list
-   configs = args.configs.split(",")
+   
    paths_filename = args.paths
    with open(paths_filename) as menu_config:
       paths = menu_config.readlines()
-   
+      
+   configs = glob.glob(args.configs)
+   configs.sort()
+
    hlt_menu_versions = {}
    menu_objects = {}
    hlt_paths_objects = {}
-   for config in configs:
+   total_configs = len(configs)
+   for idx, config in enumerate(configs, start=1):
+
       if not config: 
          continue
-      if config.endswith(".py"):
-         config = config.replace(".py", "")
+      # if config.endswith(".py"):
+      #    config = config.replace(".py", "")
       # output_yaml = config.split('.')[-1]+".yml"
       # read file with hlt config and hlt paths
       
@@ -40,8 +46,21 @@ def main(args):
          # As this is a dictionary, if the same path is in different menus, it will be overwritten, but the last one will be kept
          # it should be safe by construction, for the same path should have the same modules in different menus
          hlt_paths_objects[hlt_path_v] = hlt_path
+      # progress bar 
+      if total_configs:
+         progress = (idx / total_configs) * 100
+      else:
+         progress = 100.0
+      # progress bar on same line, filled with 'x'
+      bar_len = total_configs
+      filled = int((progress / 100.0) * bar_len)
+      bar = "x" * filled + "-" * (bar_len - filled)
+      print(f"Processing config {idx}/{total_configs} ({progress:.1f}%) [{bar}]", end="\r", file=sys.stderr, flush=True)
+
    
    # Save the trigger info to a YAML file
+   # finish progress line
+   print(file=sys.stderr)
    with open(args.output, "w") as f:
       f.write("#==================================================================\n")
       f.write("# Trigger information for ntuple production\n")
@@ -60,9 +79,9 @@ if __name__ == "__main__":
    # HLT Path (process uses VarParsing, which prevents using command line parameters directly. TO DO: find a solution, or workaround; see below)
    # Create an argument parser
    parser = argparse.ArgumentParser()
-   # Add an argument for the comma-separated values
+   # Add an argument for the comma-separated values or glob pattern
    parser.add_argument("--paths", default="hlt_paths.txt", help="file with list of paths")
-   parser.add_argument("--configs", help="comma-separated values fo configuration modules name")
+   parser.add_argument("--configs", default="./hlt_configs/*.py", help="glob pattern for configuration module files\n!!! use quotes in the command line to avoid shell expansion")
    parser.add_argument("--output", default="output_yaml.yml", help="output yaml file name")
    # Parse the arguments
    args = parser.parse_args()
