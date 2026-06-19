@@ -1,5 +1,6 @@
 import importlib
 import re
+import sys
 
 # Perhaps the problem is this: VarParsing.parseArguments() expects to be run from cmsRun, where sys.argv has a very specific format - cmsRun config.py
 # But running here there is no python file being parsed. By using these lines below, things seem to run fine withing python
@@ -11,10 +12,20 @@ import re
 
 def hlt_paths_info(config,hlt_paths):
     # importing module using string with importlib.import_module
-    if config.endswith(".py"):
-        config = config.replace(".py", "")    
-    loaded_config = importlib.import_module(config)
-    process = loaded_config.process
+    # config_module = config
+    # if config_module.endswith(".py"):
+    #     config_module = config_module.replace(".py", "")
+    # config_module = config_module.replace('./','')
+    # config_module = config_module.replace('/','.')
+    # loaded_config = importlib.import_module(config_module)
+    # process = loaded_config.process
+    
+    sys.argv = ['dummy.py']
+    namespace = {}
+    with open(config) as f:
+        code = f.read()
+    exec(compile(code, "dummy.py", "exec"), namespace)
+    process = namespace["process"]
     
     outputs = []
     
