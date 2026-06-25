@@ -37,13 +37,11 @@ using namespace analysis::ntuple;
 //
 // constructors and destructor
 //
-EventInfo::EventInfo()
-{
+EventInfo::EventInfo() {
    // default constructor
 }
 
-EventInfo::EventInfo(edm::Service<TFileService> & fs)
-{
+EventInfo::EventInfo(edm::Service<TFileService> & fs) {
    std::string name = "EventInfo";
    tree_ = fs->make<TTree>(name.c_str(),name.c_str());
    
@@ -63,8 +61,7 @@ EventInfo::EventInfo(edm::Service<TFileService> & fs)
    
 }
 
-EventInfo::EventInfo(TFileDirectory & dir)
-{
+EventInfo::EventInfo(TFileDirectory & dir) {
    std::string name = "EventInfo";
    tree_ = dir.make<TTree>(name.c_str(),name.c_str());
    
@@ -78,12 +75,14 @@ EventInfo::EventInfo(TFileDirectory & dir)
    do_pu_   = false;
    do_gen_  = false;
    do_lumi_ = false;
+   do_rho_  = false;
    do_prefw_ = false;
+
+
    
 }
 
-EventInfo::~EventInfo()
-{
+EventInfo::~EventInfo() {
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 }
@@ -94,8 +93,7 @@ EventInfo::~EventInfo()
 //
 
 // ------------ method called for each event  ------------
-void EventInfo::Fill(const edm::Event& event)
-{
+void EventInfo::Fill(const edm::Event& event) {
    using namespace edm;
    
    const edm::EventAuxiliary evt = event.eventAuxiliary();
@@ -106,18 +104,15 @@ void EventInfo::Fill(const edm::Event& event)
    orbit_ = evt.orbitNumber();
    bx_    = evt.bunchCrossing();
 
-   if ( do_pu_ )
-   {
+   if ( do_pu_ ) {
       ReadPileupInfo(event);
    }
-   else
-   {
+   else {
       n_pu_ = -1;
       n_true_pu_ = -1;
    }
 
-   if ( do_gen_ )
-   {
+   if ( do_gen_ ) {
       ReadGenEventInfo(event);
    }
    else
@@ -127,42 +122,36 @@ void EventInfo::Fill(const edm::Event& event)
       pdfid1_     = 0;
       pdfid2_     = 0;
       pdfx1_      = -1.;
-      pdfx2_      = -1.;
-              
+      pdfx2_      = -1.;        
    }
 
-   if ( do_lumi_ )
-   {
+   if ( do_lumi_ ) {
       ReadLumiScalers(event);
    }
-   
-   if ( do_rho_ )
-   {
+
+   if ( do_rho_ ) {
       ReadFixedGridRhoInfo(event);
    }
       
-   if ( do_prefw_ )
-   {
+   if ( do_prefw_ ) {
       ReadPrefiringWeight(event);
    }
-      
+
    tree_ -> Fill();
-  
+
 }
 
 // ------------ method called once each job just before starting event loop  ------------
-void EventInfo::Init()
-{
+void EventInfo::Init() {
+   // init
 }
 
 // ------------ other methods ----------------
-TTree * EventInfo::Tree()
-{
+TTree * EventInfo::Tree() {
    return tree_;
 }
 
-void EventInfo::PileupInfo(const edm::InputTag& tag)
-{
+void EventInfo::PileupInfo(const edm::InputTag& tag) {
    do_pu_ = true;
    
    puInfo_ = tag;
@@ -172,27 +161,22 @@ void EventInfo::PileupInfo(const edm::InputTag& tag)
    
 }
 
-void EventInfo::ReadPileupInfo(const edm::Event& event)
-{
+void EventInfo::ReadPileupInfo(const edm::Event& event) {
    using namespace edm;
-   
    // 
    edm::Handle<std::vector<PileupSummaryInfo> > handler;
    event.getByLabel(puInfo_, handler);
 
    std::vector<PileupSummaryInfo> pileup_infos = *(handler.product());
    
-// Take the first entry - should be enough
+   // Take the first entry - should be enough
    PileupSummaryInfo pileup_info = pileup_infos.at(0);
    n_true_pu_ = pileup_info.getTrueNumInteractions();
-   n_pu_      = pileup_info.getPU_NumInteractions();
-    
-   
+   n_pu_      = pileup_info.getPU_NumInteractions(); 
 }
 
 // GenEventInfoProduct
-void EventInfo::GenEventInfo(const edm::InputTag& tag)
-{
+void EventInfo::GenEventInfo(const edm::InputTag& tag) {
    do_gen_ = true;
    
    genInfo_ = tag;
@@ -206,8 +190,7 @@ void EventInfo::GenEventInfo(const edm::InputTag& tag)
    
 }
 
-void EventInfo::ReadGenEventInfo(const edm::Event& event)
-{
+void EventInfo::ReadGenEventInfo(const edm::Event& event) {
    using namespace edm;
    
    // 
@@ -227,8 +210,7 @@ void EventInfo::ReadGenEventInfo(const edm::Event& event)
    
 }
 
-void EventInfo::LumiScalersInfo(const edm::InputTag& tag)
-{
+void EventInfo::LumiScalersInfo(const edm::InputTag& tag) {
    do_lumi_  = true;
    
    lumiScalers_ = tag;
@@ -238,8 +220,7 @@ void EventInfo::LumiScalersInfo(const edm::InputTag& tag)
    tree_->Branch("lumiPileup", &lumiPU_,"lumiPileup/F");
 }
 
-void EventInfo::ReadLumiScalers(const edm::Event& event)
-{
+void EventInfo::ReadLumiScalers(const edm::Event& event) {
    edm::Handle<LumiScalersCollection> lumis;
    event.getByLabel(lumiScalers_, lumis);
    
@@ -248,8 +229,7 @@ void EventInfo::ReadLumiScalers(const edm::Event& event)
    
 }
 
-void EventInfo::FixedGridRhoInfo(const edm::InputTag& tag)
-{
+void EventInfo::FixedGridRhoInfo(const edm::InputTag& tag) {
    do_rho_ = true;
    rho_collection_ = tag;
    
@@ -257,16 +237,14 @@ void EventInfo::FixedGridRhoInfo(const edm::InputTag& tag)
    
 }
 
-void EventInfo::ReadFixedGridRhoInfo(const edm::Event& event)
-{
+void EventInfo::ReadFixedGridRhoInfo(const edm::Event& event) {
    edm::Handle<double> rhoHandler;
    event.getByLabel(rho_collection_, rhoHandler);
    rho_ = *(rhoHandler.product());
    
 }
 
-void EventInfo::PrefiringWeightInfo(const edm::InputTag & tag, const edm::InputTag & tag_up ,const edm::InputTag & tag_down)
-{
+void EventInfo::PrefiringWeightInfo(const edm::InputTag & tag, const edm::InputTag & tag_up ,const edm::InputTag & tag_down) {
    do_prefw_ = true;
    
    prefweight_collection_ = tag;
@@ -279,8 +257,8 @@ void EventInfo::PrefiringWeightInfo(const edm::InputTag & tag, const edm::InputT
    
    
 }
-void EventInfo::ReadPrefiringWeight(const edm::Event& event)
-{
+
+void EventInfo::ReadPrefiringWeight(const edm::Event& event) {
    edm::Handle<double> prefwHandler;
    edm::Handle<double> prefwUpHandler;
    edm::Handle<double> prefwDownHandler;
