@@ -106,7 +106,7 @@
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 #include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
 
-#include "Analysis/Ntuplizer/interface/color_printf.h"
+#include "Analysis/Utils/interface/color_printf.h"
 
 using namespace boost;
 using namespace boost::algorithm;
@@ -552,7 +552,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
 
 Ntuplizer::~Ntuplizer()
 {
-   // printf_info("Ntuplizer::~Ntuplizer()... THE END!\n");
+   printf_info("==> Ntuplizer::~Ntuplizer()... THE END!\n");
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 
@@ -569,7 +569,7 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
 
    ++event_count_;
    if ( event_count_ == 1 ) {
-      printf("\033[34m==> Ntuplizer::analyze...\033[0m\n");
+      printf_info("==> Ntuplizer::analyze...\n");
    }
 
    // Event info
