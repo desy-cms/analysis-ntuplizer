@@ -18,6 +18,7 @@
 
 
 // system include files
+#include <cstdlib>
 #include <memory>
 #include <boost/algorithm/string.hpp>
 #include <type_traits>
@@ -104,6 +105,8 @@
 
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 #include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
+
+#include "Analysis/Ntuplizer/interface/color_printf.h"
 
 using namespace boost;
 using namespace boost::algorithm;
@@ -350,6 +353,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       
       // File
       TFileDirectory eventsDir_;
+
+      int event_count_;
       
       
 };
@@ -365,10 +370,9 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
 //
 // constructors and destructor
 //
-Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of ntuple classes
-{
+Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization of ntuple classes
+   printf("==> Ntuplizer::Ntuplizer constructor...\n");
    config_  = config;
-   
    
    //now do what ever initialization is needed
    is_mc_         = config_.getParameter<bool> ("MonteCarlo");
@@ -451,7 +455,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
          if ( inputTags == "L1TJets" ) l1tJetTokens_[collection_name] = consumes<l1t::JetBxCollection>(collection);
          if ( inputTags == "L1TMuons" ) l1tMuonTokens_[collection_name] = consumes<l1t::MuonBxCollection>(collection);
          if ( inputTags == "ChargedCandidates" ) chargedCandTokens_[collection_name] = consumes<reco::RecoChargedCandidateCollection>(collection);
-// TriggerResults         
+         // TriggerResults         
          if ( inputTags == "TriggerResults"  )
          {
             triggerResultsTokens_[collection_name] = consumes<edm::TriggerResults>(collection);
@@ -541,13 +545,14 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of
          }
       }
    }
-   
+   event_count_ = 0;
+   printf("\n");   
 }
 
 
 Ntuplizer::~Ntuplizer()
 {
- 
+   // printf_info("Ntuplizer::~Ntuplizer()... THE END!\n");
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 
@@ -559,16 +564,17 @@ Ntuplizer::~Ntuplizer()
 //
 
 // ------------ method called for each event  ------------
-void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup)
-{
+void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
    using namespace edm;
+
+   ++event_count_;
+   if ( event_count_ == 1 ) {
+      printf("\033[34m==> Ntuplizer::analyze...\033[0m\n");
+   }
 
    // Event info
    eventinfo_ -> Fill(event);
    
-//    if ( do_pileupinfo_ )
-//       pileupinfo_ -> Fill(event);
-
    if ( is_mc_ )
    {
       // MC only stuff
@@ -627,11 +633,7 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup)
       for ( auto & collection : triggeraccepts_collections_ )
          collection -> Fill(event, setup);
       
-//       // trigger info
-//       for ( auto & collection : triggerinfo_collections_ )
-//          collection -> Fill(event, setup);
-      
-       // primary vertices
+      // primary vertices
       for ( auto & collection : primaryvertices_collections_ )
          collection -> Fill(event);
    
@@ -649,20 +651,19 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup)
       for ( auto & collection : l1tmuons_collections_ )
          collection -> Fill(event);
       
-   // charged candidates (reco)
+      // charged candidates (reco)
       for ( auto & collection : chargedcands_collections_ )
          collection -> Fill(event);
 
-      
 }
 
 
 // ------------ method called once each job just before starting event loop  ------------
-void 
-Ntuplizer::beginJob()
-{
-   std::cout << "========================== begin beginJob =========================" << std::endl;
-   
+void Ntuplizer::beginJob() {
+
+   std::cout << "==> Ntuplizer::beginJob..." << std::endl;
+   // std::cout << "Initializing Ntuplizer job..." << std::endl;
+   // TODO: move to constructor?
    
    do_pileupinfo_       = config_.exists("PileupInfo") && is_mc_;
    do_geneventinfo_     = config_.exists("GenEventInfo") && is_mc_;
@@ -673,17 +674,17 @@ Ntuplizer::beginJob()
    do_pfjets_           = config_.exists("PFJets");
    do_recomuons_        = config_.exists("RecoMuons");
    do_recotracks_       = config_.exists("RecoTracks");
-//   do_patjets_          = config_.exists("PatJets");
+   // do_patjets_          = config_.exists("PatJets");
    do_patmets_          = config_.exists("PatMETs");
    do_patmuons_         = config_.exists("PatMuons");
    do_genjets_          = config_.exists("GenJets");
    do_genparticles_     = config_.exists("GenParticles");
    do_jetstags_         = config_.exists("JetsTags");
-//   do_triggeraccepts_   = config_.exists("TriggerResults") && config_.exists("TriggerPaths");
+   // do_triggeraccepts_   = config_.exists("TriggerResults") && config_.exists("TriggerPaths");
    do_triggeraccepts_   = config_.exists("TriggerResults");
-//   do_triggerinfo_      = config_.exists("TriggerResults");
+   // do_triggerinfo_      = config_.exists("TriggerResults");
    do_primaryvertices_  = config_.exists("PrimaryVertices");
-//   do_eventfilter_      = config_.exists("EventFilter");
+   // do_eventfilter_      = config_.exists("EventFilter");
    do_eventfilter_      = config_.exists("TotalEvents")  && config_.exists("FilteredEvents");
    do_genfilter_        = config_.exists("GenFilterInfo");
    do_triggerobjects_   = ( config_.exists("TriggerObjectStandAlone") || config_.exists("TriggerEvent") ) &&  config_.exists("TriggerObjectLabels");
@@ -698,11 +699,6 @@ Ntuplizer::beginJob()
    if ( config_.exists("UseFullName") )
       use_full_name_ = config_.getParameter<bool> ("UseFullName");
 
-   
-//    edm::Service<TFileService> fs;
-//    
-//    TFileDirectory eventsDir = fs -> mkdir("Events");
-   
    std::string name;
    std::string fullname;
    
@@ -737,7 +733,7 @@ Ntuplizer::beginJob()
    for ( size_t it = 0 ; it < btagAlgos_.size() ;  ++it )
    {
       btagVars_.push_back({btagAlgos_[it],btagAlgosAlias_[it]});
-//      btagVars_[btagAlgosAlias_[it]] = {btagAlgos_[it],(unsigned int)it};
+      // btagVars_[btagAlgosAlias_[it]] = {btagAlgos_[it],(unsigned int)it};
    }
    
    // JEC Record (from TXT files)
@@ -750,25 +746,6 @@ Ntuplizer::beginJob()
          jec_files = config_.getParameter< std::vector<std::string > >("JECUncertaintyFiles");
       }
    }
-//    // JER Record (from TXT files)
-//    std::vector<std::string > jer_files;
-//    std::vector<std::string > jersf_files;
-//    // JER Record (from CondDB)
-//    jerRecords_.clear();
-//    if ( do_patjets_ && config_.exists("JERRecords") )
-//    {
-//       jerRecords_ = config_.getParameter< std::vector<std::string> >("JERRecords");
-//       if(config_.exists("JERResFiles"))
-//       {
-//       	jer_files = config_.getParameter< std::vector<std::string > >("JERResFiles");
-//       }
-//       if(config_.exists("JERSfFiles"))
-//       {
-//       	jersf_files = config_.getParameter< std::vector<std::string > >("JERSfFiles");
-//       }
-//       
-//    }
-   //
    
    size_t nPatJets = 0;
    if ( do_patjets_ )
@@ -794,9 +771,7 @@ Ntuplizer::beginJob()
    // Event info tree
    eventinfo_ = pEventInfo (new EventInfo(eventsDir_));
    if ( config_.exists("FixedGridRhoAll") )
-   {
       eventinfo_ -> FixedGridRhoInfo(config_.getParameter<edm::InputTag>("FixedGridRhoAll"));
-   }
    if ( do_pileupinfo_ )
       eventinfo_ -> PileupInfo(config_.getParameter<edm::InputTag>("PileupInfo"));
    if ( do_geneventinfo_ )
@@ -810,8 +785,8 @@ Ntuplizer::beginJob()
       eventinfo_ -> PrefiringWeightInfo(prefWeight_, prefWeightUp_, prefWeightDown_);
    }
 
-//     // Metadata 
-//    metadata_ = pMetadata (new Metadata(fs,is_mc_));
+   //  // Metadata 
+   // metadata_ = pMetadata (new Metadata(fs,is_mc_));
    metadata_ -> AddDefinitions(btagVars_,"btagging");
    // My cross section  value for the metadata
    xsection_ = -1.0;
@@ -845,16 +820,16 @@ Ntuplizer::beginJob()
       splitTriggerObject = false;
    }
    
-//    if ( splitTriggerObject )
-//    {
-//       std::cout << "oioioi " << splitTriggerObject << std::endl;
-//       for ( size_t ito = 0 ; ito < triggerObjectSplits_.size() ; ++ito )
-//         std::cout << triggerObjectSplits_[ito] << "   " << triggerObjectSplitsTypes_[ito] << std::endl;
-//    }
-//    
-//    
+   // if ( splitTriggerObject )
+   // {
+   //    std::cout << "oioioi " << splitTriggerObject << std::endl;
+   //    for ( size_t ito = 0 ; ito < triggerObjectSplits_.size() ; ++ito )
+   //      std::cout << triggerObjectSplits_[ito] << "   " << triggerObjectSplitsTypes_[ito] << std::endl;
+   // }
    
-  // Input tags (vector)
+   
+   
+   // Input tags (vector)
    for ( auto & inputTags : inputTagsVec_ )
    {
       InputTags collections = config_.getParameter<InputTags>(inputTags);
@@ -884,8 +859,8 @@ Ntuplizer::beginJob()
          if ( inputTags == "L1TMuons" && l1tmuons_collections_.size() == 0 )  name = "l1tMuons";
 
          // Initialise trees
-//          if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" )
-//             tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
+         // if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" )
+         //    tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
          
          // L1 Jets
          if ( inputTags == "L1ExtraJets" )
@@ -940,7 +915,7 @@ Ntuplizer::beginJob()
                if ( jec_files.size() > 0 && jec_files[patJetCounter] != "" )
                   patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter],jec_files[patJetCounter]);  // use txt file
                else
-//                  patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter]);                           // use confdb
+               //   patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter]);                           // use confdb
                   patjets_collections_.back() -> AddJecInfo(jec_es_tokens_[patJetCounter]);                           // use confdb
 
             }
@@ -951,27 +926,27 @@ Ntuplizer::beginJob()
                if ( jer_files_.size() > 0 && jer_files_[patJetCounter] != "" )
                   patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],jer_files_[patJetCounter], jersf_files_[patJetCounter],fixedGridRhoAll_);  // use txt file
                else
-//                  patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],fixedGridRhoAll_);  // use txt file
+               //   patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],fixedGridRhoAll_);  // use txt file
                   patjets_collections_.back() -> AddJerInfo(jer_es_tokens_[patJetCounter],fixedGridRhoAll_);  // use txt file
 
             }
             
-//             if ( jecRecords_.size() > 0 && jerRecords_.size() > 0 )
-//             {
-//                if (jer_files_.size() != 0 && jer_files_[patJetCounter] != "" && jersf_files_[patJetCounter] != "")
-//                {
-//             		patjets_collections_.back() -> Init(btagVars_,jecRecords_[patJetCounter],jerRecords_[patJetCounter],jer_files_[patJetCounter],jersf_files_[patJetCounter],fixedGridRhoAll_);
-//             	}
-//             	else
-//                {
-//                   patjets_collections_.back() -> Init(btagVars_,jecRecords_[patJetCounter],jerRecords_[patJetCounter],fixedGridRhoAll_);
-//                }
-//                if ( jecRecords_[patJetCounter] != "" )  std::cout << name << " => "  << jecRecords_[patJetCounter] << std::endl;
-//             }
-//             else
-//             {
-//                patjets_collections_.back() -> Init(btagVars_);
-//             }
+            // if ( jecRecords_.size() > 0 && jerRecords_.size() > 0 )
+            // {
+            //    if (jer_files_.size() != 0 && jer_files_[patJetCounter] != "" && jersf_files_[patJetCounter] != "")
+            //    {
+            // 		patjets_collections_.back() -> Init(btagVars_,jecRecords_[patJetCounter],jerRecords_[patJetCounter],jer_files_[patJetCounter],jersf_files_[patJetCounter],fixedGridRhoAll_);
+            // 	}
+            // 	else
+            //    {
+            //       patjets_collections_.back() -> Init(btagVars_,jecRecords_[patJetCounter],jerRecords_[patJetCounter],fixedGridRhoAll_);
+            //    }
+            //    if ( jecRecords_[patJetCounter] != "" )  std::cout << name << " => "  << jecRecords_[patJetCounter] << std::endl;
+            // }
+            // else
+            // {
+            //    patjets_collections_.back() -> Init(btagVars_);
+            // }
             ++patJetCounter;
          }
          // Pat METs
@@ -1104,40 +1079,40 @@ Ntuplizer::beginJob()
             }
          }
          
-//          // Trigger Accepts
-//          if ( do_triggeraccepts_ && inputTags == "TriggerResults" )
-//          {
-//             // TriggerResults collections names differ by the process, so add it to the name
-//             std::vector< std::string> triggerpaths;
-//             triggerpaths.clear();
-//             std::vector< std::string> l1seeds;
-//             l1seeds.clear();
-//             
-//             if ( config_.exists("TriggerPaths") ) triggerpaths = config_.getParameter< std::vector< std::string> >("TriggerPaths");
-//             if ( config_.exists("L1Seeds") ) l1seeds = config_.getParameter< std::vector< std::string> >("L1Seeds");
-//             
-//             triggeraccepts_collections_.push_back( pTriggerAccepts( new TriggerAccepts(collection, tree_[name], triggerpaths, l1seeds, hltPrescaleProvider_) ));
-//             triggeraccepts_collections_.back() -> Init();
-//             triggeraccepts_collections_.back() -> ReadPrescaleInfo(readprescale_);  // sometimes an error occurs as if the collection was not consumed!??? See TriggerAccepts
-//          }
-//          
-//          // TriggerInfo
-//          if ( do_triggerinfo_ && inputTags == "TriggerResults" )
-//          {
-//             // TriggerResults collections names differ by the process, so add it to the name
-//             std::vector< std::string> triggerpaths;
-//             triggerpaths.clear();
-//             if ( config_.exists("TriggerPaths") ) triggerpaths = config_.getParameter< std::vector< std::string> >("TriggerPaths");
-//             TFileDirectory triggerResultsDir = eventsDir_.mkdir("TriggerResults");
-//             
-//             for ( auto & path : triggerpaths )
-//             {
-//                name = path;
-//                tree_[name] = triggerResultsDir.make<TTree>(name.c_str(),name.c_str());
-//                triggerinfo_collections_.push_back( pTriggerInfo( new TriggerInfo(collection, tree_[name], path, hltPrescaleProvider_, testmode_) ));
-//                triggerinfo_collections_.back() -> ReadPrescaleInfo(readprescale_);  // sometimes an error occurs as if the collection was not consumed!??? See TriggerAccepts
-//             }
-//          }
+         // // Trigger Accepts
+         // if ( do_triggeraccepts_ && inputTags == "TriggerResults" )
+         // {
+         //    // TriggerResults collections names differ by the process, so add it to the name
+         //    std::vector< std::string> triggerpaths;
+         //    triggerpaths.clear();
+         //    std::vector< std::string> l1seeds;
+         //    l1seeds.clear();
+            
+         //    if ( config_.exists("TriggerPaths") ) triggerpaths = config_.getParameter< std::vector< std::string> >("TriggerPaths");
+         //    if ( config_.exists("L1Seeds") ) l1seeds = config_.getParameter< std::vector< std::string> >("L1Seeds");
+            
+         //    triggeraccepts_collections_.push_back( pTriggerAccepts( new TriggerAccepts(collection, tree_[name], triggerpaths, l1seeds, hltPrescaleProvider_) ));
+         //    triggeraccepts_collections_.back() -> Init();
+         //    triggeraccepts_collections_.back() -> ReadPrescaleInfo(readprescale_);  // sometimes an error occurs as if the collection was not consumed!??? See TriggerAccepts
+         // }
+         
+         // // TriggerInfo
+         // if ( do_triggerinfo_ && inputTags == "TriggerResults" )
+         // {
+         //    // TriggerResults collections names differ by the process, so add it to the name
+         //    std::vector< std::string> triggerpaths;
+         //    triggerpaths.clear();
+         //    if ( config_.exists("TriggerPaths") ) triggerpaths = config_.getParameter< std::vector< std::string> >("TriggerPaths");
+         //    TFileDirectory triggerResultsDir = eventsDir_.mkdir("TriggerResults");
+            
+         //    for ( auto & path : triggerpaths )
+         //    {
+         //       name = path;
+         //       tree_[name] = triggerResultsDir.make<TTree>(name.c_str(),name.c_str());
+         //       triggerinfo_collections_.push_back( pTriggerInfo( new TriggerInfo(collection, tree_[name], path, hltPrescaleProvider_, testmode_) ));
+         //       triggerinfo_collections_.back() -> ReadPrescaleInfo(readprescale_);  // sometimes an error occurs as if the collection was not consumed!??? See TriggerAccepts
+         //    }
+         // }
          
          // Primary Vertices
          if ( inputTags == "PrimaryVertices" )
@@ -1181,23 +1156,23 @@ Ntuplizer::beginJob()
 
          if ( nCounters == 2 ) 		metadata_ -> SetEventFilter(eventCounters_);
          if ( nMHatCounters == 2)	metadata_ -> SetMHatEventFilter(mHatEventCounters_);
-//         std::cout<<nMHatCounters<<std::endl;
+        std::cout<<nMHatCounters<<std::endl;
       }
       // Pileup Info
-//       if ( inputTag == "PileupInfo" && is_mc_ )
-//       {
-//          tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
-//          pileupinfo_ = pPileupInfo( new PileupInfo(collection, tree_[name]) );
-//          pileupinfo_ -> Branches();
-// 
-//       }
+      // if ( inputTag == "PileupInfo" && is_mc_ )
+      // {
+      //    tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
+      //    pileupinfo_ = pPileupInfo( new PileupInfo(collection, tree_[name]) );
+      //    pileupinfo_ -> Branches();
+
+      // }
          
 
 
 
    } 
-   
-   std::cout << "========================== end beginJob =========================" << std::endl;
+
+   std::cout << std::endl;
    
 }
 
@@ -1209,93 +1184,53 @@ Ntuplizer::endJob()
 }
 
 // ------------ method called when starting to processes a run  ------------
-void Ntuplizer::beginRun(edm::Run const& run, edm::EventSetup const& setup)
-{
-   std::cout << "========================== begin beginRun =========================" << std::endl;
-   
+void Ntuplizer::beginRun(edm::Run const& run, edm::EventSetup const& setup) {
+   printf("==> beginRun: Run = %d ...\n", (int)run.run());
+   // std::cout << "Things that need to be done at the beginning of a run (e.g. HLTConfigProvider) are called here." << std::endl;
+
    bool changed(true);
-   std::string proc = trig_res_process_[0];
-   if (hltPrescaleProvider_->init(run, setup, proc, changed))
-   {
-      hltConfigProvider_ = hltPrescaleProvider_->hltConfigProvider();
+
+   std::string proc;
+   if ( !trig_res_process_.empty() ) {
+      proc = trig_res_process_[0];        // for the time being only one TriggerResults is used TODO: simplify and always allow only one entry, i.e. remove vector
+      if (hltPrescaleProvider_->init(run, setup, proc, changed)) {
+         hltConfigProvider_ = hltPrescaleProvider_->hltConfigProvider();
+      }
+      // trigger accepts
+      for ( auto & collection : triggeraccepts_collections_ )
+         collection -> Providers(hltPrescaleProvider_, std::make_shared<HLTConfigProvider>(hltConfigProvider_));
    }
-   // trigger accepts
-   for ( auto & collection : triggeraccepts_collections_ )
-      collection -> Providers(hltPrescaleProvider_, std::make_shared<HLTConfigProvider>(hltConfigProvider_));
-   
-   
-//     // Trigger Accepts
-//     if ( do_triggeraccepts_ && inputTags == "TriggerResults" )
-//     {
-//        // TriggerResults collections names differ by the process, so add it to the name
-//        std::vector< std::string> triggerpaths;
-//        triggerpaths.clear();
-//        std::vector< std::string> l1seeds;
-//        l1seeds.clear();
-//        
-//        if ( config_.exists("TriggerPaths") ) triggerpaths = config_.getParameter< std::vector< std::string> >("TriggerPaths");
-//        if ( config_.exists("L1Seeds") ) l1seeds = config_.getParameter< std::vector< std::string> >("L1Seeds");
-//        
-//        triggeraccepts_collections_.push_back( pTriggerAccepts( new TriggerAccepts(collection, tree_[name], triggerpaths, l1seeds, hltPrescaleProvider_) ));
-//        triggeraccepts_collections_.back() -> Init();
-//        triggeraccepts_collections_.back() -> ReadPrescaleInfo(readprescale_);  // sometimes an error occurs as if the collection was not consumed!??? See TriggerAccepts
-//     }
-         
-   
-   // Initialize HLTConfig every lumi block
-//    if ( do_triggeraccepts_ )
-//    {
-//       for ( size_t i = 0; i < triggeraccepts_collections_.size() ; ++i )
-//       {
-//          triggeraccepts_collections_[i]  -> Run(run,setup);
-//       }
-//    }
-   std::cout << "========================== end beginRun =========================" << std::endl;
-   
+   else {
+      std::cout << "Error: TriggerResults is empty!" << std::endl;
+      exit(-1);
+   }
+
+   std::cout << std::endl;
 }
 
 
 // ------------ method called when ending the processing of a run  ------------
-
-void 
-Ntuplizer::endRun(edm::Run const& run, edm::EventSetup const& setup)
-{
-   if ( do_genruninfo_ )
-   {
+void Ntuplizer::endRun(edm::Run const& run, edm::EventSetup const& setup) {
+   if ( do_genruninfo_ ) {
       metadata_ -> SetCrossSections(run,genRunInfo_,xsection_);
    }
 }
 
 // ------------ method called when starting to processes a luminosity block  ------------
+void  Ntuplizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup) {
+   std::cout << "==> Ntuplizer::beginLuminosityBlock..." << std::endl;
 
-void  Ntuplizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup)
-{
-
-   std::cout << "========================== start beginLuminosityBlock =========================" << std::endl;   
-//    // Initialize HLTConfig every lumi block
-//    if ( do_triggeraccepts_ )
-//    {
-//       for ( size_t i = 0; i < triggeraccepts_collections_.size() ; ++i )
-//       {
-//          triggeraccepts_collections_[i]  -> LumiBlock(lumi,setup);
-//       }
-//    }
-   std::cout << "========================== finish beginLuminosityBlock =========================" << std::endl;   
 }
 
 
 // ------------ method called when ending the processing of a luminosity block  ------------
-
-void 
-Ntuplizer::endLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup)
-{
+void Ntuplizer::endLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup) {
    metadata_ -> IncrementEventFilters(lumi);
 }
 
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void
-Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
