@@ -184,7 +184,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       */
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-
    private:
       void analyze(const edm::Event&, const edm::EventSetup&) override;
       void beginJob() override;
@@ -370,7 +369,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
 // constructors and destructor
 //
 Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization of ntuple classes
-   printf("==> Ntuplizer::Ntuplizer constructor...\n");
+   printf_info("==> Ntuplizer::Ntuplizer() constructor...\n");
    config_  = config;
    
    //now do what ever initialization is needed
@@ -545,15 +544,15 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
       }
    }
    event_count_ = 0;
-   printf("\n");   
 }
 
 
 Ntuplizer::~Ntuplizer()
 {
-   printf_info("==> Ntuplizer::~Ntuplizer()... THE END!\n");
+   printf_info("==> Ntuplizer::~Ntuplizer() destructor...\n");
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
+   printf_info("*** THE END!!! ***\n");
 
 }
 
@@ -568,7 +567,7 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
 
    ++event_count_;
    if ( event_count_ == 1 ) {
-      printf_info("==> Ntuplizer::analyze...\n");
+      printf_info("==> Ntuplizer::analyze()...\n");
    }
 
    // Event info
@@ -660,9 +659,9 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
 // ------------ method called once each job just before starting event loop  ------------
 void Ntuplizer::beginJob() {
 
-   std::cout << "==> Ntuplizer::beginJob..." << std::endl;
-   // std::cout << "Initializing Ntuplizer job..." << std::endl;
-   // TODO: move to constructor?
+   printf_info("==> Ntuplizer::beginJob()...\n");
+
+   // TODO: move all below to constructor?
    
    do_pileupinfo_       = config_.exists("PileupInfo") && is_mc_;
    do_geneventinfo_     = config_.exists("GenEventInfo") && is_mc_;
@@ -819,15 +818,6 @@ void Ntuplizer::beginJob() {
       splitTriggerObject = false;
    }
    
-   // if ( splitTriggerObject )
-   // {
-   //    std::cout << "oioioi " << splitTriggerObject << std::endl;
-   //    for ( size_t ito = 0 ; ito < triggerObjectSplits_.size() ; ++ito )
-   //      std::cout << triggerObjectSplits_[ito] << "   " << triggerObjectSplitsTypes_[ito] << std::endl;
-   // }
-   
-   
-   
    // Input tags (vector)
    for ( auto & inputTags : inputTagsVec_ )
    {
@@ -929,23 +919,6 @@ void Ntuplizer::beginJob() {
                   patjets_collections_.back() -> AddJerInfo(jer_es_tokens_[patJetCounter],fixedGridRhoAll_);  // use txt file
 
             }
-            
-            // if ( jecRecords_.size() > 0 && jerRecords_.size() > 0 )
-            // {
-            //    if (jer_files_.size() != 0 && jer_files_[patJetCounter] != "" && jersf_files_[patJetCounter] != "")
-            //    {
-            // 		patjets_collections_.back() -> Init(btagVars_,jecRecords_[patJetCounter],jerRecords_[patJetCounter],jer_files_[patJetCounter],jersf_files_[patJetCounter],fixedGridRhoAll_);
-            // 	}
-            // 	else
-            //    {
-            //       patjets_collections_.back() -> Init(btagVars_,jecRecords_[patJetCounter],jerRecords_[patJetCounter],fixedGridRhoAll_);
-            //    }
-            //    if ( jecRecords_[patJetCounter] != "" )  std::cout << name << " => "  << jecRecords_[patJetCounter] << std::endl;
-            // }
-            // else
-            // {
-            //    patjets_collections_.back() -> Init(btagVars_);
-            // }
             ++patJetCounter;
          }
          // Pat METs
@@ -1155,7 +1128,6 @@ void Ntuplizer::beginJob() {
 
          if ( nCounters == 2 ) 		metadata_ -> SetEventFilter(eventCounters_);
          if ( nMHatCounters == 2)	metadata_ -> SetMHatEventFilter(mHatEventCounters_);
-        std::cout<<nMHatCounters<<std::endl;
       }
       // Pileup Info
       // if ( inputTag == "PileupInfo" && is_mc_ )
@@ -1166,26 +1138,19 @@ void Ntuplizer::beginJob() {
 
       // }
          
-
-
-
    } 
-
-   std::cout << std::endl;
    
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void 
-Ntuplizer::endJob() 
-{
+void Ntuplizer::endJob() {
+   printf_info("==> NTuplizer::endJob()...\n");
    metadata_ -> Fill();
 }
 
 // ------------ method called when starting to processes a run  ------------
 void Ntuplizer::beginRun(edm::Run const& run, edm::EventSetup const& setup) {
-   printf("==> beginRun: Run = %d ...\n", (int)run.run());
-   // std::cout << "Things that need to be done at the beginning of a run (e.g. HLTConfigProvider) are called here." << std::endl;
+   printf_info("==> Ntuplizer::beginRun(): Run = %d ...\n", (int)run.run());
 
    bool changed(true);
 
@@ -1204,27 +1169,29 @@ void Ntuplizer::beginRun(edm::Run const& run, edm::EventSetup const& setup) {
       exit(-1);
    }
 
-   std::cout << std::endl;
 }
 
 
 // ------------ method called when ending the processing of a run  ------------
 void Ntuplizer::endRun(edm::Run const& run, edm::EventSetup const& setup) {
+   printf_info("==> Ntuplizer::endRun(): Run = %d ...\n", (int)run.run());
+
    if ( do_genruninfo_ ) {
       metadata_ -> SetCrossSections(run,genRunInfo_,xsection_);
    }
+
 }
 
 // ------------ method called when starting to processes a luminosity block  ------------
 void  Ntuplizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup) {
-   std::cout << "==> Ntuplizer::beginLuminosityBlock..." << std::endl;
+   printf_info("==> Ntuplizer::beginLuminosityBlock(): Run = %d, LumiSection = %d ...\n", (int)lumi.run(), (int)lumi.id().value());
 
 }
 
 
 // ------------ method called when ending the processing of a luminosity block  ------------
 void Ntuplizer::endLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup) {
-   printf_info("==> Ntuplizer::endLuminosityBlock...\n");
+   printf_info("==> Ntuplizer::endLuminosityBlock(): Run = %d, LumiSection = %d ...\n", (int)lumi.run(), (int)lumi.id().value());
    metadata_ -> IncrementEventFilters(lumi);
 }
 
