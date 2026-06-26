@@ -115,8 +115,6 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    tree_ = tree;
    
    is_mc_              = mc;
-   is_l1jet_           = std::is_same<T,l1extra::L1JetParticle>::value;
-   is_l1muon_          = std::is_same<T,l1extra::L1MuonParticle>::value;
    is_calojet_         = std::is_same<T,reco::CaloJet>::value;
    is_recomuon_        = std::is_same<T,reco::Muon>::value;
    is_recotrack_       = std::is_same<T,reco::Track>::value;
@@ -1151,8 +1149,6 @@ void Candidates<T>::PileupJetIdInstance(const std::string & instance)
 }
 
 // Need to declare all possible template classes here
-template class Candidates<l1extra::L1JetParticle>;
-template class Candidates<l1extra::L1MuonParticle>;
 template class Candidates<reco::CaloJet>;
 template class Candidates<reco::PFJet>;
 template class Candidates<reco::Muon>;

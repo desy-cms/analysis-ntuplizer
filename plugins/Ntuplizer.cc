@@ -122,8 +122,6 @@ typedef analysis::ntuple::EventInfo EventInfo;
 typedef analysis::ntuple::Metadata Metadata;
 typedef analysis::ntuple::Definitions Definitions;
 typedef analysis::ntuple::PileupInfo PileupInfo;
-typedef analysis::ntuple::Candidates<l1extra::L1JetParticle> L1JetCandidates;
-typedef analysis::ntuple::Candidates<l1extra::L1MuonParticle> L1MuonCandidates;
 typedef analysis::ntuple::Candidates<reco::CaloJet> CaloJetCandidates;
 typedef analysis::ntuple::Candidates<reco::PFJet> PFJetCandidates;
 typedef analysis::ntuple::Candidates<reco::Muon> RecoMuonCandidates;
@@ -149,8 +147,6 @@ typedef std::unique_ptr<EventInfo> pEventInfo;
 typedef std::unique_ptr<Metadata> pMetadata;
 typedef std::unique_ptr<Definitions> pDefinitions;
 typedef std::unique_ptr<PileupInfo> pPileupInfo;
-typedef std::unique_ptr<L1JetCandidates> pL1JetCandidates;
-typedef std::unique_ptr<L1MuonCandidates> pL1MuonCandidates;
 typedef std::unique_ptr<CaloJetCandidates> pCaloJetCandidates;
 typedef std::unique_ptr<PFJetCandidates> pPFJetCandidates;
 typedef std::unique_ptr<RecoMuonCandidates> pRecoMuonCandidates;
@@ -241,8 +237,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       std::vector< std::string > jecRecords_;
       std::vector< std::string > jerRecords_;
       
-      std::map<std::string, edm::EDGetTokenT<l1extra::L1JetParticleCollection> > l1JetTokens_;
-      std::map<std::string, edm::EDGetTokenT<l1extra::L1MuonParticleCollection> > l1MuonTokens_;
       std::map<std::string, edm::EDGetTokenT<reco::CaloJetCollection> > caloJetTokens_;
       std::map<std::string, edm::EDGetTokenT<reco::PFJetCollection> > pfJetTokens_;
       std::map<std::string, edm::EDGetTokenT<reco::MuonCollection> > recoMuonTokens_;
@@ -309,8 +303,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       pPileupInfo pileupinfo_;
       
       // Collections for the ntuples (vector)
-      std::vector<pL1JetCandidates> l1jets_collections_;
-      std::vector<pL1MuonCandidates> l1muons_collections_;
       std::vector<pCaloJetCandidates> calojets_collections_;
       std::vector<pPFJetCandidates> pfjets_collections_;
       std::vector<pRecoMuonCandidates> recomuons_collections_;
@@ -414,19 +406,10 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
             trig_res_process_.push_back(proc);
          }
          
-         if ( find_first(inputTags,"L1Extra") )
-         {
-            // renaming tree for L1 jest as there is no explicit indication those are L1 jets objects
-            std::string l1obj = inputTags;
-            erase_first(l1obj,"L1Extra");
-            name += l1obj;
-         }
          fullname = name + "_" + inst + "_" + proc;
-         name += inputTags == "L1ExtraJets" && ! use_full_name_ ? "_" + inst : "";
+         // name += inputTags == "L1ExtraJets" && ! use_full_name_ ? "_" + inst : "";
          
          if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" && inputTags != "JetsTags" ) tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
-         if ( inputTags == "L1ExtraJets" ) l1JetTokens_[collection_name] = consumes<l1extra::L1JetParticleCollection>(collection);
-         if ( inputTags == "L1ExtraMuons" ) l1MuonTokens_[collection_name] = consumes<l1extra::L1MuonParticleCollection>(collection);
          if ( inputTags == "CaloJets" ) caloJetTokens_[collection_name] = consumes<reco::CaloJetCollection>(collection);
          if ( inputTags == "PFJets" ) pfJetTokens_[collection_name] = consumes<reco::PFJetCollection>(collection);
          if ( inputTags == "RecoMuons" ) recoMuonTokens_[collection_name] = consumes<reco::MuonCollection>(collection);
@@ -573,15 +556,7 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
    {
       // MC only stuff
    }
-   
-   // L1 jets
-      for ( auto & collection : l1jets_collections_ )
-         collection -> Fill(event);
-   
-   // L1 muons
-      for ( auto & collection : l1muons_collections_ )
-         collection -> Fill(event);
-   
+      
    // Calo jets (reco)
       for ( auto & collection : calojets_collections_ )
          collection -> Fill(event);
@@ -662,8 +637,6 @@ void Ntuplizer::beginJob() {
    do_pileupinfo_       = config_.exists("PileupInfo") && is_mc_;
    do_geneventinfo_     = config_.exists("GenEventInfo") && is_mc_;
    do_lumiscalers_      = config_.exists("LumiScalers");
-   do_l1jets_           = config_.exists("L1ExtraJets");
-   do_l1muons_          = config_.exists("L1ExtraMuons");
    do_calojets_         = config_.exists("CaloJets");
    do_pfjets_           = config_.exists("PFJets");
    do_recomuons_        = config_.exists("RecoMuons");
@@ -827,15 +800,8 @@ void Ntuplizer::beginJob() {
          std::string inst  = collection.instance();
          std::string proc  = collection.process();
          name = label;
-         if ( find_first(inputTags,"L1Extra") )
-         {
-            // renaming tree for L1 jest as there is no explicit indication those are L1 jets objects
-            std::string l1obj = inputTags;
-            erase_first(l1obj,"L1Extra");
-            name += l1obj;
-         }
          fullname = name + "_" + inst + "_" + proc;
-         name += inputTags == "L1ExtraJets" && ! use_full_name_ ? "_" + inst : "";
+         // name += inputTags == "L1ExtraJets" && ! use_full_name_ ? "_" + inst : "";
          if ( collection.instance() != "" && collections.size() > 1 )
             name += "_" + inst;
          if ( use_full_name_ || inputTags == "JetsTags") name = fullname;
@@ -843,20 +809,6 @@ void Ntuplizer::beginJob() {
          // Initialise trees
          // if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" )
          //    tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
-         
-         // L1 Jets
-         if ( inputTags == "L1ExtraJets" )
-         {
-            l1jets_collections_.push_back( pL1JetCandidates( new L1JetCandidates(collection, tree_[name], is_mc_ ) ));
-            l1jets_collections_.back() -> Init();
-         }
-         
-         // L1 Muons
-         if ( inputTags == "L1ExtraMuons" )
-         {
-            l1muons_collections_.push_back( pL1MuonCandidates( new L1MuonCandidates(collection, tree_[name], is_mc_ ) ));
-            l1muons_collections_.back() -> Init();
-         }
          
          // Calo Jets
          if ( inputTags == "CaloJets" )
