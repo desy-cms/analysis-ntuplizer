@@ -92,8 +92,8 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     JERRecords      = cms.vstring  (              'AK4PFPuppi', 'AK4PFPuppi'), # for the JER uncertainties
     PatMuons        = cms.VInputTag(cms.InputTag('slimmedMuons') ),
     PrimaryVertices = cms.VInputTag(cms.InputTag('offlineSlimmedPrimaryVertices') ),
-    # L1TJets         = cms.VInputTag(cms.InputTag('caloStage2Digis','Jet','RECO'), ),
-    # L1TMuons        = cms.VInputTag(cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
+    L1TJets         = cms.VInputTag(cms.InputTag('caloStage2Digis','Jet','RECO'), ),
+    L1TMuons        = cms.VInputTag(cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
 )
 
 if command_line_options.type != 'mc':
