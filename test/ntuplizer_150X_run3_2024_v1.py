@@ -15,6 +15,15 @@ cmssw_base = os.getenv("CMSSW_BASE")
 from Analysis.Ntuplizer.utils.ntuplizer_parser import ntuplizer_parser
 command_line_options = ntuplizer_parser()
 
+# If the output file already exists, remove it so ROOT/TFileService can recreate it
+# problems with files in EOS
+if hasattr(command_line_options, 'outputFile') and command_line_options.outputFile:
+    try:
+        if os.path.exists(command_line_options.outputFile):
+            os.remove(command_line_options.outputFile)
+    except Exception as e:
+        print('Warning: could not remove existing output file:', e)
+
 # General CMS stuff
 import FWCore.ParameterSet.Config as cms
 from Configuration.StandardSequences.Eras import eras
@@ -81,10 +90,10 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     PatJets         = cms.VInputTag( cms.InputTag('updatedPatJetsAK4Puppi'), cms.InputTag('slimmedJetsPuppi')),
     JECRecords      = cms.vstring  (              'AK4PFPuppi', 'AK4PFPuppi'), # for the JEC uncertainties
     JERRecords      = cms.vstring  (              'AK4PFPuppi', 'AK4PFPuppi'), # for the JER uncertainties
-    #PatMuons        = cms.VInputTag(cms.InputTag('slimmedMuons') ),
-    #PrimaryVertices = cms.VInputTag(cms.InputTag('offlineSlimmedPrimaryVertices') ),
-#    L1TJets         = cms.VInputTag(cms.InputTag('caloStage2Digis','Jet','RECO'), ),
-#    L1TMuons        = cms.VInputTag(cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
+    PatMuons        = cms.VInputTag(cms.InputTag('slimmedMuons') ),
+    PrimaryVertices = cms.VInputTag(cms.InputTag('offlineSlimmedPrimaryVertices') ),
+    # L1TJets         = cms.VInputTag(cms.InputTag('caloStage2Digis','Jet','RECO'), ),
+    # L1TMuons        = cms.VInputTag(cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
 )
 
 if command_line_options.type != 'mc':
