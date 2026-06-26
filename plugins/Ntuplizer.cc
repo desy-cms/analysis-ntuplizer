@@ -174,7 +174,7 @@ typedef std::unique_ptr<ChargedCandidates> pChargedCandidates;
 // class declaration
 //
 
-class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one::WatchRuns> {
+class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one::WatchRuns,edm::one::WatchLuminosityBlocks> {
    public:
       explicit Ntuplizer(const edm::ParameterSet&);
       ~Ntuplizer();
@@ -186,14 +186,13 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
 
 
    private:
-      virtual void beginJob() ;
-      virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
-      virtual void endJob() ;
-
-      virtual void beginRun(edm::Run const&, edm::EventSetup const&) ;
-      virtual void endRun(edm::Run const&, edm::EventSetup const&) ;
-      virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) ;
-      virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) ;
+      void analyze(const edm::Event&, const edm::EventSetup&) override;
+      void beginJob() override;
+      void endJob() override;
+      void beginRun(edm::Run const&, edm::EventSetup const&) override;
+      void endRun(edm::Run const&, edm::EventSetup const&) override;
+      void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
+      void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
       
       // ----------member data ---------------------------
       edm::ParameterSet config_;
@@ -1225,6 +1224,7 @@ void  Ntuplizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::Eve
 
 // ------------ method called when ending the processing of a luminosity block  ------------
 void Ntuplizer::endLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup) {
+   printf_info("==> Ntuplizer::endLuminosityBlock...\n");
    metadata_ -> IncrementEventFilters(lumi);
 }
 
