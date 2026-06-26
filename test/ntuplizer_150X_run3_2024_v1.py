@@ -22,10 +22,10 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 
 ## Let it begin
 process = cms.Process('MssmHbb',eras.Run3_2024)
-# process options
+# # process options
 process.options = cms.untracked.PSet()
 process.options.numberOfThreads=cms.untracked.uint32(4) # execution with 4cores
-process.options.numberOfConcurrentLuminosityBlocks = 1  # requirement for the nFilteredEvents counter to work properly
+process.options.numberOfConcurrentLuminosityBlocks = cms.untracked.uint32(1)  # requirement for the nFilteredEvents counter to work properly
 
 # general configurations
 process.load('FWCore.MessageService.MessageLogger_cfi')
@@ -76,11 +76,11 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     FixedGridRhoAll = cms.InputTag ('fixedGridRhoAll'),
     TriggerResults  = cms.VInputTag(cms.InputTag('TriggerResults','','HLT') ),
     TriggerObjectStandAlone = cms.VInputTag(cms.InputTag('slimmedPatTrigger'), ),
-    #TotalEvents     = cms.InputTag ('TotalEvents'),
-    #FilteredEvents  = cms.InputTag ('FilteredEvents'),
-    PatJets         = cms.VInputTag( cms.InputTag('updatedPatJetsAK4Puppi'), ),
-    #JECRecords      = cms.vstring  (              'AK4PFPuppi', ), # for the JEC uncertainties
-    #JERRecords      = cms.vstring  (              'AK4PFPuppi', ), # for the JER uncertainties
+    TotalEvents     = cms.InputTag ('nTotalEvents'),
+    FilteredEvents  = cms.InputTag ('nFilteredEvents'),
+    PatJets         = cms.VInputTag( cms.InputTag('updatedPatJetsAK4Puppi'), cms.InputTag('slimmedJetsPuppi')),
+    JECRecords      = cms.vstring  (              'AK4PFPuppi', 'AK4PFPuppi'), # for the JEC uncertainties
+    JERRecords      = cms.vstring  (              'AK4PFPuppi', 'AK4PFPuppi'), # for the JER uncertainties
     #PatMuons        = cms.VInputTag(cms.InputTag('slimmedMuons') ),
     #PrimaryVertices = cms.VInputTag(cms.InputTag('offlineSlimmedPrimaryVertices') ),
 #    L1TJets         = cms.VInputTag(cms.InputTag('caloStage2Digis','Jet','RECO'), ),
@@ -92,10 +92,14 @@ if command_line_options.type != 'mc':
 
 ## !!! Do the stuff!
 process.p = cms.Path(
-                     process.triggerSelection +
-                     process.MssmHbb,
-                     process.AK4PuppiJets
-                    )
+                    process.nTotalEvents +
+                    process.triggerSelection +
+                    process.nFilteredEvents +
+                    process.MssmHbb,
+                    process.AK4PuppiJets,
+                    process.AK4Jets,
+                    process.AK8Jets
+                )
 
 
 
@@ -110,7 +114,9 @@ process.p = cms.Path(
 ## Inputs
 readFiles = cms.untracked.vstring()
 secFiles = cms.untracked.vstring()
-process.source = cms.Source ('PoolSource',fileNames = readFiles, secondaryFileNames = secFiles)
+processingMode=cms.untracked.string('RunsLumisAndEvents')
+process.source = cms.Source ('PoolSource',fileNames = readFiles)
+# process.source = cms.Source ('PoolSource',fileNames = readFiles, secondaryFileNames = secFiles)
 readFiles.extend(command_line_options.inputFiles)
 secFiles.extend( [] )
 
@@ -126,8 +132,8 @@ secFiles.extend( [] )
 
 ## ============ Output MiniAOD ======================
 ## !!! Produces a large file!
-process.out = cms.OutputModule("PoolOutputModule",
-                               fileName = cms.untracked.string('patTuple.root'),
-                               outputCommands = cms.untracked.vstring('keep *' )
-                               )
-process.outpath = cms.EndPath(process.out)
+# process.out = cms.OutputModule("PoolOutputModule",
+#                                fileName = cms.untracked.string('patTuple.root'),
+#                                outputCommands = cms.untracked.vstring('keep *_*_*_MssmHbb' )
+#                                )
+# process.outpath = cms.EndPath(process.out)
