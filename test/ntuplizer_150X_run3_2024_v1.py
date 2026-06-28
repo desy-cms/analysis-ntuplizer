@@ -81,23 +81,32 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     trigger_info['ntuplizerTriggerPaths'],
     trigger_info['ntuplizerL1Seeds'],
     trigger_info['ntuplizerTriggerObjects'],
-    stageL1Trigger = cms.uint32(2),
-    FixedGridRhoAll = cms.InputTag ('fixedGridRhoAll'),
-    TriggerResults  = cms.VInputTag(cms.InputTag('TriggerResults','','HLT') ),
-    TriggerObjectStandAlone = cms.VInputTag(cms.InputTag('slimmedPatTrigger'), ),
+    MonteCarlo      = cms.bool(command_line_options.type == 'mc'),
+    ReadPrescale    = cms.bool(True),
     TotalEvents     = cms.InputTag ('nTotalEvents'),
     FilteredEvents  = cms.InputTag ('nFilteredEvents'),
-    PatJets         = cms.VInputTag( cms.InputTag('updatedPatJetsAK4Puppi'), cms.InputTag('slimmedJetsPuppi')),
-    JECRecords      = cms.vstring  (              'AK4PFPuppi', 'AK4PFPuppi'), # for the JEC uncertainties
-    JERRecords      = cms.vstring  (              'AK4PFPuppi', 'AK4PFPuppi'), # for the JER uncertainties
-    PatMuons        = cms.VInputTag(cms.InputTag('slimmedMuons') ),
-    PrimaryVertices = cms.VInputTag(cms.InputTag('offlineSlimmedPrimaryVertices') ),
-    L1TJets         = cms.VInputTag(cms.InputTag('caloStage2Digis','Jet','RECO'), ),
-    L1TMuons        = cms.VInputTag(cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
+    TriggerResults  = cms.VInputTag(
+                                    cms.InputTag('TriggerResults','','HLT'), ),
+    TriggerObjectStandAlone = cms.VInputTag(
+                                    cms.InputTag('slimmedPatTrigger'), ),
+    PatJets         = cms.VInputTag( 
+                                    cms.InputTag('updatedPatJetsAK4Puppi'),
+                                    cms.InputTag('slimmedJetsPuppi'),),
+    JECRecords      = cms.vstring  (
+                                    'AK4PFPuppi',
+                                    'AK4PFPuppi',), # for the JEC uncertainties
+    JERRecords      = cms.vstring  (
+                                    'AK4PFPuppi',
+                                    'AK4PFPuppi',), # for the JER uncertainties
+    PatMuons        = cms.VInputTag(
+                                    cms.InputTag('slimmedMuons'), ),
+    PrimaryVertices = cms.VInputTag(
+                                    cms.InputTag('offlineSlimmedPrimaryVertices'), ),
+    L1TJets         = cms.VInputTag(
+                                    cms.InputTag('caloStage2Digis','Jet','RECO'), ),
+    L1TMuons        = cms.VInputTag(
+                                    cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
 )
-
-if command_line_options.type != 'mc':
-   process.MssmHbb.MonteCarlo      = cms.bool(False)
 
 ## !!! Do the stuff!
 process.p = cms.Path(
