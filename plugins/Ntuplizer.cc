@@ -361,14 +361,17 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
 // constructors and destructor
 //
 Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization of ntuple classes
+
+   usesResource(TFileService::kSharedResource);
    printf_info("==> Ntuplizer::Ntuplizer() constructor...\n");
+
    config_  = config;
    
    //now do what ever initialization is needed
    is_mc_         = config_.getParameter<bool> ("MonteCarlo");
    readprescale_  = true;
    
-   edm::Service<TFileService> fs;
+   edm::Service<TFileService> fs; // TODO MOVE TO beginJob???
    eventsDir_ = fs -> mkdir("Events");   
    // Metadata 
    metadata_ = pMetadata (new Metadata(fs,is_mc_));
@@ -390,9 +393,11 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
    
    std::string name;
    std::string fullname;
-   
+
+
    for ( auto & inputTags : inputTagsVec_ ) {
       InputTags collections = config_.getParameter<InputTags>(inputTags);
+
       for ( auto & collection : collections ) {
          std::string label = collection.label();
          std::string inst  = collection.instance();
