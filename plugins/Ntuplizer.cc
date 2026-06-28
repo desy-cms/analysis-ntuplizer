@@ -200,18 +200,18 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       
       bool testmode_;
       
-      std::vector<std::string> trig_res_process_;
+      strings trig_res_process_;
       
-      std::vector< std::string > inputTagsVec_;
-      std::vector< std::string > inputTags_;
-      std::vector< std::string > btagAlgos_;
-      std::vector< std::string > btagAlgosAlias_;
-      std::vector< std::string > triggerObjectLabels_;
-      std::vector< std::string > triggerObjectSplits_;
-      std::vector< std::string > triggerObjectSplitsTypes_;
+      strings inputTagsVec_;
+      strings inputTags_;
+      strings btagAlgos_;
+      strings btagAlgosAlias_;
+      strings triggerObjectLabels_;
+      strings triggerObjectSplits_;
+      strings triggerObjectSplitsTypes_;
       std::vector< TitleAlias >  btagVars_;
-      std::vector< std::string > jecRecords_;
-      std::vector< std::string > jerRecords_;
+      strings jecRecords_;
+      strings jerRecords_;
       
       std::map<std::string, edm::EDGetTokenT<reco::CaloJetCollection> > caloJetTokens_;
       std::map<std::string, edm::EDGetTokenT<reco::PFJetCollection> > pfJetTokens_;
@@ -314,8 +314,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
 
       
       // JER
-      std::vector<std::string > jer_files_;
-      std::vector<std::string > jersf_files_;
+      strings jer_files_;
+      strings jersf_files_;
       
       // File
       TFileDirectory eventsDir_;
@@ -413,9 +413,9 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
       std::vector< std::string> triggerpaths;
       std::vector< std::string> l1seeds;
       if (config_.exists("TriggerPaths"))
-         triggerpaths = config_.getParameter<std::vector<std::string>>("TriggerPaths");
+         triggerpaths = config_.getParameter<strings>("TriggerPaths");
       if (config_.exists("L1Seeds"))
-         l1seeds = config_.getParameter<std::vector<std::string>>("L1Seeds");
+         l1seeds = config_.getParameter<strings>("L1Seeds");
       for (auto const& collection : collections) {
          makeCollectionTree(collection);
          trig_res_process_.push_back(collection.process());
@@ -525,7 +525,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
    jerRecords_.clear();
    if ( do_patjets_ && config_.exists("JERRecords") )
    {
-      jerRecords_ = config_.getParameter< std::vector<std::string> >("JERRecords");
+      jerRecords_ = config_.getParameter< strings >("JERRecords");
       for ( auto & rcd : jerRecords_ )
       {
          if ( rcd != "" )
@@ -542,11 +542,11 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
       
       if(config_.exists("JERResFiles"))
       {
-      	jer_files_ = config_.getParameter< std::vector<std::string > >("JERResFiles");
+      	jer_files_ = config_.getParameter< strings >("JERResFiles");
       }
       if(config_.exists("JERSfFiles"))
       {
-      	jersf_files_ = config_.getParameter< std::vector<std::string > >("JERSfFiles");
+      	jersf_files_ = config_.getParameter< strings >("JERSfFiles");
       }
       
    }
@@ -555,7 +555,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
    jecRecords_.clear();
    if ( do_patjets_ && config_.exists("JECRecords") )
    {
-      jecRecords_ = config_.getParameter< std::vector<std::string> >("JECRecords");
+      jecRecords_ = config_.getParameter< strings >("JECRecords");
       for ( auto & rcd : jecRecords_ )
       {
          if ( rcd != "" )
@@ -726,12 +726,12 @@ void Ntuplizer::beginJob() {
    if ( config_.exists("BTagAlgorithmsAlias") )
    {
       btagAlgosAlias_.clear();
-      btagAlgosAlias_ = config_.getParameter< std::vector<std::string> >("BTagAlgorithmsAlias");
+      btagAlgosAlias_ = config_.getParameter< strings >("BTagAlgorithmsAlias");
    }
    if ( config_.exists("BTagAlgorithms") )
    {
       btagAlgos_.clear();
-      btagAlgos_ = config_.getParameter< std::vector<std::string> >("BTagAlgorithms");
+      btagAlgos_ = config_.getParameter< strings >("BTagAlgorithms");
    }
    if ( btagAlgos_.size() != btagAlgosAlias_.size() )
    {
@@ -749,13 +749,13 @@ void Ntuplizer::beginJob() {
    }
    
    // JEC Record (from TXT files)
-   std::vector<std::string > jec_files;
+   strings jec_files;
    // JEC Record (from CondDB)
    if ( do_patjets_ && config_.exists("JECRecords") )
    {
       if(config_.exists("JECUncertaintyFiles"))
       {
-         jec_files = config_.getParameter< std::vector<std::string > >("JECUncertaintyFiles");
+         jec_files = config_.getParameter< strings >("JECUncertaintyFiles");
       }
    }
    
@@ -816,10 +816,10 @@ void Ntuplizer::beginJob() {
    bool splitTriggerObject = config_.exists("TriggerObjectSplits");
    if ( do_triggerobjects_ && triggerObjectSplits_.empty() && splitTriggerObject )
    {
-      triggerObjectSplits_  = config_.getParameter< std::vector<std::string> >("TriggerObjectSplits");
+      triggerObjectSplits_  = config_.getParameter< strings >("TriggerObjectSplits");
       if ( ! triggerObjectSplits_.empty() && triggerObjectSplitsTypes_.empty() && config_.exists("TriggerObjectSplitsTypes") )
       {
-         triggerObjectSplitsTypes_ = config_.getParameter< std::vector<std::string> >("TriggerObjectSplitsTypes");
+         triggerObjectSplitsTypes_ = config_.getParameter< strings >("TriggerObjectSplitsTypes");
          for ( auto & tot : triggerObjectSplitsTypes_ ) std::transform(tot.begin(), tot.end(), tot.begin(), ::tolower);
          splitTriggerObject = !triggerObjectSplitsTypes_.empty();
       }
@@ -971,7 +971,7 @@ void Ntuplizer::beginJob() {
          if ( do_triggeraccepts_  && do_triggerobjects_ && inputTags == "TriggerObjectStandAlone"  )
          {
             if ( triggerObjectLabels_.empty() )
-               triggerObjectLabels_ = config_.getParameter< std::vector<std::string> >("TriggerObjectLabels");
+               triggerObjectLabels_ = config_.getParameter< strings >("TriggerObjectLabels");
             sort( triggerObjectLabels_.begin(), triggerObjectLabels_.end() );
             triggerObjectLabels_.erase( unique( triggerObjectLabels_.begin(), triggerObjectLabels_.end() ), triggerObjectLabels_.end() );
             std::string dir = name;
@@ -987,7 +987,7 @@ void Ntuplizer::beginJob() {
                triggerobjects_collections_.back() -> UseTriggerResults(trgRes);
                if ( splitTriggerObject )
                {
-                  std::vector<std::string> types;
+                  strings types;
                   for ( size_t tos = 0; tos < triggerObjectSplits_.size() ; ++tos )
                   {
                      if ( triggerObjectSplits_.at(tos) == name )
@@ -1016,7 +1016,7 @@ void Ntuplizer::beginJob() {
          if ( do_triggerobjects_ && inputTags == "TriggerEvent"  )
          {
             if ( triggerObjectLabels_.empty() )
-               triggerObjectLabels_ = config_.getParameter< std::vector<std::string> >("TriggerObjectLabels");
+               triggerObjectLabels_ = config_.getParameter< strings >("TriggerObjectLabels");
             sort( triggerObjectLabels_.begin(), triggerObjectLabels_.end() );
             triggerObjectLabels_.erase( unique( triggerObjectLabels_.begin(), triggerObjectLabels_.end() ), triggerObjectLabels_.end() );
             std::string dir = name;
@@ -1218,8 +1218,8 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.add<InputTags>("TriggerResults", { edm::InputTag("TriggerResults", "", "HLT") });
    //or    desc.add<InputTags>("TriggerResults", InputTags{ edm::InputTag("TriggerResults", "", "HLT") });
    desc.add<InputTags>("PatJets", { edm::InputTag("slimmedJetsPuppi") });
-   desc.add<std::vector<std::string>>("JECRecords", { "AK4PFPuppi" });
-   desc.add<std::vector<std::string>>("JERRecords", { "AK4PFPuppi" });
+   desc.add<strings>("JECRecords", { "AK4PFPuppi" });
+   desc.add<strings>("JERRecords", { "AK4PFPuppi" });
    desc.add<InputTags>( "PatMuons", { edm::InputTag("slimmedMuons") });
    desc.add<InputTags>( "L1TJets", { edm::InputTag("caloStage2Digis","Jet","RECO") });
    desc.add<InputTags>( "L1TMuons", { edm::InputTag("gmtStage2Digis","Muon","RECO") });
@@ -1229,11 +1229,11 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<InputTags>("TriggerObjectStandAlone");
    desc.addOptional<edm::InputTag>("FilteredEvents");
    desc.addOptional<edm::InputTag>("TotalEvents");
-   desc.addOptional<std::vector<std::string>>("L1Seeds");
-   desc.addOptional<std::vector<std::string>>("TriggerPaths");
-   desc.addOptional<std::vector<std::string>>("TriggerObjectLabels");
-   desc.addOptional<std::vector<std::string>>("TriggerObjectSplits");
-   desc.addOptional<std::vector<std::string>>("TriggerObjectSplitsTypes");
+   desc.addOptional<strings>("L1Seeds");
+   desc.addOptional<strings>("TriggerPaths");
+   desc.addOptional<strings>("TriggerObjectLabels");
+   desc.addOptional<strings>("TriggerObjectSplits");
+   desc.addOptional<strings>("TriggerObjectSplitsTypes");
 
   descriptions.addDefault(desc);
 }
