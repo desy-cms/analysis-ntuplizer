@@ -38,6 +38,7 @@ process.options.numberOfConcurrentLuminosityBlocks = cms.untracked.uint32(1)  # 
 
 # general configurations
 process.load('FWCore.MessageService.MessageLogger_cfi')
+# process.MessageLogger.cerr.threshold = cms.untracked.string("WARNING")
 process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(command_line_options.logReportEvery)
 process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cff')
 process.load('Configuration.Geometry.GeometryRecoDB_cff')
