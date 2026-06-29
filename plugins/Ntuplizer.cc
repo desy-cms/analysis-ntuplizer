@@ -48,6 +48,7 @@
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
 #include "DataFormats/L1Trigger/interface/Jet.h"
 #include "DataFormats/L1Trigger/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/TriggerObject.h"
@@ -68,6 +69,7 @@
 #include "DataFormats/Common/interface/OwnVector.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
+#include "DataFormats/HLTReco/interface/TriggerObject.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "DataFormats/Scalers/interface/LumiScalers.h"
@@ -112,7 +114,7 @@ using PatMETCandidates             = Candidates<pat::MET>;
 using GenJetCandidates             = Candidates<reco::GenJet>;
 using GenParticleCandidates        = Candidates<reco::GenParticle>;
 using TriggerObjectCandidates      = Candidates<pat::TriggerObject>;
-using TriggerObjectRecoCandidates  = Candidates<trigger::TriggerObject>;
+using TriggerObjectRecoCandidates  = Candidates<trigger::TriggerObject>; // ! not readout below!?  FIX
 using TriggerAccepts               = TriggerAccepts;
 using PrimaryVertices              = Vertices;
 using L1TJetCandidates             = Candidates<l1t::Jet>;
