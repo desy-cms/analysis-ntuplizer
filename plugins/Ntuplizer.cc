@@ -20,7 +20,6 @@
 // system include files
 #include <cstdlib>
 #include <memory>
-#include <boost/algorithm/string.hpp>
 #include <type_traits>
 
 // user include files
@@ -80,12 +79,14 @@
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 #include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
 #include "Analysis/Utils/interface/color_printf.h"
+#include "Analysis/Utils/interface/string_utils.h"
 
 using namespace analysis::ntuple;
+using analysis::utils::string_split;
 
+// Template aliases
 template<typename T>
 using Ptr = std::unique_ptr<T>;
-
 template<typename Collection>
 using Token = edm::EDGetTokenT<Collection>;
 template<typename Collection>
@@ -93,6 +94,7 @@ using TokenMap = std::map<std::string, Token<Collection>>;
 template<typename T>
 using Collections = std::vector<Ptr<T>>;
 
+// Aliases
 using TitleIndex                   = TitleIndex;
 using TitleAlias                   = TitleAlias;
 using InputTag                     = edm::InputTag;
@@ -202,14 +204,10 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool do_l1tjets_;
       bool do_l1tmuons_;
       bool do_chargedcands_;
-      // bool do_triggerinfo_;
-
       bool readprescale_;
-
       bool testmode_;
 
       Strings trig_res_process_;
-
       Strings inputTagsVec_;
       Strings inputTags_;
       Strings btagAlgos_;
@@ -221,23 +219,23 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Strings jecRecords_;
       Strings jerRecords_;
 
+      TokenMap<pat::JetCollection>                       patJetTokens_;
+      TokenMap<pat::MuonCollection>                      patMuonTokens_;
+      TokenMap<pat::METCollection>                       patMETTokens_;
+      TokenMap<pat::TriggerObjectStandAloneCollection>   triggerObjTokens_;
+      TokenMap<edm::TriggerResults>                      triggerResultsTokens_;
+      TokenMap<l1t::JetBxCollection>                     l1tJetTokens_;
+      TokenMap<l1t::MuonBxCollection>                    l1tMuonTokens_;
+      TokenMap<trigger::TriggerEvent>                    triggerEventTokens_;
+      TokenMap<reco::VertexCollection>                   primaryVertexTokens_;
+      TokenMap<reco::GenJetCollection>                   genJetTokens_;
+      TokenMap<reco::GenParticleCollection>              genPartTokens_;
       TokenMap<reco::CaloJetCollection>                  caloJetTokens_;
       TokenMap<reco::PFJetCollection>                    pfJetTokens_;
       TokenMap<reco::MuonCollection>                     recoMuonTokens_;
       TokenMap<reco::TrackCollection>                    recoTrackTokens_;
-      TokenMap<pat::JetCollection>                       patJetTokens_;
-      TokenMap<pat::METCollection>                       patMETTokens_;
-      TokenMap<pat::MuonCollection>                      patMuonTokens_;
-      TokenMap<reco::GenJetCollection>                   genJetTokens_;
-      TokenMap<reco::GenParticleCollection>              genPartTokens_;
-      TokenMap<pat::TriggerObjectStandAloneCollection>   triggerObjTokens_;
-      TokenMap<trigger::TriggerEvent>                    triggerEventTokens_;
-      TokenMap<edm::TriggerResults>                      triggerResultsTokens_;
-      TokenMap<reco::VertexCollection>                   primaryVertexTokens_;
-      TokenMap<reco::JetTagCollection>                   jetTagTokens_;
-      TokenMap<l1t::JetBxCollection>                     l1tJetTokens_;
-      TokenMap<l1t::MuonBxCollection>                    l1tMuonTokens_;
       TokenMap<reco::RecoChargedCandidateCollection>     chargedCandTokens_;
+      TokenMap<reco::JetTagCollection>                   jetTagTokens_;
 
       std::shared_ptr<HLTPrescaleProvider> hltPrescaleProvider_;
       HLTConfigProvider                    hltConfigProvider_;
@@ -280,23 +278,23 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       pPileupInfo pileupinfo_;
       
       // Collections for the ntuples (vector)
-      Collections<CaloJetCandidates>            calojets_collections_;
-      Collections<PFJetCandidates>              pfjets_collections_;
-      Collections<RecoMuonCandidates>           recomuons_collections_;
-      Collections<RecoTrackCandidates>          recotracks_collections_;
       Collections<PatJetCandidates>             patjets_collections_;
-      Collections<PatMETCandidates>             patmets_collections_;
       Collections<PatMuonCandidates>            patmuons_collections_;
-      Collections<GenJetCandidates>             genjets_collections_;
-      Collections<GenParticleCandidates>        genparticles_collections_;
-      Collections<JetsTags>                     jetstags_collections_;
-      Collections<PrimaryVertices>              primaryvertices_collections_;
-      Collections<TriggerAccepts>               triggeraccepts_collections_;
+      Collections<PatMETCandidates>             patmets_collections_;
       Collections<TriggerObjectCandidates>      triggerobjects_collections_;
       Collections<TriggerObjectRecoCandidates>  triggerobjectsreco_collections_;
       Collections<L1TJetCandidates>             l1tjets_collections_;
       Collections<L1TMuonCandidates>            l1tmuons_collections_;
+      Collections<PrimaryVertices>              primaryvertices_collections_;
+      Collections<GenJetCandidates>             genjets_collections_;
+      Collections<GenParticleCandidates>        genparticles_collections_;
+      Collections<CaloJetCandidates>            calojets_collections_;
+      Collections<PFJetCandidates>              pfjets_collections_;
+      Collections<RecoMuonCandidates>           recomuons_collections_;
+      Collections<RecoTrackCandidates>          recotracks_collections_;
+      Collections<TriggerAccepts>               triggeraccepts_collections_;
       Collections<ChargedCandidates>            chargedcands_collections_;
+      Collections<JetsTags>                     jetstags_collections_;
       
       // Collections for the ntuples (single)
       
@@ -990,7 +988,7 @@ void Ntuplizer::beginJob() {
                   {
                      if ( triggerObjectSplits_.at(tos) == name )
                      {
-                        boost::split(types,triggerObjectSplitsTypes_.at(tos),boost::is_any_of(":"));
+                        types = string_split(triggerObjectSplitsTypes_.at(tos), ':');
                         break;
                      }
                   }
