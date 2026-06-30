@@ -174,6 +174,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
       template<typename Product>
          void registerToken(InputTag const&, Token<Product>&, InputTag& );
+      template<typename Product, edm::BranchType B>
+         void registerToken(InputTag const&, Token<Product>&, InputTag& );
       template<typename Collection>
          void registerTokens(InputTags const& , TokenMap<Collection>& );
       void makeCollectionTree(InputTag const& collection, bool useFullName = false, std::string const& custom_tree_name = "");
@@ -495,23 +497,28 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
       registerToken<double>(collection,prefWeightDownToken_,prefWeightDown_);
    };
 
+   inputTagDispatch["GenFilterInfo"] = [&](InputTag const& collection) {
+      registerToken<GenFilterInfo,edm::InLumi>(collection,genFilterInfoToken_,genFilterInfo_);
+   };
+   inputTagDispatch["GenRunInfo"] = [&](InputTag const& collection) {
+      registerToken<GenRunInfoProduct,edm::InRun>(collection,genRunInfoToken_,genRunInfo_);
+   };
+   inputTagDispatch["TotalEvents"] = [&](InputTag const& collection) {
+      registerToken<edm::MergeableCounter,edm::InLumi>(collection,totalEventsToken_,totalEvents_);
+   };
+   inputTagDispatch["FilteredEvents"] = [&](InputTag const& collection) {
+      registerToken<edm::MergeableCounter,edm::InLumi>(collection,filteredEventsToken_,filteredEvents_);
+   };
+   inputTagDispatch["FilteredMHatEvents"] = [&](InputTag const& collection) {
+      registerToken<edm::MergeableCounter,edm::InLumi>(collection,filteredMHatEventsToken_,filteredMHatEvents_);
+   };
 
-   for ( auto & inputTag : inputTags_ )
-   {
+
+   for ( auto & inputTag : inputTags_ ) {
       InputTag collection = config_.getParameter<InputTag>(inputTag);
-
       auto it = inputTagDispatch.find(inputTag);
       if (it != inputTagDispatch.end())
          it->second(collection);
-
-      // Lumi products
-      if ( inputTag == "GenFilterInfo" )  { genFilterInfoToken_    = consumes<GenFilterInfo,edm::InLumi>(collection);         genFilterInfo_   = collection;}
-      if ( inputTag == "TotalEvents" )    { totalEventsToken_      = consumes<edm::MergeableCounter,edm::InLumi>(collection); totalEvents_     = collection;}
-      if ( inputTag == "FilteredEvents" ) { filteredEventsToken_   = consumes<edm::MergeableCounter,edm::InLumi>(collection); filteredEvents_  = collection;}
-      if ( inputTag == "FilteredMHatEvents" ) { filteredMHatEventsToken_ = consumes<edm::MergeableCounter,edm::InLumi>(collection); filteredMHatEvents_  = collection;}
-      // Run productus
-      if ( inputTag == "GenRunInfo" )     { genRunInfoToken_       = consumes<GenRunInfoProduct,edm::InRun>(collection);      genRunInfo_      = collection;}
-
    }
    
    // flags
@@ -1129,7 +1136,11 @@ void Ntuplizer::registerToken(InputTag const& collection, Token<Product>& token,
    token = consumes<Product>(collection);
    storedCollection = collection;
 }
-
+template<typename Product, edm::BranchType B>
+void Ntuplizer::registerToken(InputTag const& collection, Token<Product>& token, InputTag& storedCollection) {
+   token = consumes<Product,B>(collection);
+   storedCollection = collection;
+}
 
 void Ntuplizer::makeCollectionTree(InputTag const& collection, bool use_full_name, std::string const& custom_tree_name) {
    std::string label = collection.label();
