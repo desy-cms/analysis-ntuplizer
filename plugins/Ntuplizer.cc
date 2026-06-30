@@ -69,7 +69,6 @@
 #include "DataFormats/Common/interface/OwnVector.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
-#include "DataFormats/HLTReco/interface/TriggerObject.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "DataFormats/Scalers/interface/LumiScalers.h"
@@ -83,7 +82,6 @@
 #include "Analysis/Utils/interface/color_printf.h"
 #include "Analysis/Utils/interface/string_utils.h"
 
-using namespace analysis::ntuple;
 using analysis::utils::string_split;
 
 // Template aliases
@@ -97,34 +95,38 @@ template<typename T>
 using Collections = std::vector<Ptr<T>>;
 
 // Aliases
-using TitleIndex                   = TitleIndex;
-using TitleAlias                   = TitleAlias;
+using TitleIndex                   = analysis::ntuple::TitleIndex;
+using TitleAlias                   = analysis::ntuple::TitleAlias;
 using InputTag                     = edm::InputTag;
 using InputTags                    = std::vector<InputTag>;
 using Strings                      = std::vector<std::string>;
 
 // Alias to the collections classes of candidates for the ntuple
-using EventInfo                    = EventInfo;
-using Metadata                     = Metadata;
-using Definitions                  = Definitions;
-using PileupInfo                   = PileupInfo;
-using PatJetCandidates             = Candidates<pat::Jet>;
-using PatMuonCandidates            = Candidates<pat::Muon>;
-using PatMETCandidates             = Candidates<pat::MET>;
-using GenJetCandidates             = Candidates<reco::GenJet>;
-using GenParticleCandidates        = Candidates<reco::GenParticle>;
-using TriggerObjectCandidates      = Candidates<pat::TriggerObject>;
-using TriggerObjectRecoCandidates  = Candidates<trigger::TriggerObject>; // ! not readout below!?  FIX
-using TriggerAccepts               = TriggerAccepts;
-using PrimaryVertices              = Vertices;
-using L1TJetCandidates             = Candidates<l1t::Jet>;
-using L1TMuonCandidates            = Candidates<l1t::Muon>;
-using ChargedCandidates            = Candidates<reco::RecoChargedCandidate>;
-using CaloJetCandidates            = Candidates<reco::CaloJet>;
-using PFJetCandidates              = Candidates<reco::PFJet>;
-using RecoMuonCandidates           = Candidates<reco::Muon>;
-using RecoTrackCandidates          = Candidates<reco::Track>;
-using JetsTags                     = JetsTags;
+using EventInfo                    = analysis::ntuple::EventInfo;
+using Metadata                     = analysis::ntuple::Metadata;
+using Definitions                  = analysis::ntuple::Definitions;
+using PileupInfo                   = analysis::ntuple::PileupInfo;
+using PatJetCandidates             = analysis::ntuple::Candidates<pat::Jet>;
+using PatMuonCandidates            = analysis::ntuple::Candidates<pat::Muon>;
+using PatMETCandidates             = analysis::ntuple::Candidates<pat::MET>;
+using GenJetCandidates             = analysis::ntuple::Candidates<reco::GenJet>;
+using GenParticleCandidates        = analysis::ntuple::Candidates<reco::GenParticle>;
+using TriggerObjectCandidates      = analysis::ntuple::Candidates<pat::TriggerObject>;
+using TriggerAccepts               = analysis::ntuple::TriggerAccepts;
+using PrimaryVertices              = analysis::ntuple::Vertices;
+using L1TJetCandidates             = analysis::ntuple::Candidates<l1t::Jet>;
+using L1TMuonCandidates            = analysis::ntuple::Candidates<l1t::Muon>;
+using ChargedCandidates            = analysis::ntuple::Candidates<reco::RecoChargedCandidate>;
+using CaloJetCandidates            = analysis::ntuple::Candidates<reco::CaloJet>;
+using PFJetCandidates              = analysis::ntuple::Candidates<reco::PFJet>;
+using RecoMuonCandidates           = analysis::ntuple::Candidates<reco::Muon>;
+using RecoTrackCandidates          = analysis::ntuple::Candidates<reco::Track>;
+using JetsTags                     = analysis::ntuple::JetsTags;
+
+using FilterResults                = analysis::ntuple::FilterResults;
+using JerESTokens                  = analysis::ntuple::JerESTokens;
+using JecESTokens                  = analysis::ntuple::JecESTokens;
+
 
 // Alias to the pointers to the above classes
 using pEventInfo                    = Ptr<EventInfo>;
@@ -137,7 +139,6 @@ using pPatMETCandidates             = Ptr<PatMETCandidates>;
 using pGenJetCandidates             = Ptr<GenJetCandidates>;
 using pGenParticleCandidates        = Ptr<GenParticleCandidates>;
 using pTriggerObjectCandidates      = Ptr<TriggerObjectCandidates>;
-using pTriggerObjectRecoCandidates  = Ptr<TriggerObjectRecoCandidates>;
 using pTriggerAccepts               = Ptr<TriggerAccepts>;
 using pPrimaryVertices              = Ptr<PrimaryVertices>;
 using pL1TJetCandidates             = Ptr<L1TJetCandidates>;
@@ -272,7 +273,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       InputTags eventCounters_;
       InputTags mHatEventCounters_;
       
-      std::map<std::string, TTree*>          tree_; // using pointers instead of smart pointers, could not Fill() with smart pointer???
+      std::map<std::string, TTree*> tree_; // Non-owning pointers. TTree objects are created and owned by TFileService.
 
       // Ntuple stuff
       pEventInfo eventinfo_;
@@ -284,7 +285,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Collections<PatMuonCandidates>            patmuons_collections_;
       Collections<PatMETCandidates>             patmets_collections_;
       Collections<TriggerObjectCandidates>      triggerobjects_collections_;
-      Collections<TriggerObjectRecoCandidates>  triggerobjectsreco_collections_;
       Collections<L1TJetCandidates>             l1tjets_collections_;
       Collections<L1TMuonCandidates>            l1tmuons_collections_;
       Collections<PrimaryVertices>              primaryvertices_collections_;
@@ -303,12 +303,12 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       // metadata
       double xsection_;
       
-      FilterResults eventFilterResults_;
-      FilterResults genFilterResults_;
+      analysis::ntuple::FilterResults eventFilterResults_;
+      analysis::ntuple::FilterResults genFilterResults_;
       
       // ESTokens
-      std::vector<JerESTokens> jer_es_tokens_;
-      std::vector<JecESTokens> jec_es_tokens_;
+      std::vector<analysis::ntuple::JerESTokens> jer_es_tokens_;
+      std::vector<analysis::ntuple::JecESTokens> jec_es_tokens_;
 
       
       // JER
@@ -406,6 +406,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
    inputTagsDispatch["TriggerEvent"] = [&](InputTags const& collections) {
       registerTokens<trigger::TriggerEvent>(collections, triggerEventTokens_);
    };
+
    inputTagsDispatch["TriggerResults"] = [&](InputTags const& collections) {
       registerTokens<edm::TriggerResults>(collections, triggerResultsTokens_);
       std::vector< std::string> triggerpaths;
@@ -467,7 +468,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
       it->second(collections);
 
    }
-
    
    // Single InputTag
    using RegisterFn = std::function<void(InputTag const&)>;
@@ -521,13 +521,10 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
    // JER Record (from TXT files)
    // JER Record (from CondDB)
    jerRecords_.clear();
-   if ( do_patjets_ && config_.exists("JERRecords") )
-   {
+   if ( do_patjets_ && config_.exists("JERRecords") ) {
       jerRecords_ = config_.getParameter< Strings >("JERRecords");
-      for ( auto & rcd : jerRecords_ )
-      {
-         if ( rcd != "" )
-         {
+      for ( auto & rcd : jerRecords_ ) {
+         if ( rcd != "" ) {
             std::string label_pt = rcd + "_pt";
             std::string label_sf = rcd;
             JerESTokens est;
@@ -537,13 +534,10 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
             jer_es_tokens_.push_back(est);
          }
       }
-      
-      if(config_.exists("JERResFiles"))
-      {
+      if(config_.exists("JERResFiles")) {
       	jer_files_ = config_.getParameter< Strings >("JERResFiles");
       }
-      if(config_.exists("JERSfFiles"))
-      {
+      if(config_.exists("JERSfFiles")) {
       	jersf_files_ = config_.getParameter< Strings >("JERSfFiles");
       }
       
@@ -551,13 +545,10 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
    // JEC record (from CondDB)
    // see example: https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/PatUtils/plugins/ShiftedPFCandidateProducerForNoPileUpPFMEt.cc
    jecRecords_.clear();
-   if ( do_patjets_ && config_.exists("JECRecords") )
-   {
+   if ( do_patjets_ && config_.exists("JECRecords") ) {
       jecRecords_ = config_.getParameter< Strings >("JECRecords");
-      for ( auto & rcd : jecRecords_ )
-      {
-         if ( rcd != "" )
-         {
+      for ( auto & rcd : jecRecords_ ) {
+         if ( rcd != "" ) {
             JecESTokens est;
             est.record = rcd;
             est.jecToken = esConsumes(edm::ESInputTag("", rcd));
@@ -653,8 +644,8 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       for ( auto & collection : triggerobjects_collections_ )
          collection -> Fill(event);
       
-      for ( auto & collection : triggerobjectsreco_collections_ )
-         collection -> Fill(event);
+      // for ( auto & collection : triggerobjectsreco_collections_ )
+      //    collection -> Fill(event);
       
       // L1T jets
       for ( auto & collection : l1tjets_collections_ )
@@ -749,10 +740,8 @@ void Ntuplizer::beginJob() {
    // JEC Record (from TXT files)
    Strings jec_files;
    // JEC Record (from CondDB)
-   if ( do_patjets_ && config_.exists("JECRecords") )
-   {
-      if(config_.exists("JECUncertaintyFiles"))
-      {
+   if ( do_patjets_ && config_.exists("JECRecords") ) {
+      if(config_.exists("JECUncertaintyFiles")) {
          jec_files = config_.getParameter< Strings >("JECUncertaintyFiles");
       }
    }
@@ -761,20 +750,17 @@ void Ntuplizer::beginJob() {
    if ( do_patjets_ )
       nPatJets = config_.getParameter<InputTags>("PatJets").size();
    
-   if ( nPatJets > jecRecords_.size() && jecRecords_.size() != 0 )
-   {
-      std::cout << "*** ERROR ***  Ntuplizer: Number of JEC Records less than the number of PatJet collections." << std::endl;;
+   if ( nPatJets > jecRecords_.size() && jecRecords_.size() != 0 ) {
+      printf_error("Ntuplizer::beginJob *** ERROR ***  Number of JEC Records less than the number of PatJet collections.\n");
       exit(-1);
    }
-   if ( nPatJets > jerRecords_.size() && jerRecords_.size() != 0 )
-   {
-      std::cout << "*** ERROR ***  Ntuplizer: Number of JER Records less than the number of PatJet collections." << std::endl;;
+   if ( nPatJets > jerRecords_.size() && jerRecords_.size() != 0 ) {
+      printf_error("Ntuplizer::beginJob *** ERROR ***  Number of JER Records less than the number of PatJet collections.\n");
       exit(-1);
    }
-   if ( jerRecords_.size() != 0 && jer_files_.size() != 0 && jersf_files_.size()!=0 &&(jerRecords_.size() != jer_files_.size() || jerRecords_.size() != jersf_files_.size()) )
-   {
-   		std::cerr << "*** ERROR *** Ntuplizer: Number of JER Records are not the same as number of provided input files. " <<std::endl;
-   		exit(-1);
+   if ( jerRecords_.size() != 0 && jer_files_.size() != 0 && jersf_files_.size()!=0 &&(jerRecords_.size() != jer_files_.size() || jerRecords_.size() != jersf_files_.size()) ) {
+      printf_error("Ntuplizer::beginJob *** ERROR *** Number of JER Records are not the same as number of provided input files.\n");
+      exit(-1);
    }
    
    
@@ -1011,6 +997,8 @@ void Ntuplizer::beginJob() {
             }
          }
          
+         
+
          if ( do_triggerobjects_ && inputTags == "TriggerEvent"  )
          {
             if ( triggerObjectLabels_.empty() )
@@ -1020,14 +1008,6 @@ void Ntuplizer::beginJob() {
             std::string dir = name;
             TFileDirectory triggerObjectsDir = eventsDir_.mkdir(dir);
       
-            for ( auto & triggerObjectLabel : triggerObjectLabels_ )
-            {
-               name = triggerObjectLabel;
-               if ( use_full_name_ ) name += "_" + dir;
-               tree_[name] = triggerObjectsDir.make<TTree>(name.c_str(),name.c_str());
-               triggerobjectsreco_collections_.push_back(pTriggerObjectRecoCandidates( new TriggerObjectRecoCandidates(collection, tree_[name], is_mc_ ) ));
-               triggerobjectsreco_collections_.back() -> Init();
-            }
          }
          // Primary Vertices
          if ( inputTags == "PrimaryVertices" )
