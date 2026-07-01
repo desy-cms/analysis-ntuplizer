@@ -420,7 +420,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
       for (auto const& collection : collections) {
          makeCollectionTree(collection);
          trig_res_process_.push_back(collection.process());
-         triggeraccepts_collections_.push_back( pTriggerAccepts( new TriggerAccepts(collection, tree_[collection.label()], triggerpaths, l1seeds) ));
+         triggeraccepts_collections_.push_back( pTriggerAccepts( new TriggerAccepts(collection, tree_[collection.label()], triggerpaths, l1seeds, hltPrescaleProvider_) ));
          triggeraccepts_collections_.back()->Init();
          triggeraccepts_collections_.back()->ReadPrescaleInfo(readprescale_);
       }
@@ -650,9 +650,6 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       // trigger objects
       for ( auto & collection : triggerobjects_collections_ )
          collection -> Fill(event);
-      
-      // for ( auto & collection : triggerobjectsreco_collections_ )
-      //    collection -> Fill(event);
       
       // L1T jets
       for ( auto & collection : l1tjets_collections_ )

@@ -18,14 +18,14 @@
 // 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-//#include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
  
 #include "Analysis/Ntuplizer/interface/TriggerAccepts.h"
+#include "Analysis/Utils/interface/color_printf.h"
 
 //
-// class declaration
+// class declarationhlt_ps_double
 //
 
 using namespace analysis;
@@ -127,7 +127,33 @@ void TriggerAccepts::Fill(const edm::Event& event, const edm::EventSetup & setup
             // get prescale info if requested
             if ( psinfo_ )
             {
-               // // const std::pair<std::vector<std::pair<std::string,int> >,int> ps = hlt_prescale_->prescaleValuesInDetail(event,setup,hlt_config_->triggerName(j));
+
+               auto const hlt_ps_double = hlt_prescale_->prescaleValue<double>(event, setup, hlt_config_->triggerName(j));
+
+
+               // auto const hltPSDouble = hlt_prescale_->prescaleValue<double>(event, setup, hlt_config_->triggerName(j));
+               // auto const hltPSFrac = hlt_prescale_->prescaleValue<FractionalPrescale>(event, setup, hlt_config_->triggerName(j));
+
+               // auto const l1HLTPSDouble = hlt_prescale_->prescaleValues<double>(event, setup, hlt_config_->triggerName(j));
+               // auto const l1HLTPSFrac = hlt_prescale_->prescaleValues<FractionalPrescale>(event, setup, hlt_config_->triggerName(j));
+               // auto const l1HLTPSDoubleFrac = hlt_prescale_->prescaleValues<double, FractionalPrescale>(event, setup, hlt_config_->triggerName(j));
+
+               auto const l1HLTDetailPSDouble = hlt_prescale_->prescaleValuesInDetail<double>(event, setup, hlt_config_->triggerName(j));
+               auto const l1HLTDetailPSFrac = hlt_prescale_->prescaleValuesInDetail<FractionalPrescale>(event, setup, hlt_config_->triggerName(j));
+
+               printf_info("TriggerAccepts::Fill: Path %s \n", hlt_config_->triggerName(j).c_str());
+               printf_debug("TriggerAccepts::Fill: HLT prescale = %.2f\n", l1HLTDetailPSDouble.second);
+               for (const auto& entry : l1HLTDetailPSDouble.first) {
+                  printf_debug("TriggerAccepts::Fill: L1 prescale for seed %s = %.2f\n", entry.first.c_str(), entry.second);
+               }
+               printf_debug("TriggerAccepts::Fill: HLT prescale fraction = %.2f / %.2f\n", l1HLTDetailPSFrac.second.numerator() , l1HLTDetailPSFrac.second.denominator());
+               for (const auto& entry : l1HLTDetailPSFrac.first) {
+                  printf_debug("TriggerAccepts::Fill: L1 prescale fraction for seed %s = %.2f / %.2f\n", entry.first.c_str(), entry.second.numerator() , entry.second.denominator());
+               }
+
+               printf_debug("\n");
+
+               // const std::pair<std::vector<std::pair<std::string,int> >,int> ps = hlt_prescale_->prescaleValuesInDetail(event,setup,hlt_config_->triggerName(j));
                // auto ps = hlt_prescale_->prescaleValuesInDetail(event,setup,hlt_config_->triggerName(j));
                // // HLT prescale
                // pshlt_[i] = ps.second;
