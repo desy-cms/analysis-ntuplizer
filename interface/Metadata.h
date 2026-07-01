@@ -28,36 +28,34 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/Run.h"
 #include "FWCore/Framework/interface/LuminosityBlock.h"
-
-#include "Analysis/Ntuplizer/interface/Definitions.h"
-
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
-
 #include "DataFormats/Common/interface/MergeableCounter.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenFilterInfo.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include "Analysis/Ntuplizer/interface/Definitions.h"
 #include "Analysis/Ntuplizer/interface/EventFilter.h"
-
 #include "Analysis/Ntuplizer/interface/Utils.h"
-
-
-
 #include "TTree.h"
 
-
-typedef analysis::ntuple::Definitions Definitions;
-typedef std::unique_ptr<Definitions> pDefinitions;
-
-typedef analysis::ntuple::EventFilter<GenFilterInfo> GenFilter;
-typedef analysis::ntuple::EventFilter<edm::MergeableCounter> EvtFilter;
-
-typedef std::unique_ptr<GenFilter> pGenFilter;
-typedef std::unique_ptr<EvtFilter> pEvtFilter;
+template<typename T>
+using Ptr = std::unique_ptr<T>;
+template<typename T>
+using Vector = std::vector<T>;
 
 
-typedef std::unique_ptr<edm::Service<TFileService> > pTFileService;
-
+using String = std::string;
+using Strings = Vector<String>;
+using InputTag = edm::InputTag;
+using InputTags = Vector<InputTag>;
+using LuminosityBlock = edm::LuminosityBlock;
+using Run = edm::Run;
+using Definitions = analysis::ntuple::Definitions;
+using DefinitionsPtr = Ptr<Definitions>;
+using GenFilter = analysis::ntuple::EventFilter<GenFilterInfo>;
+using EvtFilter = analysis::ntuple::EventFilter<edm::MergeableCounter>;
+using GenFilterPtr = Ptr<GenFilter>;
+using EvtFilterPtr = Ptr<EvtFilter>;
 
 //
 // class declaration
@@ -65,66 +63,54 @@ typedef std::unique_ptr<edm::Service<TFileService> > pTFileService;
 
 namespace analysis {
    namespace ntuple {
-
       class Metadata {
          public:
             Metadata();
-            Metadata(edm::Service<TFileService> &, const bool & is_mc = false, const std::string & dir = "Metadata" );
+            Metadata(edm::Service<TFileService> &, const bool & is_mc = false, const String & dir = "Metadata" );
             Metadata(TFileDirectory & );
            ~Metadata();
+            void Init();
             void Fill();
-            TTree * Tree();
-            TFileDirectory TreeDir();
-            void AddDefinitions(const std::vector<std::string> &, const std::vector<std::string> &);
-            void AddDefinitions(const std::vector<std::string> &, const std::vector<std::string> &, const std::string &);
-            void AddDefinitions(const std::vector<TitleAlias> &, const std::string &);
-            
-            void SetGeneratorFilter(const edm::InputTag & );
-            void SetEventFilter(const std::vector<edm::InputTag> &);
-            void SetMHatEventFilter(const std::vector<edm::InputTag> &);
-            void IncrementEventFilters( edm::LuminosityBlock const& );
-            
-            void SetCrossSections( const edm::Run  &, const edm::InputTag &, const double & myxs = -1. );
-            
+            void AddDefinitions(const Strings &, const Strings &);
+            void AddDefinitions(const Strings &, const Strings &, const String &);
+            void AddDefinitions(const Vector<TitleAlias> &, const String &);
+            void SetGeneratorFilter(const InputTag & );
+            void SetEventFilter(const InputTags &);
+            void SetMHatEventFilter(const InputTags &);
+            void IncrementEventFilters( LuminosityBlock const& );
+            void SetCrossSections( const Run &, const InputTag &, const double & myxs = -1. );
             
             GenFilter & GetGeneratorFilter();
             EvtFilter & GetEventFilter();
 
          private:
             // ----------member data ---------------------------
+            void TreesBranches_();
+            Vector<DefinitionsPtr> vdefinitions_;
             
-//            edm::Service<TFileService> * fs_;
-            TFileDirectory mainDir_;
-            TFileDirectory mHatDir_;
-            
-            std::vector<pDefinitions> vdefinitions_;
-            
-            bool isGenFilter_;
-            bool isEvtFilter_;
-            bool isMHatEvtFilter_;
-            pGenFilter  genfilter_;
-            pEvtFilter  evtfilter_;
-            pEvtFilter  mHatEvtFilter_;
-            
-            
-            pTFileService pfs_;
+            bool is_gen_filter_;
+            bool is_evt_filter_;
+            bool is_mhat_evt_filter_;
+            GenFilterPtr  gen_filter_;
+            EvtFilterPtr  evt_filter_;
+            EvtFilterPtr  m_hat_evt_filter_;
             
             // Cross sections tree
-            TTree * treeXS_;
-            double myXSec_;
-            double XSec_;
-            double internalXSec_;
-            double externalXSecLO_;
-            double externalXSecNLO_;
-            unsigned int runXS_;
+            TTree * xsection_tree_;
+            double my_xsection_;
+            double xsection_;
+            double internal_xsection_;
+            double external_xsection_lo_;
+            double external_xsection_nlo_;
+            unsigned int run_xsection_;
             
             // Dataset tree
-            TTree * treeDS_;
+            TTree * dataset_tree_;
             bool is_mc_;
 
-            
-            
-            
+            // Tree folders
+            TFileDirectory main_folder_;
+            TFileDirectory mhat_folder_;   
       };
    }
 }
