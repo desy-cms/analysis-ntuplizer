@@ -34,13 +34,11 @@ using namespace analysis::ntuple;
 //
 // constructors and destructor
 //
-TriggerAccepts::TriggerAccepts()
-{
+TriggerAccepts::TriggerAccepts() {
    // default constructor
 }
 
-TriggerAccepts::TriggerAccepts(const edm::InputTag& tag, TTree* tree, const std::vector<std::string>& paths, const std::vector<std::string>& seeds, const std::shared_ptr<HLTPrescaleProvider> hltPrescale)
-{
+TriggerAccepts::TriggerAccepts(const edm::InputTag& tag, TTree* tree, const std::vector<std::string>& paths, const std::vector<std::string>& seeds, const std::shared_ptr<HLTPrescaleProvider> hltPrescale) {
    hlt_prescale_ = hltPrescale;
    input_collection_ = tag;
    tree_ = tree;
@@ -60,8 +58,7 @@ TriggerAccepts::TriggerAccepts(const edm::InputTag& tag, TTree* tree, const std:
    psinfo_ = true;
 }
 
-TriggerAccepts::TriggerAccepts(const edm::InputTag& tag, TTree* tree, const std::vector<std::string>& paths, const std::vector<std::string>& seeds)
-{
+TriggerAccepts::TriggerAccepts(const edm::InputTag& tag, TTree* tree, const std::vector<std::string>& paths, const std::vector<std::string>& seeds) {
    input_collection_ = tag;
    tree_ = tree;
    paths_.clear();
@@ -80,8 +77,7 @@ TriggerAccepts::TriggerAccepts(const edm::InputTag& tag, TTree* tree, const std:
    psinfo_ = true;
 }
 
-TriggerAccepts::~TriggerAccepts()
-{
+TriggerAccepts::~TriggerAccepts() {
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 }
@@ -97,14 +93,12 @@ void TriggerAccepts::Fill(const edm::Event& event, const edm::EventSetup & setup
    using namespace edm;
    
    // reset trigger accepts and prescales to default -1
-   for (size_t i = 0; i < paths_.size() ; ++i )
-   {
+   for (size_t i = 0; i < paths_.size() ; ++i ) {
       accept_[i] = false;
       pshlt_[i] = -1;
    }
    std::map<std::string, bool> l1done; // L1 prescale only once per event
-   for (size_t i = 0; i < seeds_.size() ; ++i )
-   {
+   for (size_t i = 0; i < seeds_.size() ; ++i ) {
       psl1_[i] = -1;
       l1accept_[i] = false;
       l1done[seeds_[i]] = false;
@@ -115,73 +109,33 @@ void TriggerAccepts::Fill(const edm::Event& event, const edm::EventSetup & setup
    const TriggerResults & triggers = *(handler.product());
       
    // l1 accept
-   for ( size_t j = 0 ; j < hlt_config_->size() ; ++j )
-   {
-      for (size_t i = 0; i < paths_.size() ; ++i )
-      {
-         if ( hlt_config_->triggerName(j).find(paths_[i]) == 0 )
-         {
-            // trigger accepted?
-            accept_[i] = triggers.accept(j);
-            
+   for ( size_t j = 0 ; j < hlt_config_->size() ; ++j ) {
+      for (size_t i = 0; i < paths_.size() ; ++i ) {
+         if ( hlt_config_->triggerName(j).find(paths_[i]) == 0 )  {
+            accept_[i] = triggers.accept(j); // get HLT trigger decision
             // get prescale info if requested
-            if ( psinfo_ )
-            {
-
-               auto const hlt_ps_double = hlt_prescale_->prescaleValue<double>(event, setup, hlt_config_->triggerName(j));
-
-
-               // auto const hltPSDouble = hlt_prescale_->prescaleValue<double>(event, setup, hlt_config_->triggerName(j));
-               // auto const hltPSFrac = hlt_prescale_->prescaleValue<FractionalPrescale>(event, setup, hlt_config_->triggerName(j));
-
-               // auto const l1HLTPSDouble = hlt_prescale_->prescaleValues<double>(event, setup, hlt_config_->triggerName(j));
-               // auto const l1HLTPSFrac = hlt_prescale_->prescaleValues<FractionalPrescale>(event, setup, hlt_config_->triggerName(j));
-               // auto const l1HLTPSDoubleFrac = hlt_prescale_->prescaleValues<double, FractionalPrescale>(event, setup, hlt_config_->triggerName(j));
-
-               auto const l1HLTDetailPSDouble = hlt_prescale_->prescaleValuesInDetail<double>(event, setup, hlt_config_->triggerName(j));
-               auto const l1HLTDetailPSFrac = hlt_prescale_->prescaleValuesInDetail<FractionalPrescale>(event, setup, hlt_config_->triggerName(j));
-
-               printf_info("TriggerAccepts::Fill: Path %s \n", hlt_config_->triggerName(j).c_str());
-               printf_debug("TriggerAccepts::Fill: HLT prescale = %.2f\n", l1HLTDetailPSDouble.second);
-               for (const auto& entry : l1HLTDetailPSDouble.first) {
-                  printf_debug("TriggerAccepts::Fill: L1 prescale for seed %s = %.2f\n", entry.first.c_str(), entry.second);
+            if ( psinfo_ ) {
+               auto const l1_hlt_detail_prescale_double = hlt_prescale_->prescaleValuesInDetail<double>(event, setup, hlt_config_->triggerName(j));
+               // HLT prescale
+               pshlt_[i] = static_cast<float>(l1_hlt_detail_prescale_double.second);
+               // Get L1 prescale of all seeds of the path
+               for (const auto& detail_seed : l1_hlt_detail_prescale_double.first) { // loop over seeds of the path
+                  for ( size_t l = 0; l < seeds_.size(); ++l ) { // loop over seeds passed by python config
+                     if ( ! l1done[seeds_[l]] && detail_seed.first == seeds_[l] ) {  // if prescale of L1 seed not read and seed is in path
+                        psl1_[l] = static_cast<float>(detail_seed.second); // set prescale of L1 seed
+                        l1done[seeds_[l]] = true;
+                        hlt_prescale_->l1tGlobalUtil().getFinalDecisionByName(seeds_[l], l1accept_[l]); // get L1 seed decision
+                        break;
+                     }
+                  }
                }
-               printf_debug("TriggerAccepts::Fill: HLT prescale fraction = %.2f / %.2f\n", l1HLTDetailPSFrac.second.numerator() , l1HLTDetailPSFrac.second.denominator());
-               for (const auto& entry : l1HLTDetailPSFrac.first) {
-                  printf_debug("TriggerAccepts::Fill: L1 prescale fraction for seed %s = %.2f / %.2f\n", entry.first.c_str(), entry.second.numerator() , entry.second.denominator());
-               }
-
-               printf_debug("\n");
-
-               // const std::pair<std::vector<std::pair<std::string,int> >,int> ps = hlt_prescale_->prescaleValuesInDetail(event,setup,hlt_config_->triggerName(j));
-               // auto ps = hlt_prescale_->prescaleValuesInDetail(event,setup,hlt_config_->triggerName(j));
-               // // HLT prescale
-               // pshlt_[i] = ps.second;
-               // // Get L1 prescale of all seeds of the path
-               // for ( size_t k = 0; k < ps.first.size(); ++k ) // loop over seeds of the path
-               // {
-               //    for ( size_t l = 0; l < seeds_.size(); ++l ) // loop over seeds passed by python config
-               //    {
-               //       if ( ! l1done[seeds_[l]] && ps.first[k].first == seeds_[l] )  // if prescale of L1 seed not read and seed is in path
-               //       {
-               //          psl1_[l] = ps.first[k].second;
-               //          l1done[seeds_[l]] = true;
-               //          hlt_prescale_->l1tGlobalUtil().getFinalDecisionByName (seeds_[l], l1accept_[l]);
-               //          break;
-               //       }
-               //    }
-               // }
-            }
-            else
-            {
+               // TODO: fractional prescale
+               // auto const l1_hlt_detail_prescale_fractional = hlt_prescale_->prescaleValuesInDetail<FractionalPrescale>(event, setup, hlt_config_->triggerName(j));
+            } else {
                std::vector<std::string> l1seeds = hlt_config_->hltL1TSeeds(hlt_config_->triggerName(j));
-               for ( size_t l = 0; l < seeds_.size(); ++l ) // loop over seeds passed by python config
-               {
-                  for ( auto & l1 : l1seeds )
-                  {
-                     if ( l1.find(seeds_[l]) == 0 && ! l1done[seeds_[l]] )
-                     {
-//                        hlt_prescale_->l1tGlobalUtil().getFinalDecisionByName (seeds_[l], l1accept_[l]);
+               for ( size_t l = 0; l < seeds_.size(); ++l ) { // loop over seeds passed by python config
+                  for ( auto & l1 : l1seeds ) {
+                     if ( l1.find(seeds_[l]) == 0 && ! l1done[seeds_[l]] ) {
                         l1done[seeds_[l]] = true;
                         break;
                      }
@@ -197,51 +151,38 @@ void TriggerAccepts::Fill(const edm::Event& event, const edm::EventSetup & setup
 }
 
 // ------------ method called once each job just before starting event loop  ------------
-void TriggerAccepts::Branches()
-{
+void TriggerAccepts::Branches() {
    // two loops for separation of accepts and prescales(?)
-   for (size_t i = 0; i < paths_.size() ; ++i )
-   {
+   for (size_t i = 0; i < paths_.size() ; ++i )   {
       tree_->Branch(paths_[i].c_str(), &accept_[i], (paths_[i]+"/O").c_str());
    }
-   for (size_t i = 0; i < seeds_.size() ; ++i )
-   {
+   for (size_t i = 0; i < seeds_.size() ; ++i )   {
       tree_->Branch(seeds_[i].c_str(), &l1accept_[i], (seeds_[i]+"/O").c_str());
    }
-   for (size_t i = 0; i < paths_.size() ; ++i )
-   {
-      tree_->Branch(("ps_"+paths_[i]).c_str(), &pshlt_[i], ("ps_"+paths_[i]+"/I").c_str());
+   for (size_t i = 0; i < paths_.size() ; ++i )   {
+      tree_->Branch(("ps_"+paths_[i]).c_str(), &pshlt_[i], ("ps_"+paths_[i]+"/F").c_str());
    }
-   for (size_t i = 0; i < seeds_.size() ; ++i )
-   {
-      tree_->Branch(("ps_"+seeds_[i]).c_str(), &psl1_[i], ("ps_"+seeds_[i]+"/I").c_str());
+   for (size_t i = 0; i < seeds_.size() ; ++i )   {
+      tree_->Branch(("ps_"+seeds_[i]).c_str(), &psl1_[i], ("ps_"+seeds_[i]+"/F").c_str());
    }
-   // std::cout << "TriggerAccepts Branches ok" << std::endl;
 }
 
-void TriggerAccepts::Run(edm::Run const & run, edm::EventSetup const& setup)
-{
-//   bool changed;
-//   hlt_prescale_->init(run, setup, input_collection_.process(), changed);
-//   hlt_config_ = hlt_prescale_->hltConfigProvider();
-   
+void TriggerAccepts::Run(edm::Run const & run, edm::EventSetup const& setup) {
+   // Now done in the Ntuplizer::beginRun()
 }
-void TriggerAccepts::ReadPrescaleInfo(const bool & ok)
-{
+
+void TriggerAccepts::ReadPrescaleInfo(const bool & ok) {
    psinfo_ = ok;
 }
-bool TriggerAccepts::ReadPrescaleInfo()
-{
+bool TriggerAccepts::ReadPrescaleInfo() {
    return psinfo_;
 }
 
-void TriggerAccepts::Init()
-{
+void TriggerAccepts::Init() {
    Branches();
 }
 
-void TriggerAccepts::Providers(const std::shared_ptr<HLTPrescaleProvider> & hltpsprov, const std::shared_ptr<HLTConfigProvider> &hltcfgprov)
-{
+void TriggerAccepts::Providers(const std::shared_ptr<HLTPrescaleProvider> & hltpsprov, const std::shared_ptr<HLTConfigProvider> &hltcfgprov) {
    hlt_config_ = hltcfgprov;
    hlt_prescale_ = hltpsprov;
 }
