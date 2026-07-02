@@ -83,7 +83,7 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     trigger_info['ntuplizerL1Seeds'],
     trigger_info['ntuplizerTriggerObjects'],
     MonteCarlo      = cms.bool(command_line_options.type == 'mc'),
-    ReadPrescale    = cms.bool(True),
+    StorePrescale    = cms.bool(True),
     TotalEvents     = cms.InputTag ('nTotalEvents'),
     FilteredEvents  = cms.InputTag ('nFilteredEvents'),
     TriggerResults  = cms.VInputTag(
