@@ -1167,6 +1167,8 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<InputTags>("GenJets");
    desc.addOptional<InputTags>("GenParticles");
 
+   desc.addOptional<InputTag>("FilteredMHatEvents");
+
 
   descriptions.addDefault(desc);
 }
