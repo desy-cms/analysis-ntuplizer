@@ -98,7 +98,8 @@ using TitleIndex                   = analysis::ntuple::TitleIndex;
 using TitleAlias                   = analysis::ntuple::TitleAlias;
 using InputTag                     = edm::InputTag;
 using InputTags                    = std::vector<InputTag>;
-using Strings                      = std::vector<std::string>;
+using String                       = std::string;
+using Strings                      = std::vector<String>;
 
 // Alias to the collections classes of candidates for the ntuple
 using EventInfo                    = analysis::ntuple::EventInfo;
@@ -137,7 +138,7 @@ using pGenJetCandidates             = Ptr<GenJetCandidates>;
 using pGenParticleCandidates        = Ptr<GenParticleCandidates>;
 using pTriggerObjectCandidates      = Ptr<TriggerObjectCandidates>;
 using pTriggerAccepts               = Ptr<TriggerAccepts>;
-using pPrimaryVertices              = Ptr<PrimaryVertices>;
+using PrimaryVerticesPtr            = Ptr<PrimaryVertices>;
 using pL1TJetCandidates             = Ptr<L1TJetCandidates>;
 using pL1TMuonCandidates            = Ptr<L1TMuonCandidates>;
 using pChargedCandidates            = Ptr<ChargedCandidates>;
@@ -175,7 +176,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
          void registerToken(InputTag const&, Token<Product>&, InputTag& );
       template<typename Collection>
          void registerTokens(InputTags const& , TokenMap<Collection>& );
-      void makeCollectionTree(InputTag const& collection, bool useFullName = false, std::string const& custom_tree_name = "");
+      String makeCollectionTree(InputTag const& collection, bool useFullName = false, String const& custom_tree_name = "");
       
       // ----------member data ---------------------------
       edm::ParameterSet config_;
@@ -197,7 +198,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool do_pileup_info_;
       bool do_geneventinfo_;
       bool do_triggeraccepts_;
-      bool do_primaryvertices_;
       bool do_eventfilter_;
       bool do_genfilter_;
       bool do_triggerobjects_;
@@ -229,7 +229,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       TokenMap<l1t::JetBxCollection>                     l1tJetTokens_;
       TokenMap<l1t::MuonBxCollection>                    l1tMuonTokens_;
       TokenMap<trigger::TriggerEvent>                    triggerEventTokens_;
-      TokenMap<reco::VertexCollection>                   primaryVertexTokens_;
+      TokenMap<reco::VertexCollection>                   primary_vertices_tokens_;
       TokenMap<reco::GenJetCollection>                   genJetTokens_;
       TokenMap<reco::GenParticleCollection>              genPartTokens_;
       TokenMap<reco::CaloJetCollection>                  caloJetTokens_;
@@ -285,7 +285,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Collections<TriggerObjectCandidates>      triggerobjects_collections_;
       Collections<L1TJetCandidates>             l1tjets_collections_;
       Collections<L1TMuonCandidates>            l1tmuons_collections_;
-      Collections<PrimaryVertices>              primaryvertices_collections_;
+      Collections<PrimaryVertices>              primary_vertices_collections_;
       Collections<GenJetCandidates>             genjets_collections_;
       Collections<GenParticleCandidates>        genparticles_collections_;
       Collections<CaloJetCandidates>            calojets_collections_;
@@ -376,8 +376,11 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
       registerTokens<pat::JetCollection>(collections, patJetTokens_);
    };
    inputTagsDispatch["PrimaryVertices"] = [&](InputTags const& collections) {
-      for (auto const& collection : collections) makeCollectionTree(collection);
-      registerTokens<reco::VertexCollection>(collections, primaryVertexTokens_);
+      registerTokens<reco::VertexCollection>(collections, primary_vertices_tokens_);
+      for (auto const& collection : collections) {
+         String tree_name = makeCollectionTree(collection);
+         primary_vertices_collections_.push_back(std::make_unique<PrimaryVertices>(collection, tree_[tree_name]));
+      }
    };
    inputTagsDispatch["PatMETs"] = [&](InputTags const& collections) {
       for (auto const& collection : collections) makeCollectionTree(collection);
@@ -411,8 +414,8 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
 
    inputTagsDispatch["TriggerResults"] = [&](InputTags const& collections) {
       registerTokens<edm::TriggerResults>(collections, triggerResultsTokens_);
-      std::vector< std::string> triggerpaths;
-      std::vector< std::string> l1seeds;
+      Strings triggerpaths;
+      Strings l1seeds;
       if (config_.exists("TriggerPaths"))
          triggerpaths = config_.getParameter<Strings>("TriggerPaths");
       if (config_.exists("L1Seeds"))
@@ -644,7 +647,7 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
          collection -> Fill(event, setup);
       
       // primary vertices
-      for ( auto & collection : primaryvertices_collections_ )
+      for ( auto & collection : primary_vertices_collections_ )
          collection -> Fill(event);
    
       // trigger objects
@@ -679,17 +682,12 @@ void Ntuplizer::beginJob() {
    do_pfjets_           = config_.exists("PFJets");
    do_recomuons_        = config_.exists("RecoMuons");
    do_recotracks_       = config_.exists("RecoTracks");
-   // do_patjets_          = config_.exists("PatJets");
    do_patmets_          = config_.exists("PatMETs");
    do_patmuons_         = config_.exists("PatMuons");
    do_genjets_          = config_.exists("GenJets");
    do_genparticles_     = config_.exists("GenParticles");
    do_jetstags_         = config_.exists("JetsTags");
-   // do_triggeraccepts_   = config_.exists("TriggerResults") && config_.exists("TriggerPaths");
    do_triggeraccepts_   = config_.exists("TriggerResults");
-   // do_triggerinfo_      = config_.exists("TriggerResults");
-   do_primaryvertices_  = config_.exists("PrimaryVertices");
-   // do_eventfilter_      = config_.exists("EventFilter");
    do_eventfilter_      = config_.exists("TotalEvents")  && config_.exists("FilteredEvents");
    do_genfilter_        = config_.exists("GenFilterInfo") && is_mc_;
    do_triggerobjects_   = ( config_.exists("TriggerObjectStandAlone") || config_.exists("TriggerEvent") ) &&  config_.exists("TriggerObjectLabels");
@@ -977,10 +975,6 @@ void Ntuplizer::beginJob() {
             TFileDirectory triggerObjectsDir = eventsDir_.mkdir(dir);
       
          }
-         // Primary Vertices
-         if ( inputTags == "PrimaryVertices" ) {
-            primaryvertices_collections_.push_back(std::make_unique<PrimaryVertices>(collection, tree_[name]));
-         }
          
       }
    }
@@ -1102,18 +1096,19 @@ void Ntuplizer::registerToken(InputTag const& collection, Token<Product>& token,
    storedCollection = collection;
 }
 
-void Ntuplizer::makeCollectionTree(InputTag const& collection, bool use_full_name, std::string const& custom_tree_name) {
-   std::string label = collection.label();
-   std::string inst  = collection.instance();
-   std::string proc  = collection.process();
-   std::string full_name = label + "_" + inst + "_" + proc;
-   std::string tree_name;
+String Ntuplizer::makeCollectionTree(InputTag const& collection, bool use_full_name, String const& custom_tree_name) {
+   String label = collection.label();
+   String inst  = collection.instance();
+   String proc  = collection.process();
+   String full_name = label + "_" + inst + "_" + proc;
+   String tree_name;
    if (!custom_tree_name.empty()) {
       tree_name = custom_tree_name;
    } else {
       tree_name = use_full_name ? full_name : label;
    }
    tree_[tree_name] = eventsDir_.make<TTree>(tree_name.c_str(), full_name.c_str());
+   return tree_name;
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------

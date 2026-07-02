@@ -49,27 +49,25 @@ namespace analysis {
            ~Vertices();
             void ReadFromEvent(const edm::Event&);
             void Fill(const edm::Event&);
-            static const int maxPVs = 100;
+            static const int max_vertices = 100;
       
-         protected:
+         private:
             // ----------member data ---------------------------
-            reco::VertexCollection candidates_;
-            std::string configParameter_;
+            reco::VertexCollection vertex_candidates_;
             edm::InputTag input_collection_;
-            
             
             // particles kinematics for the ntuple
             int   n_;
-            float x_[maxPVs];
-            float y_[maxPVs];
-            float z_[maxPVs];
-            float xe_[maxPVs];
-            float ye_[maxPVs];
-            float ze_[maxPVs];
-            bool  fake_[maxPVs];
-            float chi2_[maxPVs];
-            float ndof_[maxPVs];
-            float rho_[maxPVs];
+            float x_[max_vertices];
+            float y_[max_vertices];
+            float z_[max_vertices];
+            float xe_[max_vertices];
+            float ye_[max_vertices];
+            float ze_[max_vertices];
+            bool  fake_[max_vertices];
+            float chi2_[max_vertices];
+            float ndof_[max_vertices];
+            float rho_[max_vertices];
             
             TTree * tree_;
             
