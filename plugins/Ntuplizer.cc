@@ -203,8 +203,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool do_triggerobjects_;
       bool do_genruninfo_;
       bool do_lumiscalers_;
-      bool do_l1tjets_;
-      bool do_l1tmuons_;
       bool do_chargedcands_;
       bool store_prescale_;
       bool testmode_;
@@ -426,13 +424,25 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          triggeraccepts_collections_.back()->ReadPrescaleInfo(store_prescale_);
       }
    };
-   inputTagsDispatch["L1TJets"] = [&](InputTags const& collections) {
-      for (auto const& collection : collections) makeCollectionTree(collection, false, "l1tJets");
+   inputTagsDispatch["L1TJets"] = [&](InputTags const& collections) { // TODO: make it single inputtag, since we only want to make one collection of L1TJets in the ntuple
       registerTokens<l1t::JetBxCollection>(collections, l1tJetTokens_);
+      for (auto const& collection : collections) {
+         if (l1tjets_collections_.size() == 0) {
+            String tree_name = makeCollectionTree(collection, false, "l1tJets");
+            l1tjets_collections_.push_back(std::make_unique<L1TJetCandidates>(collection, tree_[tree_name], is_mc_ ));
+            l1tjets_collections_.back() -> Init();
+         }
+      }
    };
-   inputTagsDispatch["L1TMuons"] = [&](InputTags const& collections) {
-      for (auto const& collection : collections) makeCollectionTree(collection, false, "l1tMuons");
+   inputTagsDispatch["L1TMuons"] = [&](InputTags const& collections) {  // TODO: make it single inputtag, since we only want to make one collection of L1TMuons in the ntuple
       registerTokens<l1t::MuonBxCollection>(collections, l1tMuonTokens_);
+      for (auto const& collection : collections) {
+         if (l1tmuons_collections_.size() == 0) {
+            String tree_name = makeCollectionTree(collection, false, "l1tMuons");
+            l1tmuons_collections_.push_back(std::make_unique<L1TMuonCandidates>(collection, tree_[tree_name], is_mc_ ));
+            l1tmuons_collections_.back() -> Init();
+         }
+      }
    };
 
    // Technical stuff
@@ -690,8 +700,6 @@ void Ntuplizer::beginJob() {
    do_genfilter_        = config_.exists("GenFilterInfo") && is_mc_;
    do_triggerobjects_   = ( config_.exists("TriggerObjectStandAlone") || config_.exists("TriggerEvent") ) &&  config_.exists("TriggerObjectLabels");
    do_genruninfo_       = config_.exists("GenRunInfo") && is_mc_ ;
-   do_l1tjets_          = config_.exists("L1TJets");
-   do_l1tmuons_         = config_.exists("L1TMuons");
    do_chargedcands_     = config_.exists("ChargedCandidates");
    
    if ( config_.exists("TestMode") ) // This is DANGEROUS! but can be useful. So BE CAREFUL!!!!
@@ -897,25 +905,7 @@ void Ntuplizer::beginJob() {
             jetstags_collections_.push_back( pJetsTags( new JetsTags(collection, tree_[name]) ));
             jetstags_collections_.back() -> Branches();
          }
-         
-         // L1T Jets
-         if ( inputTags == "L1TJets" && l1tjets_collections_.size() == 0 ) {
-            std::string old_name = name;
-            name = "l1tJets";
-            l1tjets_collections_.push_back( pL1TJetCandidates( new L1TJetCandidates(collection, tree_[name], is_mc_ ) ));
-            l1tjets_collections_.back() -> Init();
-            name = old_name;
-         }
-
-         // L1T Muon
-         if ( inputTags == "L1TMuons" && l1tmuons_collections_.size() == 0 ) {
-            std::string old_name = name;
-            name = "l1tMuons";
-            l1tmuons_collections_.push_back( pL1TMuonCandidates( new L1TMuonCandidates(collection, tree_[name], is_mc_ ) ));
-            l1tmuons_collections_.back() -> Init();
-            name = old_name;
-         }
-         
+                  
          // Charged candidates
          if ( inputTags == "ChargedCandidates" ) {
             chargedcands_collections_.push_back( pChargedCandidates( new ChargedCandidates(collection, tree_[name], is_mc_ ) ));
