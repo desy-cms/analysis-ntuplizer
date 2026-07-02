@@ -85,7 +85,8 @@ namespace analysis {
 
          private:
             // ----------member data ---------------------------
-            void TreesBranches_();
+            void XSectionTreeBranches_();
+            void DatasetTreeBranches_();
             Vector<DefinitionsPtr> vdefinitions_;
             
             bool is_gen_filter_;

@@ -53,22 +53,24 @@ analysis::ntuple::Metadata::~Metadata() {
 //
 
 void analysis::ntuple::Metadata::Init() {
-   TreesBranches_();
+   if ( is_mc_ )
+      XSectionTreeBranches_();
+   DatasetTreeBranches_();
 }
 
-void analysis::ntuple::Metadata::TreesBranches_() {
-   if ( is_mc_ ) {
-      // Cross sections tree
-      xsection_tree_ = main_folder_.make<TTree>("CrossSections","Cross Sections");
-      // cross section branches
-      xsection_tree_ -> Branch("run"            , &run_xsection_          , "run/i");
-      xsection_tree_ -> Branch("myCrossSection" , &my_xsection_           , "myCrossSection/D");
-      xsection_tree_ -> Branch("crossSection"   , &xsection_              , "crossSection_generator/D");
-      xsection_tree_ -> Branch("internalXSec"   , &internal_xsection_     , "internalXSec_generator/D");
-      xsection_tree_ -> Branch("externalXSecLO" , &external_xsection_lo_  , "externalXSecLO_generator/D");
-      xsection_tree_ -> Branch("externalXSecNLO", &external_xsection_nlo_ , "externalXSecNLO_generator/D");
-   }
-   
+void analysis::ntuple::Metadata::XSectionTreeBranches_() {
+   // Cross sections tree
+   xsection_tree_ = main_folder_.make<TTree>("CrossSections","Cross Sections");
+   // cross section branches
+   xsection_tree_ -> Branch("run"            , &run_xsection_          , "run/i");
+   xsection_tree_ -> Branch("myCrossSection" , &my_xsection_           , "myCrossSection/D");
+   xsection_tree_ -> Branch("crossSection"   , &xsection_              , "crossSection_generator/D");
+   xsection_tree_ -> Branch("internalXSec"   , &internal_xsection_     , "internalXSec_generator/D");
+   xsection_tree_ -> Branch("externalXSecLO" , &external_xsection_lo_  , "externalXSecLO_generator/D");
+   xsection_tree_ -> Branch("externalXSecNLO", &external_xsection_nlo_ , "externalXSecNLO_generator/D");
+}   
+
+void analysis::ntuple::Metadata::DatasetTreeBranches_() {
    // Dataset
    dataset_tree_ = main_folder_.make<TTree>("Dataset","Dataset info");
    dataset_tree_ -> Branch("isMC"            , &is_mc_            , "isMC/O");
@@ -89,12 +91,12 @@ void analysis::ntuple::Metadata::Fill() {
 
 // ------------ method called once each job just before starting event loop  ------------
 void analysis::ntuple::Metadata::AddDefinitions(const Strings & names, const Strings & aliases) {
-   vdefinitions_.push_back(DefinitionsPtr( new Definitions(main_folder_) ));
+   vdefinitions_.push_back(std::make_unique<Definitions>(main_folder_));
    vdefinitions_.back() -> Add(names,aliases);
 }
 
 void analysis::ntuple::Metadata::AddDefinitions(const Strings & names, const Strings & aliases, const String & category) {
-   vdefinitions_.push_back(DefinitionsPtr( new Definitions(main_folder_, category) ));
+   vdefinitions_.push_back(std::make_unique<Definitions>(main_folder_, category));
    vdefinitions_.back() -> Add(names,aliases);
 }
 
@@ -105,22 +107,22 @@ void analysis::ntuple::Metadata::AddDefinitions(const Vector<TitleAlias> & tas, 
       names.push_back(ta.title);
       aliases.push_back(ta.alias);
    }
-   vdefinitions_.push_back(DefinitionsPtr( new Definitions(main_folder_, category) ));
+   vdefinitions_.push_back(std::make_unique<Definitions>(main_folder_, category));
    vdefinitions_.back() -> Add(names,aliases);
 }
 
 void analysis::ntuple::Metadata::SetGeneratorFilter(const InputTag & genFilterInfo ) {
-   gen_filter_ = GenFilterPtr( new GenFilter(main_folder_, {genFilterInfo} ));
+   gen_filter_ = std::make_unique<GenFilter>(main_folder_, InputTags{genFilterInfo});
    is_gen_filter_ = true;
 }
 
 void analysis::ntuple::Metadata::SetEventFilter(const InputTags & filter_infos_ ) {
-   evt_filter_ = EvtFilterPtr( new EvtFilter(main_folder_, filter_infos_ ));
+   evt_filter_ = std::make_unique<EvtFilter>(main_folder_, filter_infos_);
    is_evt_filter_ = true;
 }
 
 void analysis::ntuple::Metadata::SetMHatEventFilter(const InputTags & filter_infos_ ) {
-      m_hat_evt_filter_ = EvtFilterPtr( new EvtFilter(mhat_folder_, filter_infos_ ));
+   m_hat_evt_filter_ = std::make_unique<EvtFilter>(mhat_folder_, filter_infos_);
    is_mhat_evt_filter_ = true;
 }
 
@@ -138,16 +140,16 @@ EvtFilter & analysis::ntuple::Metadata::GetEventFilter() {
    return *evt_filter_;
 }
 
-void analysis::ntuple::Metadata::SetCrossSections( const Run  & run, const InputTag & inputTag, const double & myxs ) {
+void analysis::ntuple::Metadata::SetCrossSections( const Run  & run, const InputTag & collection, const double & my_xsection ) {
    if ( is_mc_ ) {
       run_xsection_ = run.run();
-      edm::Handle<GenRunInfoProduct> genRunInfo;
-      run.getByLabel( inputTag, genRunInfo );
-      my_xsection_          = myxs;
-      xsection_            = genRunInfo -> crossSection();
-      internal_xsection_    = genRunInfo -> internalXSec().value();
-      external_xsection_lo_  = genRunInfo -> externalXSecLO().value();
-      external_xsection_nlo_ = genRunInfo -> externalXSecNLO().value();
+      edm::Handle<GenRunInfoProduct> gen_run_info;
+      run.getByLabel( collection, gen_run_info );
+      my_xsection_          = my_xsection;
+      xsection_            = gen_run_info -> crossSection();
+      internal_xsection_    = gen_run_info -> internalXSec().value();
+      external_xsection_lo_  = gen_run_info -> externalXSecLO().value();
+      external_xsection_nlo_ = gen_run_info -> externalXSecNLO().value();
       xsection_tree_ -> Fill();
    }
 }
