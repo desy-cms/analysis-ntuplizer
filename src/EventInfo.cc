@@ -154,7 +154,7 @@ TTree * EventInfo::Tree() {
 void EventInfo::PileupInfo(const edm::InputTag& tag) {
    do_pu_ = true;
    
-   puInfo_ = tag;
+   pileup_info_ = tag;
       
    tree_->Branch("nPileup"     , &n_pu_     , "nPileup/I");
    tree_->Branch("nTruePileup" , &n_true_pu_, "nTruePileup/F");
@@ -164,15 +164,15 @@ void EventInfo::PileupInfo(const edm::InputTag& tag) {
 void EventInfo::ReadPileupInfo(const edm::Event& event) {
    using namespace edm;
    // 
-   edm::Handle<std::vector<PileupSummaryInfo> > handler;
-   event.getByLabel(puInfo_, handler);
+   edm::Handle<std::vector<PileupSummaryInfo>> handler;
+   event.getByLabel(pileup_info_, handler);
 
-   std::vector<PileupSummaryInfo> pileup_infos = *(handler.product());
+   std::vector<PileupSummaryInfo> pu_infos = *(handler.product());
    
    // Take the first entry - should be enough
-   PileupSummaryInfo pileup_info = pileup_infos.at(0);
-   n_true_pu_ = pileup_info.getTrueNumInteractions();
-   n_pu_      = pileup_info.getPU_NumInteractions(); 
+   PileupSummaryInfo pu_info = pu_infos.at(0);
+   n_true_pu_ = pu_info.getTrueNumInteractions();
+   n_pu_      = pu_info.getPU_NumInteractions(); 
 }
 
 // GenEventInfoProduct

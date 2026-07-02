@@ -76,7 +76,7 @@ namespace analysis {
             TTree * tree_;
             
             // PileupInfo
-            edm::InputTag puInfo_;
+            edm::InputTag pileup_info_;
             bool do_pu_;
             int n_pu_;
             float n_true_pu_;

@@ -59,7 +59,6 @@
 #include "Analysis/Ntuplizer/interface/Definitions.h"
 #include "Analysis/Ntuplizer/interface/Metadata.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
-#include "Analysis/Ntuplizer/interface/PileupInfo.h"
 #include "Analysis/Ntuplizer/interface/Candidates.h"
 #include "Analysis/Ntuplizer/interface/JetsTags.h"
 #include "Analysis/Ntuplizer/interface/TriggerAccepts.h"
@@ -105,7 +104,6 @@ using Strings                      = std::vector<std::string>;
 using EventInfo                    = analysis::ntuple::EventInfo;
 using Metadata                     = analysis::ntuple::Metadata;
 using Definitions                  = analysis::ntuple::Definitions;
-using PileupInfo                   = analysis::ntuple::PileupInfo;
 using PatJetCandidates             = analysis::ntuple::Candidates<pat::Jet>;
 using PatMuonCandidates            = analysis::ntuple::Candidates<pat::Muon>;
 using PatMETCandidates             = analysis::ntuple::Candidates<pat::MET>;
@@ -129,10 +127,9 @@ using JecESTokens                  = analysis::ntuple::JecESTokens;
 
 
 // Alias to the pointers to the above classes
-using pEventInfo                    = Ptr<EventInfo>;
+using EventInfoPtr                  = Ptr<EventInfo>;
 using MetadataPtr                   = Ptr<Metadata>;
 using pDefinitions                  = Ptr<Definitions>;
-using PileupInfoPtr                 = Ptr<PileupInfo>;
 using pPatJetCandidates             = Ptr<PatJetCandidates>;
 using pPatMuonCandidates            = Ptr<PatMuonCandidates>;
 using pPatMETCandidates             = Ptr<PatMETCandidates>;
@@ -197,7 +194,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool do_genjets_;
       bool do_genparticles_;
       bool do_jetstags_;
-      bool do_pileupinfo_;
+      bool do_pileup_info_;
       bool do_geneventinfo_;
       bool do_triggeraccepts_;
       bool do_primaryvertices_;
@@ -250,7 +247,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       InputTag filteredEvents_;
       InputTag filteredMHatEvents_;
       InputTag genRunInfo_;
-      InputTag pileupInfo_;
+      InputTag pileup_info_;
       InputTag genEventInfo_;
       InputTag lumiScalers_;
       InputTag fixedGridRhoAll_;
@@ -263,7 +260,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Token<edm::MergeableCounter>            filteredEventsToken_;
       Token<edm::MergeableCounter>            filteredMHatEventsToken_;
       Token<GenRunInfoProduct>                genRunInfoToken_;
-      Token<std::vector<PileupSummaryInfo>>   pileupInfoToken_;
+      Token<std::vector<PileupSummaryInfo>>   pileup_info_token_;
       Token<GenEventInfoProduct>              genEventInfoToken_;
       Token<LumiScalersCollection>            lumiScalersToken_;
       Token<double>                           fixedGridRhoAllToken_;
@@ -278,9 +275,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       std::map<std::string, TTree*> tree_; // Non-owning pointers. TTree objects are created and owned by TFileService.
 
       // Ntuple stuff
-      pEventInfo eventinfo_;
+      EventInfoPtr eventinfo_;
       MetadataPtr  metadata_;
-      PileupInfoPtr pileupinfo_;
       
       // Collections for the ntuples (vector)
       Collections<PatJetCandidates>             patjets_collections_;
@@ -479,8 +475,8 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
    using RegisterFn = std::function<void(InputTag const&)>;
    std::unordered_map<std::string, RegisterFn> inputTagDispatch;
 
-   inputTagDispatch["PileupInfo"] = [&](InputTag const& collection) {
-      registerToken< std::vector<PileupSummaryInfo> >(collection,pileupInfoToken_,pileupInfo_);
+   inputTagDispatch["PileupSummaryInfo"] = [&](InputTag const& collection) {
+      registerToken< std::vector<PileupSummaryInfo> >(collection,pileup_info_token_,pileup_info_);
    };
    inputTagDispatch["GenEventInfo"] = [&](InputTag const& collection) {
       registerToken<GenEventInfoProduct>(collection,genEventInfoToken_,genEventInfo_);
@@ -676,7 +672,7 @@ void Ntuplizer::beginJob() {
 
    // TODO: move all below to constructor?
    
-   do_pileupinfo_       = config_.exists("PileupInfo") && is_mc_;
+   do_pileup_info_      = config_.exists("PileupSummaryInfo") && is_mc_;
    do_geneventinfo_     = config_.exists("GenEventInfo") && is_mc_;
    do_lumiscalers_      = config_.exists("LumiScalers");
    do_calojets_         = config_.exists("CaloJets");
@@ -769,11 +765,11 @@ void Ntuplizer::beginJob() {
    
    
    // Event info tree
-   eventinfo_ = pEventInfo (new EventInfo(eventsDir_));
+   eventinfo_ = EventInfoPtr(new EventInfo(eventsDir_));
    if ( config_.exists("FixedGridRhoAll") )
       eventinfo_ -> FixedGridRhoInfo(config_.getParameter<InputTag>("FixedGridRhoAll"));
-   if ( do_pileupinfo_ )
-      eventinfo_ -> PileupInfo(config_.getParameter<InputTag>("PileupInfo"));
+   if ( do_pileup_info_ )
+      eventinfo_ -> PileupInfo(config_.getParameter<InputTag>("PileupSummaryInfo"));
    if ( do_geneventinfo_ )
       eventinfo_ -> GenEventInfo(config_.getParameter<InputTag>("GenEventInfo"));
    if ( do_lumiscalers_ )
@@ -1029,15 +1025,6 @@ void Ntuplizer::beginJob() {
          if ( n_mhat_filter_counters == 2)	metadata_ -> SetMHatEventFilter(mHatEventCounters_);
       }
 
-      // Pileup Info
-      // if ( inputTag == "PileupInfo" && is_mc_ )
-      // {
-      //    tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
-      //    pileupinfo_ = pPileupInfo( new PileupInfo(collection, tree_[name]) );
-      //    pileupinfo_ -> Branches();
-
-      // }
-         
    } 
    
 }
@@ -1163,7 +1150,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<InputTag>("GenEventInfo");
    desc.addOptional<InputTag>("GenFilterInfo");
    desc.addOptional<InputTag>("GenRunInfo");
-   desc.addOptional<InputTag>("PileupInfo");
+   desc.addOptional<InputTag>("PileupSummaryInfo");
    desc.addOptional<InputTags>("GenJets");
    desc.addOptional<InputTags>("GenParticles");
 

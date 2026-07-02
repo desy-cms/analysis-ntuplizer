@@ -111,13 +111,13 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
 
    ## MC only
 if command_line_options.type == 'mc':
-   process.MssmHbb.CrossSection    = cms.double(command_line_options.xsection)  # in pb
-   process.MssmHbb.GenFilterInfo   = cms.InputTag("genFilterEfficiencyProducer")
-   process.MssmHbb.GenRunInfo      = cms.InputTag("generator")
-   process.MssmHbb.GenEventInfo    = cms.InputTag("generator")
-   process.MssmHbb.GenJets         = cms.VInputTag(cms.InputTag("slimmedGenJets"))
-   process.MssmHbb.GenParticles    = cms.VInputTag(cms.InputTag("prunedGenParticles"))
-   process.MssmHbb.PileupInfo      = cms.InputTag("slimmedAddPileupInfo")
+   process.MssmHbb.CrossSection        = cms.double(command_line_options.xsection)  # in pb
+   process.MssmHbb.GenFilterInfo       = cms.InputTag("genFilterEfficiencyProducer")
+   process.MssmHbb.GenRunInfo          = cms.InputTag("generator")
+   process.MssmHbb.GenEventInfo        = cms.InputTag("generator")
+   process.MssmHbb.GenJets             = cms.VInputTag(cms.InputTag("slimmedGenJets"))
+   process.MssmHbb.GenParticles        = cms.VInputTag(cms.InputTag("prunedGenParticles"))
+   process.MssmHbb.PileupSummaryInfo   = cms.InputTag("slimmedAddPileupInfo")
 
 
 ## !!! Do the stuff!
