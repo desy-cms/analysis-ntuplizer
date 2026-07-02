@@ -578,8 +578,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
 }
 
 
-Ntuplizer::~Ntuplizer()
-{
+Ntuplizer::~Ntuplizer() {
    printf_info("==> Ntuplizer::~Ntuplizer() destructor...\n");
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
@@ -784,7 +783,6 @@ void Ntuplizer::beginJob() {
 
    // Metadata 
    metadata_ -> AddDefinitions(btagVars_,"btagging");
-   // if ( config_.exists("CrossSection") ) xsection_ = config_.getParameter<double>("CrossSection");
    
    InputTag trgRes;
    if ( do_triggeraccepts_ ) {
