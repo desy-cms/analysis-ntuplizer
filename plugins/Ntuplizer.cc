@@ -132,7 +132,7 @@ using JecESTokens                  = analysis::ntuple::JecESTokens;
 using pEventInfo                    = Ptr<EventInfo>;
 using MetadataPtr                   = Ptr<Metadata>;
 using pDefinitions                  = Ptr<Definitions>;
-using pPileupInfo                   = Ptr<PileupInfo>;
+using PileupInfoPtr                 = Ptr<PileupInfo>;
 using pPatJetCandidates             = Ptr<PatJetCandidates>;
 using pPatMuonCandidates            = Ptr<PatMuonCandidates>;
 using pPatMETCandidates             = Ptr<PatMETCandidates>;
@@ -280,7 +280,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       // Ntuple stuff
       pEventInfo eventinfo_;
       MetadataPtr  metadata_;
-      pPileupInfo pileupinfo_;
+      PileupInfoPtr pileupinfo_;
       
       // Collections for the ntuples (vector)
       Collections<PatJetCandidates>             patjets_collections_;
@@ -1158,6 +1158,15 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<Strings>("TriggerObjectLabels");
    desc.addOptional<Strings>("TriggerObjectSplits");
    desc.addOptional<Strings>("TriggerObjectSplitsTypes");
+
+   desc.addOptional<double>("CrossSection");
+   desc.addOptional<InputTag>("GenEventInfo");
+   desc.addOptional<InputTag>("GenFilterInfo");
+   desc.addOptional<InputTag>("GenRunInfo");
+   desc.addOptional<InputTag>("PileupInfo");
+   desc.addOptional<InputTags>("GenJets");
+   desc.addOptional<InputTags>("GenParticles");
+
 
   descriptions.addDefault(desc);
 }

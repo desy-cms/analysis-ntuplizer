@@ -109,6 +109,17 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
                                     cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
 )
 
+   ## MC only
+if command_line_options.type == 'mc':
+   process.MssmHbb.CrossSection    = cms.double(command_line_options.xsection)  # in pb
+   process.MssmHbb.GenFilterInfo   = cms.InputTag("genFilterEfficiencyProducer")
+   process.MssmHbb.GenRunInfo      = cms.InputTag("generator")
+   process.MssmHbb.GenEventInfo    = cms.InputTag("generator")
+   process.MssmHbb.GenJets         = cms.VInputTag(cms.InputTag("slimmedGenJets"))
+   process.MssmHbb.GenParticles    = cms.VInputTag(cms.InputTag("prunedGenParticles"))
+   process.MssmHbb.PileupInfo      = cms.InputTag("slimmedAddPileupInfo")
+
+
 ## !!! Do the stuff!
 process.p = cms.Path(
                     process.nTotalEvents +
