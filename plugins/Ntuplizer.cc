@@ -206,7 +206,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool do_l1tjets_;
       bool do_l1tmuons_;
       bool do_chargedcands_;
-      bool readprescale_;
+      bool store_prescale_;
       bool testmode_;
 
       Strings trig_res_process_;
@@ -332,36 +332,34 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
 //
 // constructors and destructor
 //
-Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization of ntuple classes
-
-   usesResource(TFileService::kSharedResource);
+Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   // initialization of ntuple classes
    printf_info("==> Ntuplizer::Ntuplizer() constructor...\n");
 
-   edm::Service<TFileService> fs; // TODO:  book TTrees and branches during construction (seems CMSSW style) or during beginJob() (seems ROOT style)?  For now, do it in the constructor.
-   eventsDir_ = fs -> mkdir("Events");   
+   usesResource(TFileService::kSharedResource);
+   edm::Service<TFileService> file_service; // TODO:  book TTrees and branches during construction (seems CMSSW style) or during beginJob() (seems ROOT style)?  For now, do it in the constructor.
+   eventsDir_ = file_service -> mkdir("Events");   
 
-   config_  = config;
    //now do what ever initialization is needed
-   is_mc_         = config_.getParameter<bool> ("MonteCarlo");
-   readprescale_  = true;
+   is_mc_           = config_.getParameter<bool> ("MonteCarlo");
+   xsection_        = config_.getParameter<double>("CrossSection");
+   store_prescale_  = config_.getParameter<bool> ("StorePrescale");
    eventCounters_.resize(2);
    mHatEventCounters_.resize(2);
 
    // Metadata 
-   metadata_ = std::make_unique<Metadata>(fs, is_mc_);
+   metadata_ = std::make_unique<Metadata>(file_service, is_mc_);
    metadata_ -> Init();
    
    do_triggeraccepts_   = config_.exists("TriggerResults");
    trig_res_process_.clear();
    
-   readprescale_ = config_.getParameter<bool> ("ReadPrescale");
 
    use_full_name_ = false;
    testmode_      = false;
    inputTagsVec_ = config_.getParameterNamesForType<InputTags>();
    inputTags_    = config_.getParameterNamesForType<InputTag>();
    
-   hltPrescaleProvider_ = std::shared_ptr<HLTPrescaleProvider>(new HLTPrescaleProvider(config_, consumesCollector(), *this));;
+   hltPrescaleProvider_ = std::make_shared<HLTPrescaleProvider>(config_, consumesCollector(), *this);
    
    std::string name;
    std::string fullname;
@@ -425,7 +423,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config) { //:   // initialization 
          trig_res_process_.push_back(collection.process());
          triggeraccepts_collections_.push_back( pTriggerAccepts( new TriggerAccepts(collection, tree_[collection.label()], triggerpaths, l1seeds, hltPrescaleProvider_) ));
          triggeraccepts_collections_.back()->Init();
-         triggeraccepts_collections_.back()->ReadPrescaleInfo(readprescale_);
+         triggeraccepts_collections_.back()->ReadPrescaleInfo(store_prescale_);
       }
    };
    inputTagsDispatch["L1TJets"] = [&](InputTags const& collections) {
@@ -778,9 +776,7 @@ void Ntuplizer::beginJob() {
 
    // Metadata 
    metadata_ -> AddDefinitions(btagVars_,"btagging");
-   // My cross section  value for the metadata
-   xsection_ = -1.0;
-   if ( config_.exists("CrossSection") ) xsection_ = config_.getParameter<double>("CrossSection");
+   // if ( config_.exists("CrossSection") ) xsection_ = config_.getParameter<double>("CrossSection");
    
    InputTag trgRes;
    if ( do_triggeraccepts_ ) {
@@ -1117,7 +1113,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   // Please change this to state exactly what you do use, even if it is no parameters
    edm::ParameterSetDescription desc;
    desc.add<unsigned int>("stageL1Trigger", 2);
-   desc.add<bool>("ReadPrescale", false);
+   desc.add<bool>("StorePrescale", false);
    desc.add<bool>("MonteCarlo");
 
    desc.add<InputTag>("FixedGridRhoAll", InputTag("fixedGridRhoAll"));
@@ -1141,7 +1137,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<Strings>("TriggerObjectSplits");
    desc.addOptional<Strings>("TriggerObjectSplitsTypes");
 
-   desc.addOptional<double>("CrossSection");
+   desc.add<double>("CrossSection", -1.0);
    desc.addOptional<InputTag>("GenEventInfo");
    desc.addOptional<InputTag>("GenFilterInfo");
    desc.addOptional<InputTag>("GenRunInfo");
