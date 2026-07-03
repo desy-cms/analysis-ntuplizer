@@ -39,7 +39,7 @@ Vertices::Vertices() {
 
 Vertices::Vertices(const edm::InputTag& collection, TTree* tree) : input_collection_(collection), tree_(tree) {
    // Main constructor
-   printf_info("==> Vertices::Vertices() constructor...\n");
+
    tree_->Branch("n",   &this->n_,    "n/I");
    tree_->Branch("x",    this->x_,    "x[n]/F");
    tree_->Branch("y",    this->y_,    "y[n]/F");
