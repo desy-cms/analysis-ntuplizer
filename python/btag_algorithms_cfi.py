@@ -1,67 +1,139 @@
 import FWCore.ParameterSet.Config as cms
 
+# https://btv-wiki.docs.cern.ch/ScaleFactors/#taggers-and-definitions-of-discriminators
+
 # Why these do not appear in the ntuple???
 # pfParticleNetFromMiniAODAK4CHSCentralJetTags:probmu',
 # pfParticleNetFromMiniAODAK4CHSCentralJetTags:probele',
 
-BTagAlgorithms_AK4CHS = cms.PSet(
-    BTagAlgorithms = cms.vstring   (
-                'pfDeepCSVJetTags:probudsg',
-                'pfDeepCSVJetTags:probc',
-                'pfDeepCSVJetTags:probcc',
-                'pfDeepCSVJetTags:probb',
-                'pfDeepCSVJetTags:probbb',
-                'pfDeepFlavourJetTags:probuds',
-                'pfDeepFlavourJetTags:probg',                
-                'pfDeepFlavourJetTags:probc',
-                'pfDeepFlavourJetTags:probb',
-                'pfDeepFlavourJetTags:probbb',
-                'pfDeepFlavourJetTags:problepb',
-                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probb',
-                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probc',
-                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probuds',
-                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probg',
-                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probmu',
-                'pfParticleNetFromMiniAODAK4CHSCentralJetTags:probele',
-    ),
-    BTagAlgorithmsAlias = cms.vstring   (
-                'btag_deepcsv_light',
-                'btag_deepcsv_c',
-                'btag_deepcsv_cc',
-                'btag_deepcsv_b',
-                'btag_deepcsv_bb',
-                'btag_deepjet_flight',
-                'btag_deepjet_g',
-                'btag_deepjet_c',
-                'btag_deepjet_b',
-                'btag_deepjet_bb',
-                'btag_deepjet_lepb',
-                'btag_pnet_b',
-                'btag_pnet_c',
-                'btag_pnet_uds',
-                'btag_pnet_g',
-                'btag_pnet_mu',
-                'btag_pnet_ele',
+BTagAlgorithms_AK4Puppi = cms.PSet(
+    BTagAlgorithms = cms.VPSet(
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:BvsAll'),
+            alias     = cms.string('btag_pnet_bvsall'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:CvsL'),
+            alias     = cms.string('btag_pnet_cvsl'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:CvsB'),
+            alias     = cms.string('btag_pnet_cvsb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probb'),
+            alias     = cms.string('btag_pnet_b'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probc'),
+            alias     = cms.string('btag_pnet_c'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probg'),
+            alias     = cms.string('btag_pnet_g'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probuds'),
+            alias     = cms.string('btag_pnet_uds'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:probb'),
+            alias     = cms.string('btag_part_b'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:probbb'),
+            alias     = cms.string('btag_part_bb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:problepb'),
+            alias     = cms.string('btag_part_lepb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:probc'),
+            alias     = cms.string('btag_part_c'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:probg'),
+            alias     = cms.string('btag_part_g'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:probuds'),
+            alias     = cms.string('btag_part_uds'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4DiscriminatorsJetTags:BvsAll'),
+            alias     = cms.string('btag_upart_bvsall'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4DiscriminatorsJetTags:CvsL'),
+            alias     = cms.string('btag_upart_cvsl'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4DiscriminatorsJetTags:CvsB'),
+            alias     = cms.string('btag_upart_cvsb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probb'),
+            alias     = cms.string('btag_upart_b'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probbb'),
+            alias     = cms.string('btag_upart_bb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:problepb'),
+            alias     = cms.string('btag_upart_lepb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probc'),
+            alias     = cms.string('btag_upart_c'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probg'),
+            alias     = cms.string('btag_upart_g'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probs'),
+            alias     = cms.string('btag_upart_s'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probd'),
+            alias     = cms.string('btag_upart_d'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probu'),
+            alias     = cms.string('btag_upart_u'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:probb'),
+            alias     = cms.string('btag_deepflav_b'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:probbb'),
+            alias     = cms.string('btag_deepflav_bb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:problepb'),
+            alias     = cms.string('btag_deepflav_lepb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:probc'),
+            alias     = cms.string('btag_deepflav_c'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:probg'),
+            alias     = cms.string('btag_deepflav_g'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:probuds'),
+            alias     = cms.string('btag_deepflav_uds'),
+        ),        
     ),
 )
 
-BTagAlgorithms_AK4Puppi = cms.PSet(
-    BTagAlgorithms = cms.vstring   (
-                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probb',
-                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probc',
-                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probuds',
-                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probg',
-                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probmu',
-                'pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probele',
-    ),
-    BTagAlgorithmsAlias = cms.vstring   (
-                'btag_pnet_b',
-                'btag_pnet_c',
-                'btag_pnet_uds',
-                'btag_pnet_g',
-                'btag_pnet_mu',
-                'btag_pnet_ele',
-    ),
-)
+# Provide a mapping so callers can access algorithms by jet type
+BTagAlgorithms = {
+    'AK4Puppi': BTagAlgorithms_AK4Puppi,
+}
 
 

@@ -73,12 +73,14 @@ process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
 # Apply JES corrections
 process.load('Analysis.Ntuplizer.jet_corrections_cff')
 
-# from Analysis.Ntuplizer.btag_algorithms_cfi import BTagAlgorithms_AK4CHS
+# from Analysis.Ntuplizer.btag_algorithms_cfi import BTagAlgorithms_AK4Puppi
+from Analysis.Ntuplizer.btag_algorithms_cfi import BTagAlgorithms
+
 
 ## Ntuplizer
 process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     # Imported settings (always at the beginning???)
-    #BTagAlgorithms_AK4CHS,
+    BTagAlgorithms['AK4Puppi'],
     trigger_info['ntuplizerTriggerPaths'],
     trigger_info['ntuplizerL1Seeds'],
     trigger_info['ntuplizerTriggerObjects'],

@@ -210,12 +210,12 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Strings trig_res_process_;
       Strings inputTagsVec_;
       Strings inputTags_;
-      Strings btagAlgos_;
-      Strings btagAlgosAlias_;
+      Strings btag_discriminators_;
+      Strings btag_discriminators_alias_;
       Strings triggerObjectLabels_;
       Strings triggerObjectSplits_;
       Strings triggerObjectSplitsTypes_;
-      std::vector< TitleAlias >  btagVars_;
+      std::vector< TitleAlias >  btag_variables_;
       Strings jecRecords_;
       Strings jerRecords_;
 
@@ -574,7 +574,32 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          }
       }
    }
+
+   // --- Btagging algorithms (handles vstring, VPSet, or PSet mapping jet-type -> PSet containing VPSet) ---
+   btag_discriminators_.clear();
+   btag_discriminators_alias_.clear();
+   auto vpset_btag = config_.getParameter<std::vector<edm::ParameterSet>>("BTagAlgorithms");
+   for ( auto const & pset_btag : vpset_btag ) {
+      btag_discriminators_.push_back( pset_btag.getParameter<std::string>("discriminator") );
+      btag_discriminators_alias_.push_back( pset_btag.getParameter<std::string>("alias") ); // alias is obligatory!!!
+      // if ( btag_discriminators_alias_.back() == "" ) {
+      //    btag_discriminators_alias_.back() = btag_discriminators_.back();
+      //    std::string &alias = btag_discriminators_alias_.back();
+      //    std::replace(alias.begin(), alias.end(), ':', '_');
+      // }
+   }
+
+   // // populate btag_variables_
+   // btag_variables_.clear();
+   // for ( size_t it = 0 ; it < btag_discriminators_.size() ; ++it ) {
+   //    btag_variables_.push_back({btag_discriminators_[it], btag_discriminators_alias_[it]});
+   //    printf_info("==> Ntuplizer::Ntuplizer() btag discriminator: %s, alias: %s\n", btag_discriminators_[it].c_str(), btag_discriminators_alias_[it].c_str());
+   // }
+   // metadata_ -> AddDefinitions(btag_variables_,"btagging");
+
+
    event_count_ = 0;
+
 }
 
 
@@ -680,6 +705,16 @@ void Ntuplizer::beginJob() {
 
    printf_info("==> Ntuplizer::beginJob()...\n");
 
+   // populate btag_variables_
+   btag_variables_.clear();
+   for ( size_t it = 0 ; it < btag_discriminators_.size() ; ++it ) {
+      btag_variables_.push_back({btag_discriminators_[it], btag_discriminators_alias_[it]});
+   }
+
+   metadata_ -> AddDefinitions(btag_variables_,"btagging");
+
+
+
    // TODO: move all below to constructor?
    
    do_pileup_info_      = config_.exists("PileupSummaryInfo") && is_mc_;
@@ -713,33 +748,7 @@ void Ntuplizer::beginJob() {
    genFilterResults_  = {};
    eventFilterResults_ = {};
    
-   // Btagging algorithms
-   // Will set one default
-   btagAlgos_.clear();
-   btagAlgosAlias_.clear();
-   btagAlgos_.push_back("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-   btagAlgosAlias_.push_back("btag_csvivf");
-   if ( config_.exists("BTagAlgorithmsAlias") ) {
-      btagAlgosAlias_.clear();
-      btagAlgosAlias_ = config_.getParameter< Strings >("BTagAlgorithmsAlias");
-   }
-   if ( config_.exists("BTagAlgorithms") ) {
-      btagAlgos_.clear();
-      btagAlgos_ = config_.getParameter< Strings >("BTagAlgorithms");
-   }
-   if ( btagAlgos_.size() != btagAlgosAlias_.size() ) {
-      // if user put the wrong number of alias, then use the algo name as alias
-      btagAlgosAlias_.clear();
-      for ( auto& it : btagAlgos_ )
-         btagAlgosAlias_.push_back(it);
-   }
-   
-   btagVars_.clear();
-   for ( size_t it = 0 ; it < btagAlgos_.size() ;  ++it ) {
-      btagVars_.push_back({btagAlgos_[it],btagAlgosAlias_[it]});
-      // btagVars_[btagAlgosAlias_[it]] = {btagAlgos_[it],(unsigned int)it};
-   }
-   
+   // -------------------------------
    // JEC Record (from TXT files)
    Strings jec_files;
    // JEC Record (from CondDB)
@@ -781,8 +790,6 @@ void Ntuplizer::beginJob() {
    if ( config_.exists("PrefiringWeight") &&  config_.exists("PrefiringWeightUp") && config_.exists("PrefiringWeightDown"))
       eventinfo_ -> PrefiringWeightInfo(prefWeight_, prefWeightUp_, prefWeightDown_);
 
-   // Metadata 
-   metadata_ -> AddDefinitions(btagVars_,"btagging");
    
    InputTag trgRes;
    if ( do_triggeraccepts_ ) {
@@ -852,7 +859,7 @@ void Ntuplizer::beginJob() {
          // Pat Jets
          if ( inputTags == "PatJets" ) {
             patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
-            patjets_collections_.back() -> Init(btagVars_);
+            patjets_collections_.back() -> Init(btag_variables_);
             patjets_collections_.back() -> QGTaggerInstance("QGTagger");
             patjets_collections_.back() -> PileupJetIdInstance("pileupJetId");
             
@@ -1100,6 +1107,9 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
    edm::ParameterSetDescription desc;
+
+   // desc.setAllowAnything();
+
    desc.add<unsigned int>("stageL1Trigger", 2);
    desc.add<bool>("StorePrescale", false);
    desc.add<bool>("MonteCarlo");
@@ -1135,6 +1145,10 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 
    desc.addOptional<InputTag>("FilteredMHatEvents");
 
+   edm::ParameterSetDescription desc_btag;
+   desc_btag.add<std::string>("discriminator");
+   desc_btag.add<std::string>("alias");
+   desc.addVPSetOptional("BTagAlgorithms",desc_btag);
 
   descriptions.addDefault(desc);
 }
