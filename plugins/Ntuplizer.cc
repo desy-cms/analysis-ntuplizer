@@ -56,7 +56,6 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "Analysis/Ntuplizer/interface/EventInfo.h"
-#include "Analysis/Ntuplizer/interface/Definitions.h"
 #include "Analysis/Ntuplizer/interface/Metadata.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
 #include "Analysis/Ntuplizer/interface/Candidates.h"
@@ -104,7 +103,6 @@ using Strings                      = std::vector<String>;
 // Alias to the collections classes of candidates for the ntuple
 using EventInfo                    = analysis::ntuple::EventInfo;
 using Metadata                     = analysis::ntuple::Metadata;
-using Definitions                  = analysis::ntuple::Definitions;
 using PatJetCandidates             = analysis::ntuple::Candidates<pat::Jet>;
 using PatMuonCandidates            = analysis::ntuple::Candidates<pat::Muon>;
 using PatMETCandidates             = analysis::ntuple::Candidates<pat::MET>;
@@ -130,7 +128,6 @@ using JecESTokens                  = analysis::ntuple::JecESTokens;
 // Alias to the pointers to the above classes
 using EventInfoPtr                  = Ptr<EventInfo>;
 using MetadataPtr                   = Ptr<Metadata>;
-using pDefinitions                  = Ptr<Definitions>;
 using pPatJetCandidates             = Ptr<PatJetCandidates>;
 using pPatMuonCandidates            = Ptr<PatMuonCandidates>;
 using pPatMETCandidates             = Ptr<PatMETCandidates>;
@@ -347,6 +344,17 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    // Metadata 
    metadata_ = std::make_unique<Metadata>(file_service, is_mc_);
    metadata_ -> Init();
+   // Definitions of the variables to be stored in the metadata tree
+   // --- Btagging algorithms (handles vstring, VPSet, or PSet mapping jet-type -> PSet containing VPSet) ---
+   btag_variables_.clear();
+   auto vpset_btag = config_.getParameter<std::vector<edm::ParameterSet>>("BTagAlgorithms");
+   for ( auto const & pset_btag : vpset_btag ) {
+      String btag_discriminator = pset_btag.getParameter<std::string>("discriminator");
+      String btag_discriminator_alias = pset_btag.getParameter<std::string>("alias"); // alias is obligatory!!!
+      btag_variables_.push_back({btag_discriminator, btag_discriminator_alias});
+   }
+   metadata_ -> AddDefinitions(btag_variables_,"btagging");
+   
    
    do_triggeraccepts_   = config_.exists("TriggerResults");
    trig_res_process_.clear();
@@ -575,29 +583,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       }
    }
 
-   // --- Btagging algorithms (handles vstring, VPSet, or PSet mapping jet-type -> PSet containing VPSet) ---
-   btag_discriminators_.clear();
-   btag_discriminators_alias_.clear();
-   auto vpset_btag = config_.getParameter<std::vector<edm::ParameterSet>>("BTagAlgorithms");
-   for ( auto const & pset_btag : vpset_btag ) {
-      btag_discriminators_.push_back( pset_btag.getParameter<std::string>("discriminator") );
-      btag_discriminators_alias_.push_back( pset_btag.getParameter<std::string>("alias") ); // alias is obligatory!!!
-      // if ( btag_discriminators_alias_.back() == "" ) {
-      //    btag_discriminators_alias_.back() = btag_discriminators_.back();
-      //    std::string &alias = btag_discriminators_alias_.back();
-      //    std::replace(alias.begin(), alias.end(), ':', '_');
-      // }
-   }
-
-   // // populate btag_variables_
-   // btag_variables_.clear();
-   // for ( size_t it = 0 ; it < btag_discriminators_.size() ; ++it ) {
-   //    btag_variables_.push_back({btag_discriminators_[it], btag_discriminators_alias_[it]});
-   //    printf_info("==> Ntuplizer::Ntuplizer() btag discriminator: %s, alias: %s\n", btag_discriminators_[it].c_str(), btag_discriminators_alias_[it].c_str());
-   // }
-   // metadata_ -> AddDefinitions(btag_variables_,"btagging");
-
-
    event_count_ = 0;
 
 }
@@ -704,16 +689,6 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
 void Ntuplizer::beginJob() {
 
    printf_info("==> Ntuplizer::beginJob()...\n");
-
-   // populate btag_variables_
-   btag_variables_.clear();
-   for ( size_t it = 0 ; it < btag_discriminators_.size() ; ++it ) {
-      btag_variables_.push_back({btag_discriminators_[it], btag_discriminators_alias_[it]});
-   }
-
-   metadata_ -> AddDefinitions(btag_variables_,"btagging");
-
-
 
    // TODO: move all below to constructor?
    
