@@ -20,6 +20,7 @@ command_line_options = ntuplizer_parser()
 if hasattr(command_line_options, 'outputFile') and command_line_options.outputFile:
     try:
         if os.path.exists(command_line_options.outputFile):
+            print('Removing existing output file:', command_line_options.outputFile)
             os.remove(command_line_options.outputFile)
     except Exception as e:
         print('Warning: could not remove existing output file:', e)
