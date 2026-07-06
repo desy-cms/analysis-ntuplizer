@@ -29,7 +29,7 @@ analysis::ntuple::Metadata::Metadata() {
    // default constructor
 }
 
-analysis::ntuple::Metadata::Metadata(edm::Service<TFileService> & fs, const bool & is_mc, const String & dir ) {
+analysis::ntuple::Metadata::Metadata(edm::Service<TFileService> & fs, const bool & is_mc, const String & metadata_folder ) {
    is_mc_ = is_mc;
    is_gen_filter_ = false;
    is_evt_filter_ = false;
@@ -37,7 +37,22 @@ analysis::ntuple::Metadata::Metadata(edm::Service<TFileService> & fs, const bool
    
    vdefinitions_.clear();
 
-   main_folder_ = fs->mkdir(dir);
+   main_folder_ = fs->mkdir(metadata_folder);
+   if ( is_mc_ ) {
+      // Cross sections tree
+      xsection_tree_ = main_folder_.make<TTree>("CrossSections","Cross Sections");
+      // cross section branches
+      xsection_tree_ -> Branch("run"            , &run_xsection_          , "run/i");
+      xsection_tree_ -> Branch("myCrossSection" , &my_xsection_           , "myCrossSection/D");
+      xsection_tree_ -> Branch("crossSection"   , &xsection_              , "crossSection_generator/D");
+      xsection_tree_ -> Branch("internalXSec"   , &internal_xsection_     , "internalXSec_generator/D");
+      xsection_tree_ -> Branch("externalXSecLO" , &external_xsection_lo_  , "externalXSecLO_generator/D");
+      xsection_tree_ -> Branch("externalXSecNLO", &external_xsection_nlo_ , "externalXSecNLO_generator/D");
+   }
+   // Dataset
+   dataset_tree_ = main_folder_.make<TTree>("Dataset","Dataset info");
+   dataset_tree_ -> Branch("isMC"            , &is_mc_            , "isMC/O");
+
    mhat_folder_ = fs->mkdir("mHatFilter");
    
 }
@@ -53,9 +68,9 @@ analysis::ntuple::Metadata::~Metadata() {
 //
 
 void analysis::ntuple::Metadata::Init() {
-   if ( is_mc_ )
-      XSectionTreeBranches_();
-   DatasetTreeBranches_();
+   // if ( is_mc_ )
+   //    XSectionTreeBranches_();
+   // DatasetTreeBranches_();
 }
 
 void analysis::ntuple::Metadata::XSectionTreeBranches_() {
@@ -78,8 +93,8 @@ void analysis::ntuple::Metadata::DatasetTreeBranches_() {
 
 // ------------ method called for each event  ------------
 void analysis::ntuple::Metadata::Fill() {
-   for ( auto & definitions : vdefinitions_ )
-      definitions -> Fill();
+   // for ( auto & definitions : vdefinitions_ )
+   //    definitions -> Fill();
    
    if ( is_gen_filter_ )      gen_filter_       -> Fill();
    if ( is_evt_filter_ )      evt_filter_       -> Fill();

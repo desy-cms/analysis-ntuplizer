@@ -66,7 +66,7 @@ namespace analysis {
       class Metadata {
          public:
             Metadata();
-            Metadata(edm::Service<TFileService> &, const bool & is_mc = false, const String & dir = "Metadata" );
+            Metadata(edm::Service<TFileService> &, const bool &, const String & metadata_folder = "Metadata" );
             Metadata(TFileDirectory & );
            ~Metadata();
             void Init();
