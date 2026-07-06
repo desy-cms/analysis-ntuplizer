@@ -38,20 +38,18 @@ namespace analysis {
       class Definitions {
          public:
             Definitions();
-            Definitions(edm::Service<TFileService> &);
-            Definitions(edm::Service<TFileService> &, const std::string &);
             Definitions(TFileDirectory &);
             Definitions(TFileDirectory &, const std::string &);
            ~Definitions();
-            void Fill();
             void Init();
+            void Fill();
             void Add(const std::vector<std::string> &, const std::vector<std::string> &);
-            void Add(const std::string &, const std::string &);
-            TTree * Tree();
       
          private:
             // ----------member data ---------------------------
-            
+            std::vector<std::string> names_;
+            std::vector<std::string> aliases_;
+            std::string category_;
             // Output tree
             TTree * tree_;
             
