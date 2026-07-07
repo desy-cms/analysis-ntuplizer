@@ -75,25 +75,28 @@ process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
 process.load('Analysis.Ntuplizer.jet_corrections_cff')
 
 # from Analysis.Ntuplizer.btag_algorithms_cfi import BTagAlgorithms_AK4Puppi
-from Analysis.Ntuplizer.btagging_cfi import BTagging
+from Analysis.Ntuplizer.btagging_cfi import BTagging, AllBTagging
 from Analysis.Ntuplizer.bregression_cfi import BRegression
-
 from Analysis.Ntuplizer.test_cfi import Testing
 
-TestingModules = {}
-TestingModules['AK4PFPuppi'] = cms.VPSet()
-TestingModules['AK4PFPuppi'].extend(Testing['AK4PFPuppi']['ParticleNet'])
-TestingModules['AK4PFPuppi'].extend(Testing['AK4PFPuppi']['ParticleTransformer'])
+# Selection of the b-tagging algorithms to be used in the ntuplizer, or use AllBTagging to include all of them (see the ntuplizer below)
+BTaggingAlgos = {}
+BTaggingAlgos['AK4PFPuppi'] = cms.VPSet()
+BTaggingAlgos['AK4PFPuppi'].extend(BTagging['AK4PFPuppi']['ParticleNet'])
+BTaggingAlgos['AK4PFPuppi'].extend(BTagging['AK4PFPuppi']['ParticleTransformer'])
+# BTaggingAlgos['AK4PFPuppi'].extend(BTagging['AK4PFPuppi']['UnifiedParticleTransformer'])
+# BTaggingAlgos['AK4PFPuppi'].extend(BTagging['AK4PFPuppi']['DeepFlavour'])
+
 
 ## Ntuplizer
 process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     # Imported settings (always at the beginning???)
-    BTagging['AK4PFPuppi'],
     BRegression['AK4PFPuppi'],
     trigger_info['ntuplizerTriggerPaths'],
     trigger_info['ntuplizerL1Seeds'],
     trigger_info['ntuplizerTriggerObjects'],
-    Testing = TestingModules['AK4PFPuppi'],
+    BTagging = AllBTagging['AK4PFPuppi'],
+    Testing = Testing['AK4PFPuppi']['ParticleNet'],
     MonteCarlo      = cms.bool(command_line_options.type == 'mc'),
     StorePrescale    = cms.bool(True),
     TotalEvents     = cms.InputTag ('nTotalEvents'),
