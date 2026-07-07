@@ -81,7 +81,7 @@ from Analysis.Ntuplizer.btag_algorithms_cfi import BTagAlgorithms
 ## Ntuplizer
 process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     # Imported settings (always at the beginning???)
-    BTagAlgorithms['AK4Puppi'],
+    BTagAlgorithms['PFJetAK4Puppi'],
     trigger_info['ntuplizerTriggerPaths'],
     trigger_info['ntuplizerL1Seeds'],
     trigger_info['ntuplizerTriggerObjects'],
