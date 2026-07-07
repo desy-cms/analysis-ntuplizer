@@ -115,7 +115,7 @@ void analysis::ntuple::Metadata::AddDefinitions(const Strings & names, const Str
    vdefinitions_.back() -> Add(names,aliases);
 }
 
-void analysis::ntuple::Metadata::AddDefinitions(const Vector<TitleAlias> & tas, const String & category) {
+void analysis::ntuple::Metadata::AddDefinitions(const Vector<analysis::utils::TitleAlias> & tas, const String & category) {
    Strings names;
    Strings aliases;
    for ( auto & ta : tas ) {

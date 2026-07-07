@@ -35,7 +35,7 @@
 
 #include "Analysis/Ntuplizer/interface/Definitions.h"
 #include "Analysis/Ntuplizer/interface/EventFilter.h"
-#include "Analysis/Ntuplizer/interface/Utils.h"
+#include "Analysis/Utils/interface/types.h"
 #include "TTree.h"
 
 template<typename T>
@@ -73,7 +73,7 @@ namespace analysis {
             void Fill();
             void AddDefinitions(const Strings &, const Strings &);
             void AddDefinitions(const Strings &, const Strings &, const String &);
-            void AddDefinitions(const Vector<TitleAlias> &, const String &);
+            void AddDefinitions(const Vector<analysis::utils::TitleAlias> &, const String &);
             void SetGeneratorFilter(const InputTag & );
             void SetEventFilter(const InputTags &);
             void SetMHatEventFilter(const InputTags &);

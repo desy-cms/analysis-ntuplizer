@@ -71,7 +71,6 @@
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "DataFormats/Scalers/interface/LumiScalers.h"
 #include "Analysis/Ntuplizer/interface/EventFilter.h"
-#include "Analysis/Ntuplizer/interface/Utils.h"
 #include <TH1.h>
 #include <TFile.h>
 #include <TTree.h>
@@ -79,6 +78,7 @@
 #include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
 #include "Analysis/Utils/interface/color_printf.h"
 #include "Analysis/Utils/interface/string_utils.h"
+#include "Analysis/Utils/interface/types.h"
 
 using analysis::utils::string_split;
 
@@ -93,8 +93,8 @@ template<typename T>
 using Collections = std::vector<Ptr<T>>;
 
 // Aliases
-using TitleIndex                   = analysis::ntuple::TitleIndex;
-using TitleAlias                   = analysis::ntuple::TitleAlias;
+using TitleIndex                   = analysis::utils::TitleIndex;
+using TitleAlias                   = analysis::utils::TitleAlias;
 using InputTag                     = edm::InputTag;
 using InputTags                    = std::vector<InputTag>;
 using String                       = std::string;
@@ -121,8 +121,8 @@ using RecoTrackCandidates          = analysis::ntuple::Candidates<reco::Track>;
 using JetsTags                     = analysis::ntuple::JetsTags;
 
 using FilterResults                = analysis::ntuple::FilterResults;
-using JerESTokens                  = analysis::ntuple::JerESTokens;
-using JecESTokens                  = analysis::ntuple::JecESTokens;
+using JerESTokens                  = analysis::utils::JerESTokens;
+using JecESTokens                  = analysis::utils::JecESTokens;
 
 
 // Alias to the pointers to the above classes
@@ -212,9 +212,9 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Strings triggerObjectLabels_;
       Strings triggerObjectSplits_;
       Strings triggerObjectSplitsTypes_;
-      std::vector< TitleAlias >  btagging_;
-      std::vector< TitleAlias >  bregression_;
-      std::vector< TitleAlias >  discriminators_;
+      std::vector<analysis::utils::TitleAlias>  btagging_;
+      std::vector<analysis::utils::TitleAlias>  bregression_;
+      std::vector<analysis::utils::TitleAlias>  discriminators_;
       Strings jecRecords_;
       Strings jerRecords_;
 
@@ -302,9 +302,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       analysis::ntuple::FilterResults genFilterResults_;
       
       // ESTokens
-      std::vector<analysis::ntuple::JerESTokens> jer_es_tokens_;
-      std::vector<analysis::ntuple::JecESTokens> jec_es_tokens_;
-
+      std::vector<analysis::utils::JerESTokens> jer_es_tokens_;
+      std::vector<analysis::utils::JecESTokens> jec_es_tokens_;
       
       // JER
       Strings jer_files_;

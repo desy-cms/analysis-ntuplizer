@@ -1070,7 +1070,7 @@ void Candidates<T>::Init()
 }
 
 template <typename T>
-void Candidates<T>::Init( const std::vector<TitleAlias> & btagVars )
+void Candidates<T>::Init( const std::vector<analysis::utils::TitleAlias> & btagVars )
 {
    btag_vars_ = btagVars;
    Init();
@@ -1093,7 +1093,7 @@ void Candidates<T>::AddJecInfo( const std::string & jec )
 }
 
 template <typename T>
-void Candidates<T>::AddJecInfo( const JecESTokens & jec )
+void Candidates<T>::AddJecInfo( const analysis::utils::JecESTokens & jec )
 {
    // Will use confDB
    jec_tokens_ = jec;
@@ -1116,7 +1116,7 @@ void Candidates<T>::AddJerInfo( const std::string & jer, const edm::InputTag & r
 }
 
 template <typename T>
-void Candidates<T>::AddJerInfo( const JerESTokens & jer, const edm::InputTag & rho )
+void Candidates<T>::AddJerInfo( const analysis::utils::JerESTokens & jer, const edm::InputTag & rho )
 {
    // Will use confDB
    jerRecord_ = jer.record;

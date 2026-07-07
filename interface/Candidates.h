@@ -37,7 +37,7 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "Analysis/Ntuplizer/interface/Utils.h"
+#include "Analysis/Utils/interface/types.h"
 
 #include "TTree.h"
 
@@ -57,14 +57,14 @@ namespace analysis {
             void ReadFromEvent(const edm::Event&);
             void BTagAlgorithms(const std::vector<std::string> &, const std::vector<std::string> &);
             void Init();
-            void Init(const std::vector<TitleAlias> & );
+            void Init(const std::vector<analysis::utils::TitleAlias> & );
             void UseTriggerResults(edm::InputTag& );
             void TriggerObjectType(const std::string &);
             void AddJecInfo(const std::string & );
-            void AddJecInfo(const JecESTokens & );
+            void AddJecInfo(const analysis::utils::JecESTokens & );
             void AddJecInfo(const std::string &, const std::string & );
             void AddJerInfo(const std::string &, const edm::InputTag & );
-            void AddJerInfo(const JerESTokens &, const edm::InputTag & );
+            void AddJerInfo(const analysis::utils::JerESTokens &, const edm::InputTag & );
             void AddJerInfo(const std::string &, const std::string &, const std::string &, const edm::InputTag &  );
             void Branches();
             void Fill(const edm::Event&);
@@ -139,13 +139,13 @@ namespace analysis {
             
             float jetid_[15][maxCandidates];
             int   ijetid_[15][maxCandidates];
-            std::vector<TitleAlias>  id_vars_;
-            std::vector<TitleAlias>  iid_vars_;
+            std::vector<analysis::utils::TitleAlias>  id_vars_;
+            std::vector<analysis::utils::TitleAlias>  iid_vars_;
 
             
             // Jet energy resolution and scale correction
             float jecUncert_[maxCandidates];
-            JecESTokens jec_tokens_;
+            analysis::utils::JecESTokens jec_tokens_;
             edm::InputTag rho_collection_;
             double rho_;
             float jerResolution_[maxCandidates];
@@ -154,7 +154,7 @@ namespace analysis {
             float jerSFDown_[maxCandidates];            
             JME::JetResolution res_;
             JME::JetResolutionScaleFactor res_sf_;
-            JerESTokens res_tokens_;
+            analysis::utils::JerESTokens res_tokens_;
             
             // QG Jet
             float qgLikelihood_[maxCandidates];
@@ -254,7 +254,7 @@ namespace analysis {
                       
             int higgs_pdg_;
             
-            std::vector<TitleAlias>  btag_vars_;
+            std::vector<analysis::utils::TitleAlias>  btag_vars_;
             
             std::string trigobj_type_;
    
