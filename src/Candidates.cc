@@ -1073,8 +1073,6 @@ template <typename T>
 void Candidates<T>::Init( const std::vector<TitleAlias> & btagVars )
 {
    btag_vars_ = btagVars;
-   if ( btag_vars_.size() > 15 )
-      btag_vars_.erase(btag_vars_.begin()+15,btag_vars_.end());
    Init();
    
 }
