@@ -212,7 +212,9 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Strings triggerObjectLabels_;
       Strings triggerObjectSplits_;
       Strings triggerObjectSplitsTypes_;
-      std::vector< TitleAlias >  btag_variables_;
+      std::vector< TitleAlias >  btagging_;
+      std::vector< TitleAlias >  bregression_;
+      std::vector< TitleAlias >  discriminators_;
       Strings jecRecords_;
       Strings jerRecords_;
 
@@ -346,15 +348,30 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    metadata_ -> Init();
    // Definitions of the variables to be stored in the metadata tree
    // --- Btagging algorithms (handles vstring, VPSet, or PSet mapping jet-type -> PSet containing VPSet) ---
-   btag_variables_.clear();
-   auto vpset_btag = config_.getParameter<std::vector<edm::ParameterSet>>("BTagAlgorithms");
+   btagging_.clear();
+   auto vpset_btag = config_.getParameter<std::vector<edm::ParameterSet>>("BTagging");
    for ( auto const & pset_btag : vpset_btag ) {
-      String btag_discriminator = pset_btag.getParameter<std::string>("discriminator");
-      String btag_discriminator_alias = pset_btag.getParameter<std::string>("alias"); // alias is obligatory!!!
-      btag_variables_.push_back({btag_discriminator, btag_discriminator_alias});
+      String btag = pset_btag.getParameter<std::string>("discriminator");
+      String btag_alias = pset_btag.getParameter<std::string>("alias"); // alias is obligatory!!!
+      btagging_.push_back({btag, btag_alias});
    }
-   metadata_ -> AddDefinitions(btag_variables_,"btagging");
+   metadata_ -> AddDefinitions(btagging_,"btagging");
    
+
+   // --- BRegression algorithms (handles vstring, VPSet, or PSet mapping jet-type -> PSet containing VPSet) ---
+   bregression_.clear();
+   auto vpset_bregression = config_.getParameter<std::vector<edm::ParameterSet>>("BRegression");
+   for ( auto const & pset_bregression : vpset_bregression ) {
+      String bregression = pset_bregression.getParameter<std::string>("discriminator");
+      String bregression_alias = pset_bregression.getParameter<std::string>("alias"); // alias is obligatory!!!
+      bregression_.push_back({bregression, bregression_alias});
+   }
+   metadata_ -> AddDefinitions(bregression_,"bregression");
+   
+   discriminators_.reserve(btagging_.size() + bregression_.size());
+   discriminators_.insert(discriminators_.end(), btagging_.begin(), btagging_.end());
+   discriminators_.insert(discriminators_.end(), bregression_.begin(), bregression_.end());
+
    
    do_triggeraccepts_   = config_.exists("TriggerResults");
    trig_res_process_.clear();
@@ -834,7 +851,7 @@ void Ntuplizer::beginJob() {
          // Pat Jets
          if ( inputTags == "PatJets" ) {
             patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
-            patjets_collections_.back() -> Init(btag_variables_);
+            patjets_collections_.back() -> Init(discriminators_);
             patjets_collections_.back() -> QGTaggerInstance("QGTagger");
             patjets_collections_.back() -> PileupJetIdInstance("pileupJetId");
             
@@ -1123,9 +1140,14 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    edm::ParameterSetDescription desc_btag;
    desc_btag.add<std::string>("discriminator");
    desc_btag.add<std::string>("alias");
-   desc.addVPSetOptional("BTagAlgorithms",desc_btag);
+   desc.addVPSetOptional("BTagging",desc_btag);
 
-  descriptions.addDefault(desc);
+   edm::ParameterSetDescription desc_bregression;
+   desc_bregression.add<std::string>("discriminator");
+   desc_bregression.add<std::string>("alias");
+   desc.addVPSetOptional("BRegression",desc_bregression);
+   
+   descriptions.addDefault(desc);
 }
 
 //define this as a plug-in
