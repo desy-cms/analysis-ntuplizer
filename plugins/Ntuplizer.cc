@@ -215,7 +215,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       std::vector< TitleAlias >  btagging_;
       std::vector< TitleAlias >  bregression_;
       std::vector< TitleAlias >  discriminators_;
-      std::vector< TitleAlias >  testing_;
       Strings jecRecords_;
       Strings jerRecords_;
 
@@ -369,17 +368,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    }
    metadata_ -> AddDefinitions(bregression_,"bregression");
    
-   // --- Testing algorithms (handles vstring, VPSet, or PSet mapping jet-type -> PSet containing VPSet) ---
-   testing_.clear();
-   auto vpset_testing = config_.getParameter<std::vector<edm::ParameterSet>>("Testing");
-   for ( auto const & pset_testing : vpset_testing ) {
-      String testing = pset_testing.getParameter<std::string>("discriminator");
-      String testing_alias = pset_testing.getParameter<std::string>("alias"); // alias is obligatory!!!
-      testing_.push_back({testing, testing_alias});
-   }
-   metadata_ -> AddDefinitions(testing_,"testing");
-
-
 
    discriminators_.reserve(btagging_.size() + bregression_.size());
    discriminators_.insert(discriminators_.end(), btagging_.begin(), btagging_.end());
@@ -1160,11 +1148,6 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc_bregression.add<std::string>("alias");
    desc.addVPSetOptional("BRegression",desc_bregression);
    
-   edm::ParameterSetDescription desc_testing;
-   desc_testing.add<std::string>("discriminator");
-   desc_testing.add<std::string>("alias");
-   desc.addVPSetOptional("Testing",desc_testing);
-
    descriptions.addDefault(desc);
 }
 

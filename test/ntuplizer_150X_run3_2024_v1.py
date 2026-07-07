@@ -76,7 +76,6 @@ process.load('Analysis.Ntuplizer.jet_corrections_cff')
 
 from Analysis.Ntuplizer.btagging_cfi import BTagging, AllBTagging
 from Analysis.Ntuplizer.bregression_cfi import BRegression, AllBRegression
-from Analysis.Ntuplizer.test_cfi import Testing
 
 # Selection of the b-tagging algorithms to be used in the ntuplizer, or use AllBTagging to include all of them (see the ntuplizer below)
 BTaggingAlgos = {}
@@ -101,7 +100,6 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     trigger_info['ntuplizerTriggerObjects'],
     BTagging = AllBTagging['AK4PFPuppi'],
     BRegression = AllBRegression['AK4PFPuppi'],
-    Testing = Testing['AK4PFPuppi']['ParticleNet'],    
     MonteCarlo      = cms.bool(command_line_options.type == 'mc'),
     StorePrescale    = cms.bool(True),
     TotalEvents     = cms.InputTag ('nTotalEvents'),
