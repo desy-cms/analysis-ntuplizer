@@ -1,12 +1,14 @@
 import FWCore.ParameterSet.Config as cms
+from Analysis.Utils.config_utils import merge_vpsets
 
 # https://btv-wiki.docs.cern.ch/ScaleFactors/#taggers-and-definitions-of-discriminators
-
 # Also see: https://github.com/cms-sw/cmssw/blob/CMSSW_15_0_X/PhysicsTools/NanoAOD/python/jetsAK4_Puppi_cff.py
 
 
-BRegression_AK4PFPuppi = cms.PSet(
-    BRegression = cms.VPSet(
+BRegression = {}
+
+BRegression['AK4PFPuppi'] = {
+    'ParticleNet': cms.VPSet(
         cms.PSet(
             discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralJetTags:ptcorr'),
             alias     = cms.string('breg_pnet_ptcorr'),
@@ -31,7 +33,8 @@ BRegression_AK4PFPuppi = cms.PSet(
             discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiForwardJetTags:ptreslow'),
             alias     = cms.string('breg_pnet_fw_ptreslow'),
         ),
-
+    ),
+    'UnifiedParticleTransformer': cms.VPSet(
         cms.PSet(
             discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:ptcorr'),
             alias     = cms.string('breg_upart_ptcorr'),
@@ -48,7 +51,8 @@ BRegression_AK4PFPuppi = cms.PSet(
             discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:ptreslow'),
             alias     = cms.string('breg_upart_ptreslow'),
         ),
-
+    ),
+    'UnifiedParticleTransformerV1': cms.VPSet(
         cms.PSet(
             discriminator = cms.string('pfUnifiedParticleTransformerAK4V1JetTags:ptcorr'),
             alias     = cms.string('breg_upartv1_ptcorr'),
@@ -65,14 +69,11 @@ BRegression_AK4PFPuppi = cms.PSet(
             discriminator = cms.string('pfUnifiedParticleTransformerAK4V1JetTags:ptreslow'),
             alias     = cms.string('breg_upartv1_ptreslow'),
         ),
-
     ),
-
-)
-
-# Provide a mapping so callers can access algorithms by jet type
-BRegression = {
-    'AK4PFPuppi': BRegression_AK4PFPuppi,
 }
 
+AllBRegression = {}
+AllBRegression['AK4PFPuppi'] =  merge_vpsets(
+    *BRegression['AK4PFPuppi'].values()
+)
 
