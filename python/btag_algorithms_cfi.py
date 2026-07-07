@@ -2,11 +2,14 @@ import FWCore.ParameterSet.Config as cms
 
 # https://btv-wiki.docs.cern.ch/ScaleFactors/#taggers-and-definitions-of-discriminators
 
+# Also see: https://github.com/cms-sw/cmssw/blob/CMSSW_15_0_X/PhysicsTools/NanoAOD/python/jetsAK4_Puppi_cff.py
+
+
 # Why these do not appear in the ntuple???
 # pfParticleNetFromMiniAODAK4CHSCentralJetTags:probmu',
 # pfParticleNetFromMiniAODAK4CHSCentralJetTags:probele',
 
-BTagAlgorithms_AK4Puppi = cms.PSet(
+BTagging_PFJetAK4Puppi = cms.PSet(
     BTagAlgorithms = cms.VPSet(
         cms.PSet(
             discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:BvsAll'),
@@ -133,7 +136,7 @@ BTagAlgorithms_AK4Puppi = cms.PSet(
 
 # Provide a mapping so callers can access algorithms by jet type
 BTagAlgorithms = {
-    'AK4Puppi': BTagAlgorithms_AK4Puppi,
+    'PFJetAK4Puppi': BTagging_PFJetAK4Puppi,
 }
 
 
