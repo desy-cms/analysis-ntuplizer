@@ -227,8 +227,6 @@ namespace analysis {
          private:
             bool is_l1jet_;
             bool is_l1muon_;
-            bool is_calojet_;
-            bool is_pfjet_;
             bool is_patjet_;
             bool is_recomuon_;
             bool is_recotrack_;

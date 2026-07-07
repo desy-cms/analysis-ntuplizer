@@ -16,7 +16,6 @@
 //
 //
 
-
 // system include files
 #include <cstdlib>
 #include <memory>
@@ -30,55 +29,56 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
+
+#include "DataFormats/L1Trigger/interface/Jet.h"
 #include "DataFormats/L1Trigger/interface/L1JetParticle.h"
 #include "DataFormats/L1Trigger/interface/L1JetParticleFwd.h"
+#include "DataFormats/L1Trigger/interface/Muon.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidateFwd.h"
-#include "DataFormats/JetReco/interface/CaloJet.h"
-#include "DataFormats/JetReco/interface/CaloJetCollection.h"
-#include "DataFormats/JetReco/interface/PFJet.h"
-#include "DataFormats/JetReco/interface/PFJetCollection.h"
-#include "DataFormats/MuonReco/interface/Muon.h"
-#include "DataFormats/MuonReco/interface/MuonFwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
-#include "DataFormats/L1Trigger/interface/Jet.h"
-#include "DataFormats/L1Trigger/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/TriggerObject.h"
 #include "DataFormats/JetReco/interface/GenJet.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
-#include "Analysis/Ntuplizer/interface/EventInfo.h"
-#include "Analysis/Ntuplizer/interface/Metadata.h"
-#include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
-#include "Analysis/Ntuplizer/interface/Candidates.h"
-#include "Analysis/Ntuplizer/interface/JetsTags.h"
-#include "Analysis/Ntuplizer/interface/TriggerAccepts.h"
-#include "Analysis/Ntuplizer/interface/Vertices.h"
-#include "SimDataFormats/GeneratorProducts/interface/GenFilterInfo.h"
+#include "DataFormats/Scalers/interface/LumiScalers.h"
 #include "DataFormats/Common/interface/MergeableCounter.h"
 #include "DataFormats/Common/interface/OwnVector.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
+
+#include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenFilterInfo.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
-#include "DataFormats/Scalers/interface/LumiScalers.h"
-#include "Analysis/Ntuplizer/interface/EventFilter.h"
-#include <TH1.h>
-#include <TFile.h>
-#include <TTree.h>
+
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 #include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
+
+#include "Analysis/Ntuplizer/interface/Candidates.h"
+#include "Analysis/Ntuplizer/interface/JetsTags.h"
+#include "Analysis/Ntuplizer/interface/TriggerAccepts.h"
+#include "Analysis/Ntuplizer/interface/Vertices.h"
+#include "Analysis/Ntuplizer/interface/EventFilter.h"
+#include "Analysis/Ntuplizer/interface/EventInfo.h"
+#include "Analysis/Ntuplizer/interface/Metadata.h"
+
 #include "Analysis/Utils/interface/color_printf.h"
 #include "Analysis/Utils/interface/string_utils.h"
 #include "Analysis/Utils/interface/types.h"
+
+#include <TH1.h>
+#include <TFile.h>
+#include <TTree.h>
 
 using analysis::utils::string_split;
 
@@ -114,9 +114,6 @@ using PrimaryVertices              = analysis::ntuple::Vertices;
 using L1TJetCandidates             = analysis::ntuple::Candidates<l1t::Jet>;
 using L1TMuonCandidates            = analysis::ntuple::Candidates<l1t::Muon>;
 using ChargedCandidates            = analysis::ntuple::Candidates<reco::RecoChargedCandidate>;
-using CaloJetCandidates            = analysis::ntuple::Candidates<reco::CaloJet>;
-using PFJetCandidates              = analysis::ntuple::Candidates<reco::PFJet>;
-using RecoMuonCandidates           = analysis::ntuple::Candidates<reco::Muon>;
 using RecoTrackCandidates          = analysis::ntuple::Candidates<reco::Track>;
 using JetsTags                     = analysis::ntuple::JetsTags;
 
@@ -139,9 +136,6 @@ using PrimaryVerticesPtr            = Ptr<PrimaryVertices>;
 using pL1TJetCandidates             = Ptr<L1TJetCandidates>;
 using pL1TMuonCandidates            = Ptr<L1TMuonCandidates>;
 using pChargedCandidates            = Ptr<ChargedCandidates>;
-using pCaloJetCandidates            = Ptr<CaloJetCandidates>;
-using pPFJetCandidates              = Ptr<PFJetCandidates>;
-using pRecoMuonCandidates           = Ptr<RecoMuonCandidates>;
 using pRecoTrackCandidates          = Ptr<RecoTrackCandidates>;
 using pJetsTags                     = Ptr<JetsTags>;
 
@@ -182,9 +176,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool use_full_name_;
       bool do_l1jets_;
       bool do_l1muons_;
-      bool do_calojets_;
-      bool do_pfjets_;
-      bool do_recomuons_;
       bool do_recotracks_;
       bool do_patjets_;
       bool do_patmets_;
@@ -229,9 +220,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       TokenMap<reco::VertexCollection>                   primary_vertices_tokens_;
       TokenMap<reco::GenJetCollection>                   genJetTokens_;
       TokenMap<reco::GenParticleCollection>              genPartTokens_;
-      TokenMap<reco::CaloJetCollection>                  caloJetTokens_;
-      TokenMap<reco::PFJetCollection>                    pfJetTokens_;
-      TokenMap<reco::MuonCollection>                     recoMuonTokens_;
       TokenMap<reco::TrackCollection>                    recoTrackTokens_;
       TokenMap<reco::RecoChargedCandidateCollection>     chargedCandTokens_;
       TokenMap<reco::JetTagCollection>                   jetTagTokens_;
@@ -285,9 +273,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Collections<PrimaryVertices>              primary_vertices_collections_;
       Collections<GenJetCandidates>             genjets_collections_;
       Collections<GenParticleCandidates>        genparticles_collections_;
-      Collections<CaloJetCandidates>            calojets_collections_;
-      Collections<PFJetCandidates>              pfjets_collections_;
-      Collections<RecoMuonCandidates>           recomuons_collections_;
       Collections<RecoTrackCandidates>          recotracks_collections_;
       Collections<TriggerAccepts>               triggeraccepts_collections_;
       Collections<ChargedCandidates>            chargedcands_collections_;
@@ -475,25 +460,11 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       for (auto const& collection : collections) makeCollectionTree(collection);
       registerTokens<reco::TrackCollection>(collections, recoTrackTokens_);
    };
-   inputTagsDispatch["RecoMuons"] = [&](InputTags const& collections) {
-      for (auto const& collection : collections) makeCollectionTree(collection);
-      registerTokens<reco::MuonCollection>(collections, recoMuonTokens_);
-   };
    inputTagsDispatch["ChargedCandidates"] = [&](InputTags const& collections) {
       for (auto const& collection : collections) makeCollectionTree(collection);
       registerTokens<reco::RecoChargedCandidateCollection>(collections, chargedCandTokens_);
    };
 
-   // Old stuff
-   inputTagsDispatch["PFJets"] = [&](InputTags const& collections) {
-      for (auto const& collection : collections) makeCollectionTree(collection);
-      registerTokens<reco::PFJetCollection>(collections, pfJetTokens_);
-   };
-   inputTagsDispatch["CaloJets"] = [&](InputTags const& collections) {
-      for (auto const& collection : collections) makeCollectionTree(collection);
-      registerTokens<reco::CaloJetCollection>(collections, caloJetTokens_);
-   };
-      
    // Loop over configured input tag categories, retrieve the collection tags for each category,
    // and inputTagsDispatch registration of the corresponding tokens based on the category name.
    for ( auto & inputTags : inputTagsVec_ ) {
@@ -635,18 +606,6 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       // MC only stuff
    }
       
-   // Calo jets (reco)
-      for ( auto & collection : calojets_collections_ )
-         collection -> Fill(event);
-
-   // PF jets (reco)
-      for ( auto & collection : pfjets_collections_ )
-         collection -> Fill(event);
-
-      // Reco muon (reco)
-      for ( auto & collection : recomuons_collections_ )
-         collection -> Fill(event);
-   
       // Reco track (reco)
       for ( auto & collection : recotracks_collections_ )
          collection -> Fill(event);
@@ -712,9 +671,6 @@ void Ntuplizer::beginJob() {
    do_pileup_info_      = config_.exists("PileupSummaryInfo") && is_mc_;
    do_geneventinfo_     = config_.exists("GenEventInfo") && is_mc_;
    do_lumiscalers_      = config_.exists("LumiScalers");
-   do_calojets_         = config_.exists("CaloJets");
-   do_pfjets_           = config_.exists("PFJets");
-   do_recomuons_        = config_.exists("RecoMuons");
    do_recotracks_       = config_.exists("RecoTracks");
    do_patmets_          = config_.exists("PatMETs");
    do_patmuons_         = config_.exists("PatMuons");
@@ -827,21 +783,6 @@ void Ntuplizer::beginJob() {
          // if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" )
          //    tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
          
-         // Calo Jets
-         if ( inputTags == "CaloJets" ) {
-            calojets_collections_.push_back( pCaloJetCandidates( new CaloJetCandidates(collection, tree_[name], is_mc_ ) ));
-            calojets_collections_.back() -> Init();
-         }
-         // PF Jets
-         if ( inputTags == "PFJets" ) {
-            pfjets_collections_.push_back( pPFJetCandidates( new PFJetCandidates(collection, tree_[name], is_mc_ ) ));
-            pfjets_collections_.back() -> Init();
-         }
-         // Reco Muons
-         if ( inputTags == "RecoMuons" ) {
-            recomuons_collections_.push_back( pRecoMuonCandidates( new RecoMuonCandidates(collection, tree_[name], is_mc_ ) ));
-            recomuons_collections_.back() -> Init();
-         }
          // Reco Tracks
          if ( inputTags == "RecoTracks" ) {
             recotracks_collections_.push_back( pRecoTrackCandidates( new RecoTrackCandidates(collection, tree_[name], is_mc_ ) ));

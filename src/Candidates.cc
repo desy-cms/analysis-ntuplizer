@@ -36,12 +36,6 @@
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidateFwd.h"
 
-#include "DataFormats/JetReco/interface/CaloJet.h"
-#include "DataFormats/JetReco/interface/CaloJetCollection.h"
-
-#include "DataFormats/JetReco/interface/PFJet.h"
-#include "DataFormats/JetReco/interface/PFJetCollection.h"
-
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
 
@@ -115,10 +109,8 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    tree_ = tree;
    
    is_mc_              = mc;
-   is_calojet_         = std::is_same<T,reco::CaloJet>::value;
    is_recomuon_        = std::is_same<T,reco::Muon>::value;
    is_recotrack_       = std::is_same<T,reco::Track>::value;
-   is_pfjet_           = std::is_same<T,reco::PFJet>::value;
    is_patjet_          = std::is_same<T,pat::Jet>::value;
    is_patmuon_         = std::is_same<T,pat::Muon>::value;
    is_patmet_          = std::is_same<T,pat::MET>::value;
@@ -342,15 +334,13 @@ void Candidates<T>::Kinematics()
    using namespace edm;
    
    int n = 0;
-   for ( size_t i = 0 ; i < candidates_.size(); ++i )
-   {
+   for ( size_t i = 0 ; i < candidates_.size(); ++i ) {
       if ( n >= maxCandidates ) break;
       
       if ( minPt_  >= 0. && candidates_[i].pt()  < minPt_  ) continue;
       if ( maxEta_ >= 0. && fabs(candidates_[i].eta()) > maxEta_ ) continue;
 
-      if ( is_genparticle_ )
-      {
+      if ( is_genparticle_ ) {
          reco::GenParticle * gp = dynamic_cast<reco::GenParticle*> (&candidates_[i]);
          int pdg    = gp -> pdgId();
          int status = gp -> status();  // any status selection?
@@ -394,8 +384,7 @@ void Candidates<T>::Kinematics()
       et_[n]  = candidates_[i].et();
       
       // PAT MUONS
-      if ( is_patmuon_ )
-      {
+      if ( is_patmuon_ ) {
          pat::Muon * muon = dynamic_cast<pat::Muon*> (&candidates_[i]);
          const reco::Vertex::Point vtxp  = muon->reco::LeafCandidate::vertex();
          const reco::Vertex::Error error ; 
@@ -425,8 +414,7 @@ void Candidates<T>::Kinematics()
          chi2LocalPos_              [n] = 9999.;
     
          
-         if ( isPFMuon_[n] && ( isGlobalMuon_[n] || isTrackerMuon_[n] ) )
-         {
+         if ( isPFMuon_[n] && ( isGlobalMuon_[n] || isTrackerMuon_[n] ) ) {
            // muon chamber stations      
            segmentCompatibility_   [n] = muon->segmentCompatibility()       ; // medium muon
            matchedStations_        [n] = muon->numberOfMatchedStations()    ; // at least 2 in tight 
@@ -452,8 +440,7 @@ void Candidates<T>::Kinematics()
      }
 
       // PAT JETS
-      if ( is_patjet_ )
-      {
+      if ( is_patjet_ ) {
          pat::Jet * jet = dynamic_cast<pat::Jet*> (&candidates_[i]);
          
 //         std::string sv = "pfSecondaryVertexTagInfos";
@@ -596,18 +583,6 @@ void Candidates<T>::Kinematics()
          
       } // end PAT::Jet
       
-      // Reco::PFJet
-      if ( is_pfjet_ )
-      {
-         reco::PFJet * jet = dynamic_cast<reco::PFJet*> (&candidates_[i]);
-         jetid_[0][n] = jet->neutralHadronEnergyFraction();
-         jetid_[1][n] = jet->neutralEmEnergyFraction();
-         jetid_[2][n] = (float)jet->neutralMultiplicity();
-         jetid_[3][n] = jet->chargedHadronEnergyFraction();
-         jetid_[4][n] = jet->chargedEmEnergyFraction();
-         jetid_[5][n] = (float)jet->chargedMultiplicity();
-         jetid_[6][n] = jet->muonEnergyFraction();
-      }
       if ( is_patmet_ )
       {
          pat::MET * met = dynamic_cast<pat::MET*> (&candidates_[i]);
@@ -981,15 +956,13 @@ void Candidates<T>::Branches()
           tree_->Branch("bjetRegRes",bjetRegRes_,"bjetRegRes_[n]/F");
          
       }
-      if ( is_pfjet_ || is_patjet_ )
-      {
+      if ( is_patjet_ )  {
          for ( size_t it = 0 ; it < id_vars_.size() ; ++it )
             tree_->Branch(id_vars_[it].alias.c_str(), jetid_[it], (id_vars_[it].title+"[n]/F").c_str());
          for ( size_t it = 0 ; it < iid_vars_.size() ; ++it )
             tree_->Branch(iid_vars_[it].alias.c_str(), ijetid_[it], (iid_vars_[it].title+"[n]/I").c_str());
       }
-      if ( is_patmet_ )
-      {
+      if ( is_patmet_ ) {
          tree_->Branch("sigxx",  sigxx_,  "sigxx[n]/F");
          tree_->Branch("sigxy",  sigxy_,  "sigxy[n]/F");
          tree_->Branch("sigyx",  sigyx_,  "sigyx[n]/F");
@@ -1147,8 +1120,6 @@ void Candidates<T>::PileupJetIdInstance(const std::string & instance)
 }
 
 // Need to declare all possible template classes here
-template class Candidates<reco::CaloJet>;
-template class Candidates<reco::PFJet>;
 template class Candidates<reco::Muon>;
 template class Candidates<reco::Track>;
 template class Candidates<pat::Jet>;
