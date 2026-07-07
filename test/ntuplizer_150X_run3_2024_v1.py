@@ -78,6 +78,12 @@ process.load('Analysis.Ntuplizer.jet_corrections_cff')
 from Analysis.Ntuplizer.btagging_cfi import BTagging
 from Analysis.Ntuplizer.bregression_cfi import BRegression
 
+from Analysis.Ntuplizer.test_cfi import Testing
+
+TestingModules = {}
+TestingModules['AK4PFPuppi'] = cms.VPSet()
+TestingModules['AK4PFPuppi'].extend(Testing['AK4PFPuppi']['ParticleNet'])
+TestingModules['AK4PFPuppi'].extend(Testing['AK4PFPuppi']['ParticleTransformer'])
 
 ## Ntuplizer
 process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
@@ -87,6 +93,7 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
     trigger_info['ntuplizerTriggerPaths'],
     trigger_info['ntuplizerL1Seeds'],
     trigger_info['ntuplizerTriggerObjects'],
+    Testing = TestingModules['AK4PFPuppi'],
     MonteCarlo      = cms.bool(command_line_options.type == 'mc'),
     StorePrescale    = cms.bool(True),
     TotalEvents     = cms.InputTag ('nTotalEvents'),
