@@ -9,8 +9,8 @@ import FWCore.ParameterSet.Config as cms
 # pfParticleNetFromMiniAODAK4CHSCentralJetTags:probmu',
 # pfParticleNetFromMiniAODAK4CHSCentralJetTags:probele',
 
-BTagging_PFJetAK4Puppi = cms.PSet(
-    BTagAlgorithms = cms.VPSet(
+BTagging_AK4PFPuppi = cms.PSet(
+    BTagging = cms.VPSet(
         cms.PSet(
             discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:BvsAll'),
             alias     = cms.string('btag_pnet_bvsall'),
@@ -135,8 +135,8 @@ BTagging_PFJetAK4Puppi = cms.PSet(
 )
 
 # Provide a mapping so callers can access algorithms by jet type
-BTagAlgorithms = {
-    'PFJetAK4Puppi': BTagging_PFJetAK4Puppi,
+BTagging = {
+    'AK4PFPuppi': BTagging_AK4PFPuppi,
 }
 
 
