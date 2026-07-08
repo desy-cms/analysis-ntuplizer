@@ -68,7 +68,6 @@
 #include "Analysis/Ntuplizer/interface/JetsTags.h"
 #include "Analysis/Ntuplizer/interface/TriggerAccepts.h"
 #include "Analysis/Ntuplizer/interface/Vertices.h"
-#include "Analysis/Ntuplizer/interface/EventFilter.h"
 #include "Analysis/Ntuplizer/interface/EventInfo.h"
 #include "Analysis/Ntuplizer/interface/Metadata.h"
 
@@ -194,6 +193,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool do_chargedcands_;
       bool store_prescale_;
       bool testmode_;
+      bool do_metfilters_;
 
       Strings trig_res_process_;
       Strings inputTagsVec_;
@@ -239,6 +239,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       InputTag prefWeight_;
       InputTag prefWeightUp_;
       InputTag prefWeightDown_;
+      InputTag metfilters_;
 
       Token<GenFilterInfo>                    genFilterInfoToken_;
       Token<edm::MergeableCounter>            totalEventsToken_;
@@ -252,6 +253,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Token<double>                           prefWeightToken_;
       Token<double>                           prefWeightUpToken_;
       Token<double>                           prefWeightDownToken_;
+      Token<edm::TriggerResults>              metfilters_tokens_;
 
       
       InputTags eventCounters_;
@@ -358,6 +360,8 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    discriminators_.insert(discriminators_.end(), bregression_.begin(), bregression_.end());
 
    
+   do_metfilters_ = config_.exists("MetFiltersResults");
+
    do_triggeraccepts_   = config_.exists("TriggerResults");
    trig_res_process_.clear();
    
@@ -434,6 +438,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          triggeraccepts_collections_.back()->ReadPrescaleInfo(store_prescale_);
       }
    };
+   
    inputTagsDispatch["L1TJets"] = [&](InputTags const& collections) { // TODO: make it single inputtag, since we only want to make one collection of L1TJets in the ntuple
       registerTokens<l1t::JetBxCollection>(collections, l1tJetTokens_);
       for (auto const& collection : collections) {
@@ -518,6 +523,9 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    };
    inputTagDispatch["FilteredMHatEvents"] = [&](InputTag const& collection) {
       registerToken<edm::MergeableCounter,edm::InLumi>(collection,filteredMHatEventsToken_,filteredMHatEvents_);
+   };
+   inputTagDispatch["MetFiltersResults"] = [&](InputTag const& collection) {
+      registerToken<edm::TriggerResults>(collection, metfilters_tokens_, metfilters_);
    };
 
 
@@ -1057,6 +1065,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.add<InputTags>( "L1TJets", { InputTag("caloStage2Digis","Jet","RECO") });
    desc.add<InputTags>( "L1TMuons", { InputTag("gmtStage2Digis","Muon","RECO") });
    desc.add<InputTags>( "PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
+   desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "PAT"));
 
    // Optionals
    desc.addOptional<InputTags>("TriggerObjectStandAlone");

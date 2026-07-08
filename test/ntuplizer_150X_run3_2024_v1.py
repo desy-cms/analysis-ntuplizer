@@ -125,6 +125,7 @@ process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
                                     cms.InputTag('caloStage2Digis','Jet','RECO'), ),
     L1TMuons        = cms.VInputTag(
                                     cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
+    MetFiltersResults = cms.InputTag('TriggerResults', '', 'PAT'),
 )
 
    ## MC only
