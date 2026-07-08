@@ -65,7 +65,6 @@
 #include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
 
 #include "Analysis/Ntuplizer/interface/Candidates.h"
-#include "Analysis/Ntuplizer/interface/JetsTags.h"
 #include "Analysis/Ntuplizer/interface/TriggerAccepts.h"
 #include "Analysis/Ntuplizer/interface/Vertices.h"
 #include "Analysis/Ntuplizer/interface/EventInfo.h"
@@ -114,7 +113,6 @@ using L1TJetCandidates             = analysis::ntuple::Candidates<l1t::Jet>;
 using L1TMuonCandidates            = analysis::ntuple::Candidates<l1t::Muon>;
 using ChargedCandidates            = analysis::ntuple::Candidates<reco::RecoChargedCandidate>;
 using RecoTrackCandidates          = analysis::ntuple::Candidates<reco::Track>;
-using JetsTags                     = analysis::ntuple::JetsTags;
 
 using EventCounts = analysis::ntuple::EventCounts<unsigned int>;
 using WeightedEventCounts = analysis::ntuple::EventCounts<double>;
@@ -138,7 +136,6 @@ using pL1TJetCandidates             = Ptr<L1TJetCandidates>;
 using pL1TMuonCandidates            = Ptr<L1TMuonCandidates>;
 using pChargedCandidates            = Ptr<ChargedCandidates>;
 using pRecoTrackCandidates          = Ptr<RecoTrackCandidates>;
-using pJetsTags                     = Ptr<JetsTags>;
 
 //
 // class declaration
@@ -183,7 +180,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool do_patmuons_;
       bool do_genjets_;
       bool do_genparticles_;
-      bool do_jetstags_;
       bool do_pileup_info_;
       bool do_geneventinfo_;
       bool do_triggeraccepts_;
@@ -280,7 +276,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Collections<RecoTrackCandidates>          recotracks_collections_;
       Collections<TriggerAccepts>               triggeraccepts_collections_;
       Collections<ChargedCandidates>            chargedcands_collections_;
-      Collections<JetsTags>                     jetstags_collections_;
       
       // Collections for the ntuples (single)
       
@@ -415,10 +410,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    // Trigger stuff
    inputTagsDispatch["TriggerObjectStandAlone"] = [&](InputTags const& collections) {
       registerTokens<pat::TriggerObjectStandAloneCollection>(collections, triggerObjTokens_);
-   };
-   inputTagsDispatch["JetsTags"] = [&](InputTags const& collections) {
-      for (auto const& collection : collections) makeCollectionTree(collection, true);
-      registerTokens<reco::JetTagCollection>(collections, jetTagTokens_);
    };
    inputTagsDispatch["TriggerEvent"] = [&](InputTags const& collections) {
       registerTokens<trigger::TriggerEvent>(collections, triggerEventTokens_);
@@ -640,10 +631,6 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       for ( auto & collection : genparticles_collections_ )
          collection -> Fill(event);
       
-      // jets tags
-      for ( auto & collection : jetstags_collections_ )
-         collection -> Fill(event);
-      
       
       // trigger accepts
       for ( auto & collection : triggeraccepts_collections_ )
@@ -686,7 +673,6 @@ void Ntuplizer::beginJob() {
    do_patmuons_         = config_.exists("PatMuons");
    do_genjets_          = config_.exists("GenJets");
    do_genparticles_     = config_.exists("GenParticles");
-   do_jetstags_         = config_.exists("JetsTags");
    do_triggeraccepts_   = config_.exists("TriggerResults");
    do_event_count_summary_      = config_.exists("TotalEvents")  && config_.exists("FilteredEvents");
    do_genfilter_        = config_.exists("GenFilterInfo") && is_mc_;
@@ -787,7 +773,7 @@ void Ntuplizer::beginJob() {
          // name += inputTags == "L1ExtraJets" && ! use_full_name_ ? "_" + inst : "";
          if ( collection.instance() != "" && collections.size() > 1 )
             name += "_" + inst;
-         if ( use_full_name_ || inputTags == "JetsTags") name = fullname;
+         if ( use_full_name_ ) name = fullname;
          
          // Initialise trees
          // if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" )
@@ -848,11 +834,6 @@ void Ntuplizer::beginJob() {
             genparticles_collections_.push_back( pGenParticleCandidates( new GenParticleCandidates(collection, tree_[name], is_mc_ ) ));
             genparticles_collections_.back() -> Init();
         }
-         // Jets Tags
-         if ( inputTags == "JetsTags" ) {
-            jetstags_collections_.push_back( pJetsTags( new JetsTags(collection, tree_[name]) ));
-            jetstags_collections_.back() -> Branches();
-         }
                   
          // Charged candidates
          if ( inputTags == "ChargedCandidates" ) {
