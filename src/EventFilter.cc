@@ -1,4 +1,4 @@
-/**\class EventFilter EventFilter.cc Analysis/Ntuplizer/src/EventFilter.cc
+/**\class EventCountSummary EventCountSummary.cc Analysis/Ntuplizer/src/EventCountSummary.cc
 
  Description: [one line class summary]
 
@@ -19,7 +19,7 @@
 #include "DataFormats/Common/interface/MergeableCounter.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenFilterInfo.h"
 
-#include "Analysis/Ntuplizer/interface/EventFilter.h"
+#include "Analysis/Ntuplizer/interface/EventCountSummary.h"
 
 
 
@@ -33,26 +33,26 @@ using namespace analysis::ntuple;
 // member functions specialization - needed to be declared in the same namespace as the class
 namespace analysis {
    namespace ntuple {
-      template <> void EventFilter<edm::MergeableCounter>::Increment(edm::LuminosityBlock const&);
-      template <> void EventFilter<edm::MergeableCounter>::Fill();
+      template <> void EventCountSummary<edm::MergeableCounter>::Increment(edm::LuminosityBlock const&);
+      template <> void EventCountSummary<edm::MergeableCounter>::Fill();
  }
 }   
 
 //
 // constructors and destructor
 //
-// EventFilter::EventFilter()
+// EventCountSummary::EventCountSummary()
 // {
 //    // default constructor
 // }
 
 template <typename T>
-EventFilter<T>::EventFilter(edm::Service<TFileService> & fs, const std::vector<edm::InputTag> & collections) :
+EventCountSummary<T>::EventCountSummary(edm::Service<TFileService> & fs, const std::vector<edm::InputTag> & collections) :
       nTotal_(0), nFiltr_(0), collections_(collections)
 {
    std::string category = "GeneratorFilter";
    if ( std::is_same<T,edm::MergeableCounter>::value )
-      category = "EventFilter";
+      category = "EventCountSummary";
    
    tree_ = fs->make<TTree>(category.c_str(),category.c_str());
    
@@ -71,12 +71,12 @@ EventFilter<T>::EventFilter(edm::Service<TFileService> & fs, const std::vector<e
 }
 
 template <typename T>
-EventFilter<T>::EventFilter(TFileDirectory & subDir, const std::vector<edm::InputTag> & collections) :
+EventCountSummary<T>::EventCountSummary(TFileDirectory & subDir, const std::vector<edm::InputTag> & collections) :
       nTotal_(0), nFiltr_(0), collections_(collections)
 {
    std::string category = "GeneratorFilter";
    if ( std::is_same<T,edm::MergeableCounter>::value )
-      category = "EventFilter";
+      category = "EventCountSummary";
 
    tree_ = subDir.make<TTree>(category.c_str(),category.c_str());
    
@@ -94,7 +94,7 @@ EventFilter<T>::EventFilter(TFileDirectory & subDir, const std::vector<edm::Inpu
 }
 
 template <typename T>
-EventFilter<T>::~EventFilter()
+EventCountSummary<T>::~EventCountSummary()
 {
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
@@ -102,28 +102,28 @@ EventFilter<T>::~EventFilter()
 
 // ------------ other methods ----------------
 template <typename T>
-TTree * EventFilter<T>::Tree()
+TTree * EventCountSummary<T>::Tree()
 {
    return tree_;
 }
 
 // ------------ method called once each job just before starting event loop  ------------
 template <typename T>
-void EventFilter<T>::SetCollections(const std::vector<edm::InputTag> & collections)
+void EventCountSummary<T>::SetCollections(const std::vector<edm::InputTag> & collections)
 {
    collections_ = collections;
 }
 
 // ------------ method called at the end of the EDAnalyzer job  ------------
 template <typename T>
-void EventFilter<T>::Fill()
+void EventCountSummary<T>::Fill()
 {
    efficiency_ = this -> Results().efficiency;
    tree_ -> Fill();
 }
 
 template <>
-void EventFilter<edm::MergeableCounter>::Fill()
+void EventCountSummary<edm::MergeableCounter>::Fill()
 {
    efficiency_  = this -> Results().efficiency;
    wEfficiency_ = this -> WeightedResults().efficiency;
@@ -135,7 +135,7 @@ void EventFilter<edm::MergeableCounter>::Fill()
 // member functions
 //
 template <typename T>
-FilterResults EventFilter<T>::Results()
+FilterResults EventCountSummary<T>::Results()
 {
    FilterResults res;
    double eff = nTotal_ > 0  ? (double) nFiltr_ / (double) nTotal_ : 0.;
@@ -148,7 +148,7 @@ FilterResults EventFilter<T>::Results()
 }
 
 template <typename T>
-WeightedFilterResults EventFilter<T>::WeightedResults()
+WeightedFilterResults EventCountSummary<T>::WeightedResults()
 {
    WeightedFilterResults res;
    double eff = wTotal_ > 0  ? wFiltr_ / wTotal_ : 0.;
@@ -163,7 +163,7 @@ WeightedFilterResults EventFilter<T>::WeightedResults()
 
 // ------------ method called for each lumi  ------------
 template <typename T>
-void EventFilter<T>::Increment(edm::LuminosityBlock const& lumi)
+void EventCountSummary<T>::Increment(edm::LuminosityBlock const& lumi)
 {
    using namespace edm;
    
@@ -183,7 +183,7 @@ void EventFilter<T>::Increment(edm::LuminosityBlock const& lumi)
 }
 
 template <>
-void EventFilter<edm::MergeableCounter>::Increment(edm::LuminosityBlock const& lumi)
+void EventCountSummary<edm::MergeableCounter>::Increment(edm::LuminosityBlock const& lumi)
 {
    using namespace edm;
    
@@ -202,5 +202,5 @@ void EventFilter<edm::MergeableCounter>::Increment(edm::LuminosityBlock const& l
 }
 
 // Need to declare all possible template classes here
-template class EventFilter<edm::MergeableCounter>;
-template class EventFilter<GenFilterInfo>;
+template class EventCountSummary<edm::MergeableCounter>;
+template class EventCountSummary<GenFilterInfo>;

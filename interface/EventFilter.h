@@ -1,12 +1,12 @@
-#ifndef Analysis_Ntuplizer_EventFilter_h
-#define Analysis_Ntuplizer_EventFilter_h 1
+#ifndef Analysis_Ntuplizer_EventCountSummary_h
+#define Analysis_Ntuplizer_EventCountSummary_h 1
 
 // -*- C++ -*-
 //
 // Package:    Analysis/Ntuplizer
-// Class:      EventFilter
+// Class:      EventCountSummary
 // 
-/**\class EventFilter EventFilter.cc Analysis/Ntuplizer/src/EventFilter.cc
+/**\class EventCountSummary EventCountSummary.cc Analysis/Ntuplizer/src/EventCountSummary.cc
 
  Description: [one line class summary]
 
@@ -51,11 +51,11 @@ namespace analysis {
       };
 
       template <typename T>
-      class EventFilter {
+      class EventCountSummary {
          public:
-            EventFilter(edm::Service<TFileService> &, const std::vector<edm::InputTag> & collections = std::vector<edm::InputTag>() );
-            EventFilter(TFileDirectory &, const std::vector<edm::InputTag> & collections = std::vector<edm::InputTag>());
-           ~EventFilter();
+            EventCountSummary(edm::Service<TFileService> &, const std::vector<edm::InputTag> & collections = std::vector<edm::InputTag>() );
+            EventCountSummary(TFileDirectory &, const std::vector<edm::InputTag> & collections = std::vector<edm::InputTag>());
+           ~EventCountSummary();
             void SetCollections(const std::vector<edm::InputTag> &);
             void Increment(edm::LuminosityBlock const& );
             FilterResults Results();
@@ -81,4 +81,4 @@ namespace analysis {
    }
 }
 
-#endif  // Analysis_Ntuplizer_EventFilter_h
+#endif  // Analysis_Ntuplizer_EventCountSummary_h
