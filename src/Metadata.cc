@@ -31,9 +31,9 @@ analysis::ntuple::Metadata::Metadata() {
 
 analysis::ntuple::Metadata::Metadata(edm::Service<TFileService> & fs, const bool & is_mc, const String & metadata_folder ) {
    is_mc_ = is_mc;
-   is_gen_filter_ = false;
-   is_evt_filter_ = false;
-   is_mhat_evt_filter_ = false;
+   is_gen_event_count_ = false;
+   is_event_count_ = false;
+   is_mhat_event_count_ = false;
    
    vdefinitions_.clear();
 
@@ -96,9 +96,9 @@ void analysis::ntuple::Metadata::Fill() {
    // for ( auto & definitions : vdefinitions_ )
    //    definitions -> Fill();
    
-   if ( is_gen_filter_ )      gen_filter_       -> Fill();
-   if ( is_evt_filter_ )      evt_filter_       -> Fill();
-   if ( is_mhat_evt_filter_)  m_hat_evt_filter_ -> Fill();
+   if ( is_gen_event_count_ )      gen_event_count_       -> Fill();
+   if ( is_event_count_ )      event_count_       -> Fill();
+   if ( is_mhat_event_count_)  m_hat_event_count_ -> Fill();
    
    dataset_tree_ -> Fill();
    
@@ -127,32 +127,32 @@ void analysis::ntuple::Metadata::AddDefinitions(const Vector<analysis::utils::Ti
 }
 
 void analysis::ntuple::Metadata::SetGeneratorFilter(const InputTag & genFilterInfo ) {
-   gen_filter_ = std::make_unique<GenFilter>(main_folder_, InputTags{genFilterInfo});
-   is_gen_filter_ = true;
+   gen_event_count_ = std::make_unique<GenEventCount>(main_folder_, InputTags{genFilterInfo});
+   is_gen_event_count_ = true;
 }
 
-void analysis::ntuple::Metadata::SetEventFilter(const InputTags & filter_infos_ ) {
-   evt_filter_ = std::make_unique<EvtFilter>(main_folder_, filter_infos_);
-   is_evt_filter_ = true;
+void analysis::ntuple::Metadata::SetEventCountSummary(const InputTags & filter_infos_ ) {
+   event_count_ = std::make_unique<EventCount>(main_folder_, filter_infos_);
+   is_event_count_ = true;
 }
 
-void analysis::ntuple::Metadata::SetMHatEventFilter(const InputTags & filter_infos_ ) {
-   m_hat_evt_filter_ = std::make_unique<EvtFilter>(mhat_folder_, filter_infos_);
-   is_mhat_evt_filter_ = true;
+void analysis::ntuple::Metadata::SetMHatEventCountSummary(const InputTags & filter_infos_ ) {
+   m_hat_event_count_ = std::make_unique<EventCount>(mhat_folder_, filter_infos_);
+   is_mhat_event_count_ = true;
 }
 
-void analysis::ntuple::Metadata::IncrementEventFilters( LuminosityBlock const& lumi ) {
-   if ( is_gen_filter_ )      gen_filter_       -> Increment(lumi);
-   if ( is_evt_filter_ )      evt_filter_       -> Increment(lumi);
-   if ( is_mhat_evt_filter_)  m_hat_evt_filter_ -> Increment(lumi);
+void analysis::ntuple::Metadata::IncrementEventCount( LuminosityBlock const& lumi ) {
+   if ( is_gen_event_count_ )      gen_event_count_       -> IncrementEventCount(lumi);
+   if ( is_event_count_ )      event_count_       -> IncrementEventCount(lumi);
+   if ( is_mhat_event_count_)  m_hat_event_count_ -> IncrementEventCount(lumi);
 }
 
-GenFilter & analysis::ntuple::Metadata::GetGeneratorFilter() {
-   // gen_filter_ should not go out of scope after returning the reference, should be safe(?)
-   return *gen_filter_;
+GenEventCount & analysis::ntuple::Metadata::GetGeneratorFilter() {
+   // gen_event_count_ should not go out of scope after returning the reference, should be safe(?)
+   return *gen_event_count_;
 }
-EvtFilter & analysis::ntuple::Metadata::GetEventFilter() {
-   return *evt_filter_;
+EventCount & analysis::ntuple::Metadata::GetEventCountSummary() {
+   return *event_count_;
 }
 
 void analysis::ntuple::Metadata::SetCrossSections( const Run  & run, const InputTag & collection, const double & my_xsection ) {

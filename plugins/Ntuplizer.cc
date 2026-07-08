@@ -116,7 +116,9 @@ using ChargedCandidates            = analysis::ntuple::Candidates<reco::RecoChar
 using RecoTrackCandidates          = analysis::ntuple::Candidates<reco::Track>;
 using JetsTags                     = analysis::ntuple::JetsTags;
 
-using FilterResults                = analysis::ntuple::FilterResults;
+using EventCounts = analysis::ntuple::EventCounts<unsigned int>;
+using WeightedEventCounts = analysis::ntuple::EventCounts<double>;
+
 using JerESTokens                  = analysis::utils::JerESTokens;
 using JecESTokens                  = analysis::utils::JecESTokens;
 
@@ -185,7 +187,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool do_pileup_info_;
       bool do_geneventinfo_;
       bool do_triggeraccepts_;
-      bool do_eventfilter_;
+      bool do_event_count_summary_;
       bool do_genfilter_;
       bool do_triggerobjects_;
       bool do_genruninfo_;
@@ -285,8 +287,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       // metadata
       double xsection_;
       
-      analysis::ntuple::FilterResults eventFilterResults_;
-      analysis::ntuple::FilterResults genFilterResults_;
+      EventCounts event_counts_;
+      WeightedEventCounts gen_event_counts_;
       
       // ESTokens
       std::vector<analysis::utils::JerESTokens> jer_es_tokens_;
@@ -299,7 +301,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       // File
       TFileDirectory eventsDir_;
 
-      int event_count_;
+      int analyze_count_;
       
       
 };
@@ -579,7 +581,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       }
    }
 
-   event_count_ = 0;
+   analyze_count_ = 0;
 
 }
 
@@ -601,8 +603,8 @@ Ntuplizer::~Ntuplizer() {
 void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
    using namespace edm;
 
-   ++event_count_;
-   if ( event_count_ == 1 ) {
+   ++analyze_count_;
+   if ( analyze_count_ == 1 ) {
       printf_info("==> Ntuplizer::analyze()...\n");
    }
 
@@ -686,7 +688,7 @@ void Ntuplizer::beginJob() {
    do_genparticles_     = config_.exists("GenParticles");
    do_jetstags_         = config_.exists("JetsTags");
    do_triggeraccepts_   = config_.exists("TriggerResults");
-   do_eventfilter_      = config_.exists("TotalEvents")  && config_.exists("FilteredEvents");
+   do_event_count_summary_      = config_.exists("TotalEvents")  && config_.exists("FilteredEvents");
    do_genfilter_        = config_.exists("GenFilterInfo") && is_mc_;
    do_triggerobjects_   = ( config_.exists("TriggerObjectStandAlone") || config_.exists("TriggerEvent") ) &&  config_.exists("TriggerObjectLabels");
    do_genruninfo_       = config_.exists("GenRunInfo") && is_mc_ ;
@@ -701,8 +703,8 @@ void Ntuplizer::beginJob() {
    std::string name;
    std::string fullname;
    
-   genFilterResults_  = {};
-   eventFilterResults_ = {};
+   gen_event_counts_  = {};
+   event_counts_ = {};
    
    // -------------------------------
    // JEC Record (from TXT files)
@@ -931,7 +933,7 @@ void Ntuplizer::beginJob() {
          metadata_ -> SetGeneratorFilter(config_.getParameter<InputTag> ("GenFilterInfo"));
 
       // Event filter
-      if ( do_eventfilter_ ) {
+      if ( do_event_count_summary_ ) {
          if ( inputTag == "TotalEvents" ) {
             eventCounters_[0] = totalEvents_;
             mHatEventCounters_[0] = totalEvents_;
@@ -947,8 +949,8 @@ void Ntuplizer::beginJob() {
             ++n_mhat_filter_counters;
          }
 
-         if ( n_filter_counters == 2 ) 		metadata_ -> SetEventFilter(eventCounters_);
-         if ( n_mhat_filter_counters == 2)	metadata_ -> SetMHatEventFilter(mHatEventCounters_);
+         if ( n_filter_counters == 2 ) 		metadata_ -> SetEventCountSummary(eventCounters_);
+         if ( n_mhat_filter_counters == 2)	metadata_ -> SetMHatEventCountSummary(mHatEventCounters_);
       }
 
    } 
@@ -1005,7 +1007,7 @@ void  Ntuplizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::Eve
 // ------------ method called when ending the processing of a luminosity block  ------------
 void Ntuplizer::endLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup) {
    printf_info("==> Ntuplizer::endLuminosityBlock(): Run = %d, LumiSection = %d ...\n", (int)lumi.run(), (int)lumi.id().value());
-   metadata_ -> IncrementEventFilters(lumi);
+   metadata_ -> IncrementEventCount(lumi);
 }
 
 template<typename Collection>

@@ -34,7 +34,7 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "Analysis/Ntuplizer/interface/Definitions.h"
-#include "Analysis/Ntuplizer/interface/EventFilter.h"
+#include "Analysis/Ntuplizer/interface/EventCountSummary.h"
 #include "Analysis/Utils/interface/types.h"
 #include "TTree.h"
 
@@ -52,10 +52,10 @@ using LuminosityBlock = edm::LuminosityBlock;
 using Run = edm::Run;
 using Definitions = analysis::ntuple::Definitions;
 using DefinitionsPtr = Ptr<Definitions>;
-using GenFilter = analysis::ntuple::EventFilter<GenFilterInfo>;
-using EvtFilter = analysis::ntuple::EventFilter<edm::MergeableCounter>;
-using GenFilterPtr = Ptr<GenFilter>;
-using EvtFilterPtr = Ptr<EvtFilter>;
+using GenEventCount = analysis::ntuple::EventCountSummary<GenFilterInfo>;
+using EventCount = analysis::ntuple::EventCountSummary<edm::MergeableCounter>;
+using GenEventCountPtr = Ptr<GenEventCount>;
+using EventCountPtr = Ptr<EventCount>;
 
 //
 // class declaration
@@ -75,13 +75,13 @@ namespace analysis {
             void AddDefinitions(const Strings &, const Strings &, const String &);
             void AddDefinitions(const Vector<analysis::utils::TitleAlias> &, const String &);
             void SetGeneratorFilter(const InputTag & );
-            void SetEventFilter(const InputTags &);
-            void SetMHatEventFilter(const InputTags &);
-            void IncrementEventFilters( LuminosityBlock const& );
+            void SetEventCountSummary(const InputTags &);
+            void SetMHatEventCountSummary(const InputTags &);
+            void IncrementEventCount( LuminosityBlock const& );
             void SetCrossSections( const Run &, const InputTag &, const double & myxs = -1. );
             
-            GenFilter & GetGeneratorFilter();
-            EvtFilter & GetEventFilter();
+            GenEventCount & GetGeneratorFilter();
+            EventCount & GetEventCountSummary();
 
          private:
             // ----------member data ---------------------------
@@ -89,12 +89,12 @@ namespace analysis {
             void DatasetTreeBranches_();
             Vector<DefinitionsPtr> vdefinitions_;
             
-            bool is_gen_filter_;
-            bool is_evt_filter_;
-            bool is_mhat_evt_filter_;
-            GenFilterPtr  gen_filter_;
-            EvtFilterPtr  evt_filter_;
-            EvtFilterPtr  m_hat_evt_filter_;
+            bool is_gen_event_count_;
+            bool is_event_count_;
+            bool is_mhat_event_count_;
+            GenEventCountPtr  gen_event_count_;
+            EventCountPtr  event_count_;
+            EventCountPtr  m_hat_event_count_;
             
             // Cross sections tree
             TTree * xsection_tree_;
