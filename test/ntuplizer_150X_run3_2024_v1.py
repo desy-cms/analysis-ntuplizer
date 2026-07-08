@@ -31,7 +31,8 @@ from Configuration.StandardSequences.Eras import eras
 from Configuration.AlCa.GlobalTag import GlobalTag
 
 ## Let it begin
-process = cms.Process('MssmHbb',eras.Run3_2024)
+# process = cms.Process('MssmHbb',eras.Run3_2024)
+process = cms.Process('MssmHbb')
 # # process options
 process.options = cms.untracked.PSet()
 process.options.numberOfThreads=cms.untracked.uint32(4) # execution with 4cores
@@ -62,7 +63,7 @@ trigger_info = trigger_info_reader(command_line_options.triggerInfo)
 
 # Trigger filter: FOR DATA ONLY!!!
 process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
-    trigger_info['triggerResultsFilter'],
+    triggerConditions = trigger_info['TriggerConditions'],
     hltResults = cms.InputTag( 'TriggerResults', '', 'HLT' ),
     l1tResults = cms.InputTag( '' ),
     l1tIgnoreMask = cms.bool( False ),
@@ -77,55 +78,42 @@ process.load('Analysis.Ntuplizer.jet_corrections_cff')
 from Analysis.Ntuplizer.btagging_cfi import BTagging, AllBTagging
 from Analysis.Ntuplizer.bregression_cfi import BRegression, AllBRegression
 
-# Selection of the b-tagging algorithms to be used in the ntuplizer, or use AllBTagging to include all of them (see the ntuplizer below)
-BTaggingAlgos = {}
-BTaggingAlgos['AK4PFPuppi'] = cms.VPSet()
-BTaggingAlgos['AK4PFPuppi'].extend(BTagging['AK4PFPuppi']['ParticleNet'])
-BTaggingAlgos['AK4PFPuppi'].extend(BTagging['AK4PFPuppi']['UnifiedParticleTransformer'])
-# BTaggingAlgos['AK4PFPuppi'].extend(BTagging['AK4PFPuppi']['ParticleTransformer'])
-# BTaggingAlgos['AK4PFPuppi'].extend(BTagging['AK4PFPuppi']['DeepFlavour'])
-
-# Selection of the b-regression algorithms to be used in the ntuplizer, or use AllBRegression to include all of them (see the ntuplizer below)
-BRegressionAlgos = {}
-BRegressionAlgos['AK4PFPuppi'] = cms.VPSet()
-BRegressionAlgos['AK4PFPuppi'].extend(BRegression['AK4PFPuppi']['ParticleNet'])
-BRegressionAlgos['AK4PFPuppi'].extend(BRegression['AK4PFPuppi']['UnifiedParticleTransformer'])
-
-
 ## Ntuplizer
-process.MssmHbb     = cms.EDAnalyzer('Ntuplizer',
-    # Imported settings (always at the beginning???)
-    trigger_info['ntuplizerTriggerPaths'],
-    trigger_info['ntuplizerL1Seeds'],
-    trigger_info['ntuplizerTriggerObjects'],
-    BTagging = AllBTagging['AK4PFPuppi'],
-    BRegression = AllBRegression['AK4PFPuppi'],
-    MonteCarlo      = cms.bool(command_line_options.type == 'mc'),
-    StorePrescale    = cms.bool(True),
-    TotalEvents     = cms.InputTag ('nTotalEvents'),
-    FilteredEvents  = cms.InputTag ('nFilteredEvents'),
-    TriggerResults  = cms.VInputTag(
-                                    cms.InputTag('TriggerResults','','HLT'), ),
-    TriggerObjectStandAlone = cms.VInputTag(
-                                    cms.InputTag('slimmedPatTrigger'), ),
-    PatJets         = cms.VInputTag( 
-                                    cms.InputTag('updatedPatJetsAK4Puppi'),
-                                    cms.InputTag('slimmedJetsPuppi'),),
-    JECRecords      = cms.vstring  (
-                                    'AK4PFPuppi',
-                                    'AK4PFPuppi',), # for the JEC uncertainties
-    JERRecords      = cms.vstring  (
-                                    'AK4PFPuppi',
-                                    'AK4PFPuppi',), # for the JER uncertainties
-    PatMuons        = cms.VInputTag(
-                                    cms.InputTag('slimmedMuons'), ),
-    PrimaryVertices = cms.VInputTag(
-                                    cms.InputTag('offlineSlimmedPrimaryVertices'), ),
-    L1TJets         = cms.VInputTag(
-                                    cms.InputTag('caloStage2Digis','Jet','RECO'), ),
-    L1TMuons        = cms.VInputTag(
-                                    cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
-    MetFiltersResults = cms.InputTag('TriggerResults', '', 'PAT'),
+jet_type = 'AK4PFPuppi'
+process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
+    MonteCarlo                  = cms.bool(command_line_options.type == 'mc'),
+    StorePrescale               = cms.bool(True),
+    TotalEvents                 = cms.InputTag ('nTotalEvents'),
+    FilteredEvents              = cms.InputTag ('nFilteredEvents'),
+    TriggerResults              = cms.VInputTag(
+                                                    cms.InputTag('TriggerResults','','HLT'), ),
+    TriggerObjectStandAlone     = cms.VInputTag(
+                                                    cms.InputTag('slimmedPatTrigger'), ),
+    PatJets                     = cms.VInputTag( 
+                                                    cms.InputTag('updatedPatJetsAK4Puppi'),
+                                                    cms.InputTag('slimmedJetsPuppi'),),
+    JECRecords                  = cms.vstring  (
+                                                    jet_type,
+                                                    jet_type,), # for the JEC uncertainties
+    JERRecords                  = cms.vstring  (
+                                                    jet_type,
+                                                    jet_type,), # for the JER uncertainties
+    PatMuons                    = cms.VInputTag(
+                                                    cms.InputTag('slimmedMuons'), ),
+    PrimaryVertices             = cms.VInputTag(
+                                                    cms.InputTag('offlineSlimmedPrimaryVertices'), ),
+    L1TJets                     = cms.VInputTag(
+                                                    cms.InputTag('caloStage2Digis','Jet','RECO'), ),
+    L1TMuons                    = cms.VInputTag(
+                                                    cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
+    MetFiltersResults           = cms.InputTag('TriggerResults', '', 'PAT'),
+    BTagging                    = AllBTagging[jet_type],
+    BRegression                 = AllBRegression[jet_type],
+    TriggerPaths                = trigger_info['TriggerPaths'],
+    L1Seeds                     = trigger_info['L1Seeds'],    
+    TriggerObjectLabels         = trigger_info['TriggerObjectLabels'],
+    TriggerObjectSplits         = trigger_info['TriggerObjectSplits'],
+    TriggerObjectSplitsTypes    = trigger_info['TriggerObjectSplitsTypes'],
 )
 
    ## MC only
@@ -141,24 +129,14 @@ if command_line_options.type == 'mc':
 
 ## !!! Do the stuff!
 process.p = cms.Path(
-                    process.nTotalEvents +
-                    process.triggerSelection +
-                    process.nFilteredEvents +
-                    process.MssmHbb,
-                    process.AK4PuppiJets,
-                    process.AK4Jets,
-                    process.AK8Jets
-                )
-
-
-
-# process.p = cms.Path(
-#                      process.nTotalEvents +
-#                      process.triggerSelection +
-#                      process.nFilteredEvents,
-#                      process.AK4Jets
-#                     )
-
+                        process.nTotalEvents +
+                        process.triggerSelection +
+                        process.nFilteredEvents +
+                        process.MssmHbb,
+                        process.AK4PuppiJets,
+                        process.AK4Jets,
+                        process.AK8Jets
+)
 
 ## Inputs
 readFiles = cms.untracked.vstring()

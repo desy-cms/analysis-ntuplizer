@@ -14,8 +14,8 @@ def trigger_info_reader(info_file):
    triggerPaths = cms.vstring()          # paths for the ntuplizer
    l1Seeds = cms.vstring()               # l1 seeds for the ntuplizer
    triggerObjects = cms.vstring()        # trigger objects for the ntuplizer
-   trgObjL1MuJet = cms.vstring()
-   trgObjL1MuJetType = cms.vstring()
+   triggerObjectSplits = cms.vstring()
+   triggerObjectSplitsType = cms.vstring()
    
    if os.path.isfile(info_file):
       with open(info_file) as f:
@@ -44,8 +44,8 @@ def trigger_info_reader(info_file):
             if not objstr in triggerObjects:
                triggerObjects.append(objstr)
                if 'hltL1' in objstr and 'Mu' in objstr and 'Jet' in objstr:
-                  trgObjL1MuJet.append(objstr)
-                  trgObjL1MuJetType.append('l1muon:l1jet')
+                  triggerObjectSplits.append(objstr)
+                  triggerObjectSplitsType.append('l1muon:l1jet')
    else:
       print ('>>>>>>>> Msg-W: The given YAML file with trigger info does not exist <<<<<<<<')
       print ('')
@@ -56,14 +56,12 @@ def trigger_info_reader(info_file):
    l1Seeds.sort()  
    triggerObjects.sort()
    
-   triggerResultsFilter = cms.PSet(triggerConditions = triggerConditions)
-   ntuplizerTriggerPaths = cms.PSet(TriggerPaths = triggerPaths)
-   ntuplizerL1Seeds = cms.PSet(L1Seeds = l1Seeds)
-   ntuplizerTriggerObjects = cms.PSet(TriggerObjectLabels = triggerObjects, 
-       TriggerObjectSplits = trgObjL1MuJet,
-       TriggerObjectSplitsTypes = trgObjL1MuJetType)
-   info['triggerResultsFilter']=triggerResultsFilter
-   info['ntuplizerTriggerPaths']=ntuplizerTriggerPaths
-   info['ntuplizerL1Seeds']=ntuplizerL1Seeds
-   info['ntuplizerTriggerObjects']=ntuplizerTriggerObjects
+   info['TriggerConditions']         = triggerConditions
+   info['TriggerPaths']              = triggerPaths
+   info['L1Seeds']                   = l1Seeds
+   info['TriggerObjectLabels']       = triggerObjects
+   info['TriggerObjectSplits']       = triggerObjectSplits
+   info['TriggerObjectSplitsTypes']  = triggerObjectSplitsType
+   
+   
    return info
