@@ -7,7 +7,7 @@ from  PhysicsTools.PatAlgos.recoLayer0.jetCorrFactors_cfi import *
 from  PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cfi import *
 
 ## AK4 Jets
-jetCorrFactorsAK4 = patJetCorrFactors.clone(src='slimmedJets',
+correctionFactorsJets = patJetCorrFactors.clone(src='slimmedJets',
     levels = cms.vstring(
         'L1FastJet',
         'L2Relative',
@@ -17,19 +17,19 @@ jetCorrFactorsAK4 = patJetCorrFactors.clone(src='slimmedJets',
     primaryVertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
 )
 
-updatedPatJetsAK4 = updatedPatJets.clone(
+correctedJets = updatedPatJets.clone(
 	addBTagInfo=False,
 	jetSource='slimmedJets',
-	jetCorrFactorsSource=cms.VInputTag(cms.InputTag("jetCorrFactorsAK4") ),
+	jetCorrFactorsSource=cms.VInputTag(cms.InputTag("correctionFactorJets") ),
 )
 
-AK4Jets = cms.Task()
-AK4Jets.add(jetCorrFactorsAK4)
-AK4Jets.add(updatedPatJetsAK4)
+jecJets = cms.Task()
+jecJets.add(correctionFactorsJets)
+jecJets.add(correctedJets)
 
 
 ## AK8 Jets
-jetCorrFactorsAK8 = patJetCorrFactors.clone(src='slimmedJetsAK8',
+correctionFactorsJetsAK8 = patJetCorrFactors.clone(src='slimmedJetsAK8',
     levels = cms.vstring(
         'L1FastJet',
         'L2Relative',
@@ -39,19 +39,19 @@ jetCorrFactorsAK8 = patJetCorrFactors.clone(src='slimmedJetsAK8',
     primaryVertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
 )
 
-updatedPatJetsAK8 = updatedPatJets.clone(
+correctedJetsAK8 = updatedPatJets.clone(
 	addBTagInfo=False,
 	jetSource='slimmedJetsAK8',
-	jetCorrFactorsSource=cms.VInputTag(cms.InputTag("jetCorrFactorsAK8") ),
+	jetCorrFactorsSource=cms.VInputTag(cms.InputTag("correctionFactorsJetsAK8") ),
 )
 
-AK8Jets = cms.Task()
-AK8Jets.add(jetCorrFactorsAK8)
-AK8Jets.add(updatedPatJetsAK8)
+jecJetsAK8 = cms.Task()
+jecJetsAK8.add(correctionFactorsJetsAK8)
+jecJetsAK8.add(correctedJetsAK8)
 
 
 ## Puppi Jets
-jetCorrFactorsAK4Puppi = patJetCorrFactors.clone(src='slimmedJetsPuppi',
+correctionFactorsJetsPuppi = patJetCorrFactors.clone(src='slimmedJetsPuppi',
     levels = cms.vstring(
         'L1FastJet',
         'L2Relative',
@@ -61,14 +61,12 @@ jetCorrFactorsAK4Puppi = patJetCorrFactors.clone(src='slimmedJetsPuppi',
     primaryVertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
 )
 
-updatedPatJetsAK4Puppi = updatedPatJets.clone(
+correctedJetsPuppi = updatedPatJets.clone(
 	addBTagInfo=False,
 	jetSource='slimmedJetsPuppi',
-	jetCorrFactorsSource=cms.VInputTag(cms.InputTag("jetCorrFactorsAK4Puppi") ),
+	jetCorrFactorsSource=cms.VInputTag(cms.InputTag("correctionFactorsJetsPuppi") ),
 )
 
-AK4PuppiJets = cms.Task()
-AK4PuppiJets.add(jetCorrFactorsAK4Puppi)
-AK4PuppiJets.add(updatedPatJetsAK4Puppi)
-
-
+jecJetsPuppi = cms.Task()
+jecJetsPuppi.add(correctionFactorsJetsPuppi)
+jecJetsPuppi.add(correctedJetsPuppi)

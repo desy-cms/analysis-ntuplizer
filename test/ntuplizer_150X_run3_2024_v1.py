@@ -31,8 +31,8 @@ from Configuration.StandardSequences.Eras import eras
 from Configuration.AlCa.GlobalTag import GlobalTag
 
 ## Let it begin
-# process = cms.Process('MssmHbb',eras.Run3_2024)
-process = cms.Process('MssmHbb')
+process = cms.Process('MssmHbb',eras.Run3_2024)
+# process = cms.Process('MssmHbb')
 # # process options
 process.options = cms.untracked.PSet()
 process.options.numberOfThreads=cms.untracked.uint32(4) # execution with 4cores
@@ -79,7 +79,6 @@ from Analysis.Ntuplizer.btagging_cfi import BTagging, AllBTagging
 from Analysis.Ntuplizer.bregression_cfi import BRegression, AllBRegression
 
 ## Ntuplizer
-jet_type = 'AK4PFPuppi'
 process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     MonteCarlo                  = cms.bool(command_line_options.type == 'mc'),
     StorePrescale               = cms.bool(True),
@@ -90,14 +89,14 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     TriggerObjectStandAlone     = cms.VInputTag(
                                                     cms.InputTag('slimmedPatTrigger'), ),
     PatJets                     = cms.VInputTag( 
-                                                    cms.InputTag('updatedPatJetsAK4Puppi'),
+                                                    cms.InputTag('correctedJetsPuppi'),
                                                     cms.InputTag('slimmedJetsPuppi'),),
     JECRecords                  = cms.vstring  (
-                                                    jet_type,
-                                                    jet_type,), # for the JEC uncertainties
+                                                    'AK4PFPuppi',
+                                                    'AK4PFPuppi',), # for the JEC uncertainties
     JERRecords                  = cms.vstring  (
-                                                    jet_type,
-                                                    jet_type,), # for the JER uncertainties
+                                                    'AK4PFPuppi',
+                                                    'AK4PFPuppi',), # for the JER uncertainties
     PatMuons                    = cms.VInputTag(
                                                     cms.InputTag('slimmedMuons'), ),
     PrimaryVertices             = cms.VInputTag(
@@ -107,8 +106,8 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     L1TMuons                    = cms.VInputTag(
                                                     cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
     MetFiltersResults           = cms.InputTag('TriggerResults', '', 'PAT'),
-    BTagging                    = AllBTagging[jet_type],
-    BRegression                 = AllBRegression[jet_type],
+    BTagging                    = AllBTagging['AK4PFPuppi'],
+    BRegression                 = AllBRegression['AK4PFPuppi'],
     TriggerPaths                = trigger_info['TriggerPaths'],
     L1Seeds                     = trigger_info['L1Seeds'],    
     TriggerObjectLabels         = trigger_info['TriggerObjectLabels'],
@@ -132,11 +131,9 @@ process.p = cms.Path(
                         process.nTotalEvents +
                         process.triggerSelection +
                         process.nFilteredEvents +
-                        process.MssmHbb,
-                        process.AK4PuppiJets,
-                        process.AK4Jets,
-                        process.AK8Jets
+                        process.MssmHbb
 )
+process.p.associate(process.jecJetsPuppi)
 
 ## Inputs
 readFiles = cms.untracked.vstring()
