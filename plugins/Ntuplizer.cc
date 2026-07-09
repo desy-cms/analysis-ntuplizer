@@ -36,8 +36,6 @@
 #include "DataFormats/L1Trigger/interface/Muon.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
-#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
-#include "DataFormats/RecoCandidate/interface/RecoChargedCandidateFwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
@@ -111,7 +109,6 @@ using TriggerAccepts               = analysis::ntuple::TriggerAccepts;
 using PrimaryVertices              = analysis::ntuple::Vertices;
 using L1TJetCandidates             = analysis::ntuple::Candidates<l1t::Jet>;
 using L1TMuonCandidates            = analysis::ntuple::Candidates<l1t::Muon>;
-using ChargedCandidates            = analysis::ntuple::Candidates<reco::RecoChargedCandidate>;
 using RecoTrackCandidates          = analysis::ntuple::Candidates<reco::Track>;
 
 using EventCounts = analysis::ntuple::EventCounts<unsigned int>;
@@ -134,7 +131,6 @@ using pTriggerAccepts               = Ptr<TriggerAccepts>;
 using PrimaryVerticesPtr            = Ptr<PrimaryVertices>;
 using pL1TJetCandidates             = Ptr<L1TJetCandidates>;
 using pL1TMuonCandidates            = Ptr<L1TMuonCandidates>;
-using pChargedCandidates            = Ptr<ChargedCandidates>;
 using pRecoTrackCandidates          = Ptr<RecoTrackCandidates>;
 
 //
@@ -188,7 +184,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool do_triggerobjects_;
       bool do_genruninfo_;
       bool do_lumiscalers_;
-      bool do_chargedcands_;
       bool store_prescale_;
       bool testmode_;
       bool do_metfilters_;
@@ -219,7 +214,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       TokenMap<reco::GenJetCollection>                   genJetTokens_;
       TokenMap<reco::GenParticleCollection>              genPartTokens_;
       TokenMap<reco::TrackCollection>                    recoTrackTokens_;
-      TokenMap<reco::RecoChargedCandidateCollection>     chargedCandTokens_;
       TokenMap<reco::JetTagCollection>                   jetTagTokens_;
 
       std::shared_ptr<HLTPrescaleProvider> hltPrescaleProvider_;
@@ -275,7 +269,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Collections<GenParticleCandidates>        genparticles_collections_;
       Collections<RecoTrackCandidates>          recotracks_collections_;
       Collections<TriggerAccepts>               triggeraccepts_collections_;
-      Collections<ChargedCandidates>            chargedcands_collections_;
       
       // Collections for the ntuples (single)
       
@@ -458,11 +451,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       for (auto const& collection : collections) makeCollectionTree(collection);
       registerTokens<reco::TrackCollection>(collections, recoTrackTokens_);
    };
-   inputTagsDispatch["ChargedCandidates"] = [&](InputTags const& collections) {
-      for (auto const& collection : collections) makeCollectionTree(collection);
-      registerTokens<reco::RecoChargedCandidateCollection>(collections, chargedCandTokens_);
-   };
-
    // Loop over configured input tag categories, retrieve the collection tags for each category,
    // and inputTagsDispatch registration of the corresponding tokens based on the category name.
    for ( auto & inputTags : inputTagsVec_ ) {
@@ -650,10 +638,6 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       // L1T muons
       for ( auto & collection : l1tmuons_collections_ )
          collection -> Fill(event);
-      
-      // charged candidates (reco)
-      for ( auto & collection : chargedcands_collections_ )
-         collection -> Fill(event);
 
 }
 
@@ -678,7 +662,6 @@ void Ntuplizer::beginJob() {
    do_genfilter_        = config_.exists("GenFilterInfo") && is_mc_;
    do_triggerobjects_   = ( config_.exists("TriggerObjectStandAlone") || config_.exists("TriggerEvent") ) &&  config_.exists("TriggerObjectLabels");
    do_genruninfo_       = config_.exists("GenRunInfo") && is_mc_ ;
-   do_chargedcands_     = config_.exists("ChargedCandidates");
    
    if ( config_.exists("TestMode") ) // This is DANGEROUS! but can be useful. So BE CAREFUL!!!!
       testmode_ = config_.getParameter<bool> ("TestMode");
@@ -834,12 +817,6 @@ void Ntuplizer::beginJob() {
             genparticles_collections_.push_back( pGenParticleCandidates( new GenParticleCandidates(collection, tree_[name], is_mc_ ) ));
             genparticles_collections_.back() -> Init();
         }
-                  
-         // Charged candidates
-         if ( inputTags == "ChargedCandidates" ) {
-            chargedcands_collections_.push_back( pChargedCandidates( new ChargedCandidates(collection, tree_[name], is_mc_ ) ));
-            chargedcands_collections_.back() -> Init();
-         }
          
          // Trigger Objects
          if ( do_triggeraccepts_  && do_triggerobjects_ && inputTags == "TriggerObjectStandAlone"  ) {
