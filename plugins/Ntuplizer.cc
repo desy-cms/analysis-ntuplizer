@@ -185,6 +185,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Strings trig_res_process_;
       Strings inputTagsVec_;
       Strings inputTags_;
+      Strings psetsVec_;
       Strings btag_discriminators_;
       Strings btag_discriminators_alias_;
       Strings triggerObjectLabels_;
@@ -193,8 +194,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       std::vector<analysis::utils::TitleAlias>  btagging_;
       std::vector<analysis::utils::TitleAlias>  bregression_;
       std::vector<analysis::utils::TitleAlias>  discriminators_;
-      Strings jecRecords_;
-      Strings jerRecords_;
 
       TokenMap<pat::JetCollection>                       patJetTokens_;
       TokenMap<pat::MuonCollection>                      patMuonTokens_;
@@ -277,6 +276,11 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       TFileDirectory eventsDir_;
 
       int analyze_count_;     
+
+      InputTags patJets_;
+      Strings jecRecords_;
+      Strings jerRecords_;
+      Strings pileupJetIds_;
 };
 
 //
@@ -341,19 +345,46 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    testmode_      = false;
    inputTagsVec_ = config_.getParameterNamesForType<InputTags>();
    inputTags_    = config_.getParameterNamesForType<InputTag>();
+   psetsVec_     = config_.getParameterNamesForType<std::vector<edm::ParameterSet>>();
    
    hltPrescaleProvider_ = std::make_shared<HLTPrescaleProvider>(config_, consumesCollector(), *this);
    std::string name;
    std::string fullname;
 
+   using RegistersPSetFn = std::function<void(std::vector<edm::ParameterSet> const&)>;
+   std::unordered_map<std::string, RegistersPSetFn> psetDispatch;
+   psetDispatch["JetCollections"] = [&](std::vector<edm::ParameterSet> const& jets) {
+      patJets_.clear();
+      jecRecords_.clear();
+      jerRecords_.clear();
+      pileupJetIds_.clear();
+
+      for (auto const& jet : jets) {
+         auto collection = jet.getParameter<InputTag>("collection");
+         auto original = jet.getParameter<InputTag>("original");
+         patJets_.push_back(collection);
+         patJets_.push_back(original);
+         jecRecords_.push_back(jet.getParameter<std::string>("jecRecord"));
+         jecRecords_.push_back(jet.getParameter<std::string>("jecRecord")); // original has the same records as the main colleciton
+         jerRecords_.push_back(jet.getParameter<std::string>("jerRecord")); 
+         jerRecords_.push_back(jet.getParameter<std::string>("jerRecord")); // original has the same records as the main colleciton
+         pileupJetIds_.push_back(jet.getParameter<std::string>("pileupJetId"));
+         pileupJetIds_.push_back(jet.getParameter<std::string>("pileupJetId")); // original has the same records as the main colleciton
+         makeCollectionTree(collection);
+         makeCollectionTree(original);
+      }
+
+      registerTokens<pat::JetCollection>(patJets_, patJetTokens_);
+};   
+
    // Table-driven dispatch
    using RegistersFn = std::function<void(InputTags const&)>;
    std::unordered_map<std::string, RegistersFn> inputTagsDispatch;
    // Main stuff
-   inputTagsDispatch["PatJets"] = [&](InputTags const& collections) {
-      for (auto const& collection : collections) makeCollectionTree(collection);
-      registerTokens<pat::JetCollection>(collections, patJetTokens_);
-   };
+   // inputTagsDispatch["PatJets"] = [&](InputTags const& collections) {
+   //    for (auto const& collection : collections) makeCollectionTree(collection);
+   //    registerTokens<pat::JetCollection>(collections, patJetTokens_);
+   // };
    inputTagsDispatch["PrimaryVertices"] = [&](InputTags const& collections) {
       registerTokens<reco::VertexCollection>(collections, primary_vertices_tokens_);
       for (auto const& collection : collections) {
@@ -420,6 +451,17 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          }
       }
    };
+
+   for (auto const& pset_name : psetsVec_) {
+      if ( pset_name != "JetCollections" ) continue; // TODO: need to improve this, see also above line with getParameterNamesForType
+      auto psets = config_.getParameter<std::vector<edm::ParameterSet>>(pset_name);
+      auto it = psetDispatch.find(pset_name);
+      if (it == psetDispatch.end()) {
+         throw cms::Exception("Configuration")
+         << "Unknown VPSet category '" << pset_name << "'\n";
+      }
+      it->second(psets);
+   }
    // Loop over configured input tag categories, retrieve the collection tags for each category,
    // and inputTagsDispatch registration of the corresponding tokens based on the category name.
    for ( auto & inputTags : inputTagsVec_ ) {
@@ -479,46 +521,47 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          it->second(collection);
    }
    // flags
-   do_patjets_          = config_.exists("PatJets");
+   // do_patjets_          = config_.exists("PatJets");
+   do_patjets_          = config_.exists("JetCollections");
    // ESTokens
    // JER Record (from TXT files)
    // JER Record (from CondDB)
-   jerRecords_.clear();
-   if ( do_patjets_ && config_.exists("JERRecords") ) {
-      jerRecords_ = config_.getParameter< Strings >("JERRecords");
-      for ( auto & rcd : jerRecords_ ) {
-         if ( rcd != "" ) {
-            std::string label_pt = rcd + "_pt";
-            std::string label_sf = rcd;
-            JerESTokens est;
-            est.record = rcd;
-            est.resolutionsToken = esConsumes(edm::ESInputTag("", label_pt));
-            est.scaleFactorsToken = esConsumes(edm::ESInputTag("", label_sf));
-            jer_es_tokens_.push_back(est);
-         }
-      }
-      if(config_.exists("JERResFiles")) {
-      	jer_files_ = config_.getParameter< Strings >("JERResFiles");
-      }
-      if(config_.exists("JERSfFiles")) {
-      	jersf_files_ = config_.getParameter< Strings >("JERSfFiles");
-      }
+   // jerRecords_.clear();
+   // if ( do_patjets_ && config_.exists("JERRecords") ) {
+   //    jerRecords_ = config_.getParameter< Strings >("JERRecords");
+   //    for ( auto & rcd : jerRecords_ ) {
+   //       if ( rcd != "" ) {
+   //          std::string label_pt = rcd + "_pt";
+   //          std::string label_sf = rcd;
+   //          JerESTokens est;
+   //          est.record = rcd;
+   //          est.resolutionsToken = esConsumes(edm::ESInputTag("", label_pt));
+   //          est.scaleFactorsToken = esConsumes(edm::ESInputTag("", label_sf));
+   //          jer_es_tokens_.push_back(est);
+   //       }
+   //    }
+   //    if(config_.exists("JERResFiles")) {
+   //    	jer_files_ = config_.getParameter< Strings >("JERResFiles");
+   //    }
+   //    if(config_.exists("JERSfFiles")) {
+   //    	jersf_files_ = config_.getParameter< Strings >("JERSfFiles");
+   //    }
       
-   }
+   // }
    // JEC record (from CondDB)
    // see example: https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/PatUtils/plugins/ShiftedPFCandidateProducerForNoPileUpPFMEt.cc
-   jecRecords_.clear();
-   if ( do_patjets_ && config_.exists("JECRecords") ) {
-      jecRecords_ = config_.getParameter< Strings >("JECRecords");
-      for ( auto & rcd : jecRecords_ ) {
-         if ( rcd != "" ) {
-            JecESTokens est;
-            est.record = rcd;
-            est.jecToken = esConsumes(edm::ESInputTag("", rcd));
-            jec_es_tokens_.push_back(est);
-         }
-      }
-   }
+   // jecRecords_.clear();
+   // if ( do_patjets_ && config_.exists("JECRecords") ) {
+   //    jecRecords_ = config_.getParameter< Strings >("JECRecords");
+   //    for ( auto & rcd : jecRecords_ ) {
+   //       if ( rcd != "" ) {
+   //          JecESTokens est;
+   //          est.record = rcd;
+   //          est.jecToken = esConsumes(edm::ESInputTag("", rcd));
+   //          jec_es_tokens_.push_back(est);
+   //       }
+   //    }
+   // }
    analyze_count_ = 0;
 }
 Ntuplizer::~Ntuplizer() {
@@ -601,28 +644,28 @@ void Ntuplizer::beginJob() {
    event_counts_ = {};
    // -------------------------------
    // JEC Record (from TXT files)
-   Strings jec_files;
-   // JEC Record (from CondDB)
-   if ( do_patjets_ && config_.exists("JECRecords") ) {
-      if(config_.exists("JECUncertaintyFiles")) {
-         jec_files = config_.getParameter< Strings >("JECUncertaintyFiles");
-      }
-   }
-   size_t nPatJets = 0;
-   if ( do_patjets_ )
-      nPatJets = config_.getParameter<InputTags>("PatJets").size();
-   if ( nPatJets > jecRecords_.size() && jecRecords_.size() != 0 ) {
-      printf_error("Ntuplizer::beginJob *** ERROR ***  Number of JEC Records less than the number of PatJet collections.\n");
-      exit(-1);
-   }
-   if ( nPatJets > jerRecords_.size() && jerRecords_.size() != 0 ) {
-      printf_error("Ntuplizer::beginJob *** ERROR ***  Number of JER Records less than the number of PatJet collections.\n");
-      exit(-1);
-   }
-   if ( jerRecords_.size() != 0 && jer_files_.size() != 0 && jersf_files_.size()!=0 &&(jerRecords_.size() != jer_files_.size() || jerRecords_.size() != jersf_files_.size()) ) {
-      printf_error("Ntuplizer::beginJob *** ERROR *** Number of JER Records are not the same as number of provided input files.\n");
-      exit(-1);
-   }
+   // Strings jec_files;
+   // // JEC Record (from CondDB)
+   // if ( do_patjets_ && config_.exists("JECRecords") ) {
+   //    if(config_.exists("JECUncertaintyFiles")) {
+   //       jec_files = config_.getParameter< Strings >("JECUncertaintyFiles");
+   //    }
+   // }
+   // size_t nPatJets = 0;
+   // if ( do_patjets_ )
+   //    nPatJets = config_.getParameter<InputTags>("PatJets").size();
+   // if ( nPatJets > jecRecords_.size() && jecRecords_.size() != 0 ) {
+   //    printf_error("Ntuplizer::beginJob *** ERROR ***  Number of JEC Records less than the number of PatJet collections.\n");
+   //    exit(-1);
+   // }
+   // if ( nPatJets > jerRecords_.size() && jerRecords_.size() != 0 ) {
+   //    printf_error("Ntuplizer::beginJob *** ERROR ***  Number of JER Records less than the number of PatJet collections.\n");
+   //    exit(-1);
+   // }
+   // if ( jerRecords_.size() != 0 && jer_files_.size() != 0 && jersf_files_.size()!=0 &&(jerRecords_.size() != jer_files_.size() || jerRecords_.size() != jersf_files_.size()) ) {
+   //    printf_error("Ntuplizer::beginJob *** ERROR *** Number of JER Records are not the same as number of provided input files.\n");
+   //    exit(-1);
+   // }
    // Event info tree
    eventinfo_ = EventInfoPtr(new EventInfo(eventsDir_));
    if ( config_.exists("FixedGridRhoAll") )
@@ -656,10 +699,43 @@ void Ntuplizer::beginJob() {
       splitTriggerObject = false;
    }
    // Input tags (vector)
-   auto pileupJetIds = config_.getParameter<Strings>("PileupJetIds");
+   // auto pileupJetIds = config_.getParameter<Strings>("PileupJetIds");
+
+   auto jetCollections = config_.getParameter<std::vector<edm::ParameterSet>>("JetCollections");
+   int patJetCounter = 0;
+   for (auto const& jet : jetCollections) {
+      auto collection  = jet.getParameter<InputTag>("collection");
+      std::string label = collection.label();
+      std::string inst  = collection.instance();
+      std::string proc  = collection.process();
+      name = label;
+      fullname = name + "_" + inst + "_" + proc;
+      if ( collection.instance() != "" && jetCollections.size() > 1 )
+         name += "_" + inst;
+      if ( use_full_name_ ) name = fullname;
+      patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
+      patjets_collections_.back() -> Init(discriminators_);
+      // patjets_collections_.back() -> PileupJetIdInstance(pileupJetIds[patJetCounter]);
+
+      auto original  = jet.getParameter<InputTag>("original");
+      label = original.label();
+      inst  = original.instance();
+      proc  = original.process();
+      name = label;
+      fullname = name + "_" + inst + "_" + proc;
+      if ( original.instance() != "" && jetCollections.size() > 1 )
+         name += "_" + inst;
+      if ( use_full_name_ ) name = fullname;
+      patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(original, tree_[name], is_mc_ ) ));
+      patjets_collections_.back() -> Init(discriminators_);
+      // patjets_collections_.back() -> PileupJetIdInstance(pileupJetIds[patJetCounter]);
+
+
+   }
+   
    for ( auto & inputTags : inputTagsVec_ ) {
       InputTags collections = config_.getParameter<InputTags>(inputTags);
-      int patJetCounter = 0;
+      // int patJetCounter = 0;
       for ( auto & collection : collections ) {
          // Names for the trees, from inputs
          std::string label = collection.label();
@@ -672,32 +748,32 @@ void Ntuplizer::beginJob() {
             name += "_" + inst;
          if ( use_full_name_ ) name = fullname;
          // Pat Jets
-         if ( inputTags == "PatJets" ) {
-            patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
-            patjets_collections_.back() -> Init(discriminators_);
-            patjets_collections_.back() -> PileupJetIdInstance(pileupJetIds[patJetCounter]);
+         // if ( inputTags == "PatJets" ) {
+         //    patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
+         //    patjets_collections_.back() -> Init(discriminators_);
+         //    patjets_collections_.back() -> PileupJetIdInstance(pileupJetIds[patJetCounter]);
             
-            if ( patJetCounter == 0 && jecRecords_.size() > 0  ) 
-            std::cout << "*** Jet Energy Corrections Records - PatJets ***" << std::endl;
-            if ( jecRecords_.size() > 0  ) {
-               if ( jec_files.size() > 0 && jec_files[patJetCounter] != "" )
-                  patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter],jec_files[patJetCounter]);  // use txt file
-               else
-               //   patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter]);                           // use confdb
-                  patjets_collections_.back() -> AddJecInfo(jec_es_tokens_[patJetCounter]);                           // use confdb
+         //    if ( patJetCounter == 0 && jecRecords_.size() > 0  ) 
+         //    std::cout << "*** Jet Energy Corrections Records - PatJets ***" << std::endl;
+         //    if ( jecRecords_.size() > 0  ) {
+         //       if ( jec_files.size() > 0 && jec_files[patJetCounter] != "" )
+         //          patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter],jec_files[patJetCounter]);  // use txt file
+         //       else
+         //       //   patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter]);                           // use confdb
+         //          patjets_collections_.back() -> AddJecInfo(jec_es_tokens_[patJetCounter]);                           // use confdb
 
-            }
-            if ( patJetCounter == 0 && jerRecords_.size() > 0  ) std::cout << "*** Jet Energy Resolutions Records - PatJets ***" << std::endl;
-            if ( jerRecords_.size() > 0 && is_mc_  ) {
-               if ( jer_files_.size() > 0 && jer_files_[patJetCounter] != "" )
-                  patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],jer_files_[patJetCounter], jersf_files_[patJetCounter],fixedGridRhoAll_);  // use txt file
-               else
-               //   patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],fixedGridRhoAll_);  // use txt file
-                  patjets_collections_.back() -> AddJerInfo(jer_es_tokens_[patJetCounter],fixedGridRhoAll_);  // use txt file
+         //    }
+         //    if ( patJetCounter == 0 && jerRecords_.size() > 0  ) std::cout << "*** Jet Energy Resolutions Records - PatJets ***" << std::endl;
+         //    if ( jerRecords_.size() > 0 && is_mc_  ) {
+         //       if ( jer_files_.size() > 0 && jer_files_[patJetCounter] != "" )
+         //          patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],jer_files_[patJetCounter], jersf_files_[patJetCounter],fixedGridRhoAll_);  // use txt file
+         //       else
+         //       //   patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],fixedGridRhoAll_);  // use txt file
+         //          patjets_collections_.back() -> AddJerInfo(jer_es_tokens_[patJetCounter],fixedGridRhoAll_);  // use txt file
 
-            }
-            ++patJetCounter;
-         }
+         //    }
+         //    ++patJetCounter;
+         // }
          // Pat METs
          if ( inputTags == "PatMETs" ) {
             patmets_collections_.push_back( pPatMETCandidates( new PatMETCandidates(collection, tree_[name], is_mc_) ));
@@ -906,15 +982,23 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.add<InputTag>("FixedGridRhoAll", InputTag("fixedGridRhoAll"));
    desc.add<InputTags>("TriggerResults", { InputTag("TriggerResults", "", "HLT") });
    //or    desc.add<InputTags>("TriggerResults", InputTags{ InputTag("TriggerResults", "", "HLT") });
-   desc.add<InputTags>("PatJets", { InputTag("slimmedJetsPuppi") });
-   desc.add<Strings>("JECRecords", { "AK4PFPuppi" });
-   desc.add<Strings>("JERRecords", { "AK4PFPuppi" });
+   // desc.add<InputTags>("PatJets", { InputTag("slimmedJetsPuppi") });
+   // desc.add<Strings>("JECRecords", { "AK4PFPuppi" });
+   // desc.add<Strings>("JERRecords", { "AK4PFPuppi" });
+   // desc.add<Strings>("PileupJetIds", { "pileupJetIdPuppi" });
    desc.add<InputTags>( "PatMuons", { InputTag("slimmedMuons") });
    desc.add<InputTags>( "L1TJets", { InputTag("caloStage2Digis","Jet","RECO") });
    desc.add<InputTags>( "L1TMuons", { InputTag("gmtStage2Digis","Muon","RECO") });
    desc.add<InputTags>( "PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
    desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "PAT"));
-   desc.add<Strings>("PileupJetIds", { "pileupJetIdPuppi" });
+
+   edm::ParameterSetDescription jetCollection;
+   jetCollection.add<edm::InputTag>("collection");
+   jetCollection.add<edm::InputTag>("original");
+   jetCollection.add<std::string>("jecRecord");
+   jetCollection.add<std::string>("jerRecord");
+   jetCollection.add<std::string>("pileupJetId");
+   desc.addVPSet("JetCollections", jetCollection);
 
    // Optionals
    desc.addOptional<InputTags>("TriggerObjectStandAlone");

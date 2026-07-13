@@ -89,18 +89,27 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
                                                     cms.InputTag('TriggerResults','','HLT'), ),
     TriggerObjectStandAlone     = cms.VInputTag(
                                                     cms.InputTag('slimmedPatTrigger'), ),
-    PatJets                     = cms.VInputTag( 
-                                                    cms.InputTag('correctedJetsPuppi'),
-                                                    cms.InputTag('slimmedJetsPuppi'),),
-    JECRecords                  = cms.vstring  (
-                                                    'AK4PFPuppi',
-                                                    'AK4PFPuppi',), # for the JEC uncertainties
-    JERRecords                  = cms.vstring  (
-                                                    'AK4PFPuppi',
-                                                    'AK4PFPuppi',), # for the JER uncertainties
-    PileupJetIds                = cms.vstring  (
-                                                    'pileupJetIdPuppi',
-                                                    'pileupJetIdPuppi',),
+    # PatJets                     = cms.VInputTag( 
+    #                                                 cms.InputTag('correctedJetsPuppi'),
+    #                                                 cms.InputTag('slimmedJetsPuppi'),),
+    # JECRecords                  = cms.vstring  (
+    #                                                 'AK4PFPuppi',
+    #                                                 'AK4PFPuppi',), # for the JEC uncertainties
+    # JERRecords                  = cms.vstring  (
+    #                                                 'AK4PFPuppi',
+    #                                                 'AK4PFPuppi',), # for the JER uncertainties
+    # PileupJetIds                = cms.vstring  (
+    #                                                 'pileupJetIdPuppi',
+    #                                                 'pileupJetIdPuppi',),
+    JetCollections              = cms.VPSet(
+                                                cms.PSet(
+                                                    collection   = cms.InputTag('correctedJetsPuppi'),
+                                                    original     = cms.InputTag('slimmedJetsPuppi'),
+                                                    jecRecord    = cms.string('AK4PFPuppi'),
+                                                    jerRecord    = cms.string('AK4PFPuppi'),
+                                                    pileupJetId  = cms.string('pileupJetIdPuppi'),
+                                                    ),
+                                                ),
     PatMuons                    = cms.VInputTag(
                                                     cms.InputTag('slimmedMuons'), ),
     PrimaryVertices             = cms.VInputTag(
@@ -138,6 +147,8 @@ process.p = cms.Path(
                         process.MssmHbb
 )
 process.p.associate(process.jecJetsPuppi)
+process.p.associate(process.jecJets)
+process.p.associate(process.jecJetsAK8)
 
 ## Inputs
 readFiles = cms.untracked.vstring()
