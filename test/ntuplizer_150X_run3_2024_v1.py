@@ -60,11 +60,11 @@ process.nFilteredEvents = cms.EDProducer('EventCountProducer')
 
 ## Trigger information
 from Analysis.Ntuplizer.utils.trigger_info import trigger_info_reader
-trigger_info = trigger_info_reader(command_line_options.triggerInfo)
+TriggerInfo = trigger_info_reader(command_line_options.triggerInfo)
 
 # Trigger filter: FOR DATA ONLY!!!
 process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
-    triggerConditions = trigger_info['TriggerConditions'],
+    triggerConditions = TriggerInfo['TriggerConditions'],
     hltResults = cms.InputTag( 'TriggerResults', '', 'HLT' ),
     l1tResults = cms.InputTag( '' ),
     l1tIgnoreMask = cms.bool( False ),
@@ -98,6 +98,9 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     JERRecords                  = cms.vstring  (
                                                     'AK4PFPuppi',
                                                     'AK4PFPuppi',), # for the JER uncertainties
+    PileupJetIds                = cms.vstring  (
+                                                    'pileupJetIdPuppi',
+                                                    'pileupJetIdPuppi',),
     PatMuons                    = cms.VInputTag(
                                                     cms.InputTag('slimmedMuons'), ),
     PrimaryVertices             = cms.VInputTag(
@@ -109,11 +112,11 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     MetFiltersResults           = cms.InputTag('TriggerResults', '', 'PAT'),
     BTagging                    = AllBTagging['AK4PFPuppi'],
     BRegression                 = AllBRegression['AK4PFPuppi'],
-    TriggerPaths                = trigger_info['TriggerPaths'],
-    L1Seeds                     = trigger_info['L1Seeds'],    
-    TriggerObjectLabels         = trigger_info['TriggerObjectLabels'],
-    TriggerObjectSplits         = trigger_info['TriggerObjectSplits'],
-    TriggerObjectSplitsTypes    = trigger_info['TriggerObjectSplitsTypes'],
+    TriggerPaths                = TriggerInfo['TriggerPaths'],
+    L1Seeds                     = TriggerInfo['L1Seeds'],    
+    TriggerObjectLabels         = TriggerInfo['TriggerObjectLabels'],
+    TriggerObjectSplits         = TriggerInfo['TriggerObjectSplits'],
+    TriggerObjectSplitsTypes    = TriggerInfo['TriggerObjectSplitsTypes'],
 )
 
    ## MC only

@@ -656,6 +656,7 @@ void Ntuplizer::beginJob() {
       splitTriggerObject = false;
    }
    // Input tags (vector)
+   auto pileupJetIds = config_.getParameter<Strings>("PileupJetIds");
    for ( auto & inputTags : inputTagsVec_ ) {
       InputTags collections = config_.getParameter<InputTags>(inputTags);
       int patJetCounter = 0;
@@ -674,6 +675,7 @@ void Ntuplizer::beginJob() {
          if ( inputTags == "PatJets" ) {
             patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
             patjets_collections_.back() -> Init(discriminators_);
+            patjets_collections_.back() -> PileupJetIdInstance(pileupJetIds[patJetCounter]);
             
             if ( patJetCounter == 0 && jecRecords_.size() > 0  ) 
             std::cout << "*** Jet Energy Corrections Records - PatJets ***" << std::endl;
@@ -912,6 +914,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.add<InputTags>( "L1TMuons", { InputTag("gmtStage2Digis","Muon","RECO") });
    desc.add<InputTags>( "PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
    desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "PAT"));
+   desc.add<Strings>("PileupJetIds", { "pileupJetIdPuppi" });
 
    // Optionals
    desc.addOptional<InputTags>("TriggerObjectStandAlone");

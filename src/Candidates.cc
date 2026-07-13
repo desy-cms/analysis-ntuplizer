@@ -113,6 +113,9 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    
    // trigger object split
    trigobj_type_ = "";
+
+   // pileup id
+   pileup_id_instance_ = "";
    
 }
 
@@ -225,7 +228,7 @@ int Candidates<pat::Jet>::AdditionalProperties(int n, size_t i) {
       jetid_[4][n] = cand_jet->chargedEmEnergyFraction();
       jetid_[5][n] = (float)cand_jet->chargedMultiplicity();
       jetid_[6][n] = cand_jet->muonEnergyFraction();
-      jetid_[7][n] = cand_jet->numberOfDaughters();
+      jetid_[7][n] = (float)cand_jet->numberOfDaughters();
    } else {  // set some dummy values
       for ( size_t ii = 0; ii < id_vars_.size(); ++ii )  jetid_[ii][n] = -1.;
    }
@@ -274,7 +277,15 @@ int Candidates<pat::Jet>::AdditionalProperties(int n, size_t i) {
       jerSF_[n]         = -1;
       jerSFUp_[n]       = -1;
       jerSFDown_[n]     = -1;
-   } 
+   }
+
+   // jet pileup id
+   pileup_id_fulldiscr_[n] = -10.;
+   std::string pileup_id_disc_key = pileup_id_instance_+":fullDiscriminant";
+   if ( cand_jet -> hasUserFloat(pileup_id_disc_key) ) {
+      pileup_id_fulldiscr_[n] = cand_jet -> userFloat(pileup_id_disc_key);
+   }
+
    return 0;
 }
 
@@ -552,6 +563,8 @@ void Candidates<T>::Branches() {
          jetid.resize(maxCandidates);      
       for ( size_t it = 0 ; it < id_vars_.size() ; ++it )
          tree_->Branch(id_vars_[it].alias.c_str(), jetid_[it].data(), (id_vars_[it].title+"[n]/F").c_str());
+
+      tree_->Branch("pileup_id_fulldiscr", pileup_id_fulldiscr_, "pileup_id_fulldiscr[n]/F");
    }
 
    if ( is_patmet_ ) {
@@ -642,6 +655,10 @@ void Candidates<T>::AddJerInfo(const std::string & jer, const std::string & res_
    rho_collection_ = rho;
 }
 
+template <typename T>
+void Candidates<T>::PileupJetIdInstance(const std::string & instance) {
+   pileup_id_instance_ = instance;
+}
 
 // Need to declare all possible template classes here: candidates types
 template class Candidates<pat::Jet>;
