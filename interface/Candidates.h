@@ -68,7 +68,6 @@ namespace analysis {
             void MinPt(const float& minPt = -1.);
             void MaxEta(const float& maxEta = -1.);
             void JECRecord(const std::string &);
-            void QGTaggerInstance(const std::string &);
             void PileupJetIdInstance(const std::string &);
             static const int maxCandidates = 250;
       
@@ -148,10 +147,6 @@ namespace analysis {
             JME::JetResolution res_;
             JME::JetResolutionScaleFactor res_sf_;
             analysis::utils::JerESTokens res_tokens_;
-            
-            // QG Jet
-            float qgLikelihood_[maxCandidates];
-            std::string qgtaggerInst_;
             
             // Jet pileup id
             float puJetIdFullDiscr_[maxCandidates];

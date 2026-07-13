@@ -738,7 +738,6 @@ void Ntuplizer::beginJob() {
          if ( inputTags == "PatJets" ) {
             patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
             patjets_collections_.back() -> Init(discriminators_);
-            patjets_collections_.back() -> QGTaggerInstance("QGTagger");
             patjets_collections_.back() -> PileupJetIdInstance("pileupJetId");
             
             if ( patJetCounter == 0 && jecRecords_.size() > 0  ) 

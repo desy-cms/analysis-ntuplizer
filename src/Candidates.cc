@@ -125,7 +125,6 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    trigobj_type_ = "";
    
    // pat jet user vars default
-   qgtaggerInst_ = "";
    pujetidInst_ = "";
     
 }
@@ -435,13 +434,6 @@ void Candidates<T>::Kinematics() {
             jerSFDown_[n]     = -1;
          } 
          
-         // quark-gluon likelihood
-         qgLikelihood_[n] = -10.;
-         std::string qgkey = qgtaggerInst_+":qgLikelihood";
-         if ( jet -> hasUserFloat(qgkey) )  {
-            qgLikelihood_[n] = jet->userFloat(qgkey);
-         }
-         
          // jet pileup id
          puJetIdFullDiscr_[n] = -10.;
          std::string pudisckey = pujetidInst_+":fullDiscriminant";
@@ -716,7 +708,6 @@ void Candidates<T>::Branches()
              tree_->Branch("jerSFDown",jerSFDown_,"jerSFDown[n]/F");
              tree_->Branch("Rho",&rho_,"Rho/D");
 //         }
-          tree_->Branch("qgLikelihood", qgLikelihood_, "qgLikelihood[n]/F");
           tree_->Branch("puJetIdFullDiscriminant", puJetIdFullDiscr_, "puJetIdFullDiscriminant[n]/F");
           tree_->Branch("puJetIdFullId", puJetIdFullId_, "puJetIdFullId[n]/I");
           
@@ -840,17 +831,11 @@ void Candidates<T>::AddJerInfo(const std::string & jer, const std::string & res_
 }
 
 template <typename T>
-void Candidates<T>::QGTaggerInstance(const std::string & instance)
-{
-   qgtaggerInst_ = instance;
-}
-template <typename T>
-void Candidates<T>::PileupJetIdInstance(const std::string & instance)
-{
+void Candidates<T>::PileupJetIdInstance(const std::string & instance) {
    pujetidInst_ = instance;
 }
 
-// Need to declare all possible template classes here
+// Need to declare all possible template classes here: candidates types
 template class Candidates<pat::Jet>;
 template class Candidates<pat::Muon>;
 template class Candidates<pat::MET>;
