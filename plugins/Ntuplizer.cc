@@ -314,24 +314,27 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    // Definitions of the variables to be stored in the metadata tree
    // --- Btagging algorithms (handles vstring, VPSet, or PSet mapping jet-type -> PSet containing VPSet) ---
    btagging_.clear();
-   auto vpset_btag = config_.getParameter<std::vector<edm::ParameterSet>>("BTagging");
-   for ( auto const & pset_btag : vpset_btag ) {
-      String btag = pset_btag.getParameter<std::string>("discriminator");
-      String btag_alias = pset_btag.getParameter<std::string>("alias"); // alias is obligatory!!!
-      btagging_.push_back({btag, btag_alias});
+   if ( config_.exists("BTagging") ) {
+      auto vpset_btag = config_.getParameter<std::vector<edm::ParameterSet>>("BTagging");
+      for ( auto const & pset_btag : vpset_btag ) {
+         String btag = pset_btag.getParameter<std::string>("discriminator");
+         String btag_alias = pset_btag.getParameter<std::string>("alias"); // alias is obligatory!!!
+         btagging_.push_back({btag, btag_alias});
+      }
+      metadata_ -> AddDefinitions(btagging_,"btagging");
    }
-   metadata_ -> AddDefinitions(btagging_,"btagging");
 
    // --- BRegression algorithms (handles vstring, VPSet, or PSet mapping jet-type -> PSet containing VPSet) ---
    bregression_.clear();
-   auto vpset_bregression = config_.getParameter<std::vector<edm::ParameterSet>>("BRegression");
-   for ( auto const & pset_bregression : vpset_bregression ) {
-      String bregression = pset_bregression.getParameter<std::string>("discriminator");
-      String bregression_alias = pset_bregression.getParameter<std::string>("alias"); // alias is obligatory!!!
-      bregression_.push_back({bregression, bregression_alias});
+   if ( config_.exists("BRegression") ) {
+      auto vpset_bregression = config_.getParameter<std::vector<edm::ParameterSet>>("BRegression");
+      for ( auto const & pset_bregression : vpset_bregression ) {
+         String bregression = pset_bregression.getParameter<std::string>("discriminator");
+         String bregression_alias = pset_bregression.getParameter<std::string>("alias"); // alias is obligatory!!!
+         bregression_.push_back({bregression, bregression_alias});
+      }
+      metadata_ -> AddDefinitions(bregression_,"bregression");
    }
-   metadata_ -> AddDefinitions(bregression_,"bregression");
-   
    discriminators_.reserve(btagging_.size() + bregression_.size());
    discriminators_.insert(discriminators_.end(), btagging_.begin(), btagging_.end());
    discriminators_.insert(discriminators_.end(), bregression_.begin(), bregression_.end());
@@ -364,10 +367,16 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          auto original = jet.getParameter<InputTag>("original");
          patJets_.push_back(collection);
          patJets_.push_back(original);
-         jecRecords_.push_back(jet.getParameter<std::string>("jecRecord"));
-         jecRecords_.push_back(jet.getParameter<std::string>("jecRecord")); // original has the same records as the main colleciton
-         jerRecords_.push_back(jet.getParameter<std::string>("jerRecord")); 
-         jerRecords_.push_back(jet.getParameter<std::string>("jerRecord")); // original has the same records as the main colleciton
+         if (jet.existsAs<std::string>("jecRecord")) {
+            auto jecRecord = jet.getParameter<std::string>("jecRecord");
+            jecRecords_.push_back(jecRecord);
+            jecRecords_.push_back(jecRecord); // for original
+         }
+         if (jet.existsAs<std::string>("jerRecord")) {
+            auto jerRecord = jet.getParameter<std::string>("jerRecord");
+            jerRecords_.push_back(jerRecord); 
+            jerRecords_.push_back(jerRecord); // for original
+         }
          pileupJetIds_.push_back(jet.getParameter<std::string>("pileupJetId"));
          pileupJetIds_.push_back(jet.getParameter<std::string>("pileupJetId")); // original has the same records as the main colleciton
          makeCollectionTree(collection);
@@ -380,11 +389,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    // Table-driven dispatch
    using RegistersFn = std::function<void(InputTags const&)>;
    std::unordered_map<std::string, RegistersFn> inputTagsDispatch;
-   // Main stuff
-   // inputTagsDispatch["PatJets"] = [&](InputTags const& collections) {
-   //    for (auto const& collection : collections) makeCollectionTree(collection);
-   //    registerTokens<pat::JetCollection>(collections, patJetTokens_);
-   // };
    inputTagsDispatch["PrimaryVertices"] = [&](InputTags const& collections) {
       registerTokens<reco::VertexCollection>(collections, primary_vertices_tokens_);
       for (auto const& collection : collections) {
@@ -992,12 +996,25 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.add<InputTags>( "PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
    desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "PAT"));
 
+   edm::ParameterSetDescription desc_btag;
+   desc_btag.add<std::string>("discriminator");
+   desc_btag.add<std::string>("alias");
+   desc.addVPSetOptional("BTagging",desc_btag);
+
+   edm::ParameterSetDescription desc_bregression;
+   desc_bregression.add<std::string>("discriminator");
+   desc_bregression.add<std::string>("alias");
+   desc.addVPSetOptional("BRegression",desc_bregression);
+   
+
    edm::ParameterSetDescription jetCollection;
    jetCollection.add<edm::InputTag>("collection");
-   jetCollection.add<edm::InputTag>("original");
-   jetCollection.add<std::string>("jecRecord");
-   jetCollection.add<std::string>("jerRecord");
-   jetCollection.add<std::string>("pileupJetId");
+   jetCollection.addOptional<edm::InputTag>("original");
+   jetCollection.addOptional<std::string>("pileupJetId");
+   jetCollection.addOptional<std::string>("jecRecord");
+   jetCollection.addOptional<std::string>("jerRecord");
+   jetCollection.addVPSetOptional("btagging", desc_btag);
+   jetCollection.addVPSetOptional("bregression", desc_bregression);   
    desc.addVPSet("JetCollections", jetCollection);
 
    // Optionals
@@ -1020,16 +1037,6 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 
    desc.addOptional<InputTag>("FilteredMHatEvents");
 
-   edm::ParameterSetDescription desc_btag;
-   desc_btag.add<std::string>("discriminator");
-   desc_btag.add<std::string>("alias");
-   desc.addVPSetOptional("BTagging",desc_btag);
-
-   edm::ParameterSetDescription desc_bregression;
-   desc_bregression.add<std::string>("discriminator");
-   desc_bregression.add<std::string>("alias");
-   desc.addVPSetOptional("BRegression",desc_bregression);
-   
    descriptions.addDefault(desc);
 }
 

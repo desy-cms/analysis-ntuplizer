@@ -76,7 +76,14 @@ process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
 # Apply JES corrections
 process.load('Analysis.Ntuplizer.jet_corrections_cff')
 
-from Analysis.Ntuplizer.btagging_cfi import BTagging, AllBTagging
+from Analysis.Ntuplizer.btagging_cfi import BTagging
+AK4Puppi_BTagging = cms.VPSet(
+    *BTagging['AK4PFPuppi']['ParticleNet'],
+    *BTagging['AK4PFPuppi']['ParticleTransformer'],
+    *BTagging['AK4PFPuppi']['UnifiedParticleTransformer'],
+    *BTagging['AK4PFPuppi']['DeepFlavour']
+)
+
 from Analysis.Ntuplizer.bregression_cfi import BRegression, AllBRegression
 
 ## Ntuplizer
@@ -103,13 +110,17 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     #                                                 'pileupJetIdPuppi',),
     JetCollections              = cms.VPSet(
                                                 cms.PSet(
-                                                    collection   = cms.InputTag('correctedJetsPuppi'),
-                                                    original     = cms.InputTag('slimmedJetsPuppi'),
-                                                    jecRecord    = cms.string('AK4PFPuppi'),
-                                                    jerRecord    = cms.string('AK4PFPuppi'),
-                                                    pileupJetId  = cms.string('pileupJetIdPuppi'),
+                                                    collection    = cms.InputTag('correctedJetsPuppi'),
+                                                    original      = cms.InputTag('slimmedJetsPuppi'),
+                                                    # jecRecord     = cms.string('AK4PFPuppi'),
+                                                    # jerRecord     = cms.string('AK4PFPuppi'),
+                                                    pileupJetId   = cms.string('pileupJetIdPuppi'),
+                                                    btagging      = AK4Puppi_BTagging, # TODO:
+                                                    bregression   = AllBRegression['AK4PFPuppi'], # TODO:
                                                     ),
                                                 ),
+    # BTagging                    = AK4Puppi_BTagging,
+    # BRegression                 = AllBRegression['AK4PFPuppi'],
     PatMuons                    = cms.VInputTag(
                                                     cms.InputTag('slimmedMuons'), ),
     PrimaryVertices             = cms.VInputTag(
@@ -119,8 +130,6 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     L1TMuons                    = cms.VInputTag(
                                                     cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
     MetFiltersResults           = cms.InputTag('TriggerResults', '', 'PAT'),
-    BTagging                    = AllBTagging['AK4PFPuppi'],
-    BRegression                 = AllBRegression['AK4PFPuppi'],
     TriggerPaths                = TriggerInfo['TriggerPaths'],
     L1Seeds                     = TriggerInfo['L1Seeds'],    
     TriggerObjectLabels         = TriggerInfo['TriggerObjectLabels'],
