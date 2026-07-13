@@ -125,7 +125,7 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    trigobj_type_ = "";
    
    // pat jet user vars default
-   pujetidInst_ = "";
+   // pujetidInst_ = "";
     
 }
 
@@ -434,17 +434,6 @@ void Candidates<T>::Kinematics() {
             jerSFDown_[n]     = -1;
          } 
          
-         // jet pileup id
-         puJetIdFullDiscr_[n] = -10.;
-         std::string pudisckey = pujetidInst_+":fullDiscriminant";
-         if ( jet -> hasUserFloat(pudisckey) ) {
-            puJetIdFullDiscr_[n] = jet -> userFloat(pudisckey);
-         }
-         puJetIdFullId_[n] = -1;
-         std::string puidkey = pujetidInst_+":fullId";
-         if ( jet -> hasUserInt(puidkey) ) {
-            puJetIdFullId_[n] = jet -> userInt(puidkey);
-         }
       } // end PAT::Jet
       
       if ( is_patmet_ )  {
@@ -708,8 +697,6 @@ void Candidates<T>::Branches()
              tree_->Branch("jerSFDown",jerSFDown_,"jerSFDown[n]/F");
              tree_->Branch("Rho",&rho_,"Rho/D");
 //         }
-          tree_->Branch("puJetIdFullDiscriminant", puJetIdFullDiscr_, "puJetIdFullDiscriminant[n]/F");
-          tree_->Branch("puJetIdFullId", puJetIdFullId_, "puJetIdFullId[n]/I");
           
           tree_->Branch("bjetRegCorr",bjetRegCorr_,"bjetRegCorr_[n]/F");
           tree_->Branch("bjetRegRes",bjetRegRes_,"bjetRegRes_[n]/F");
@@ -830,10 +817,6 @@ void Candidates<T>::AddJerInfo(const std::string & jer, const std::string & res_
    
 }
 
-template <typename T>
-void Candidates<T>::PileupJetIdInstance(const std::string & instance) {
-   pujetidInst_ = instance;
-}
 
 // Need to declare all possible template classes here: candidates types
 template class Candidates<pat::Jet>;
