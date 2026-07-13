@@ -348,13 +348,7 @@ void Candidates<T>::Kinematics() {
       // PAT JETS
       if ( is_patjet_ ) {
          pat::Jet * jet = dynamic_cast<pat::Jet*> (&candidates_[i]);
-         
-         if ( jet->hasUserFloat("bJetRegCorr") ) bjetRegCorr_[n] = jet->userFloat("bJetRegCorr");
-         else                                    bjetRegCorr_[n] = 1;
-         
-         if ( jet->hasUserFloat("bJetRegRes") )  bjetRegRes_[n] = jet->userFloat("bJetRegRes");
-         else                                    bjetRegRes_[n] = 1;
-         
+                  
          for ( size_t it = 0 ; it < btag_vars_.size() ; ++it )  {
             btag_[it][n] = jet->bDiscriminator(btag_vars_[it].title);
          }
@@ -698,9 +692,6 @@ void Candidates<T>::Branches()
              tree_->Branch("Rho",&rho_,"Rho/D");
 //         }
           
-          tree_->Branch("bjetRegCorr",bjetRegCorr_,"bjetRegCorr_[n]/F");
-          tree_->Branch("bjetRegRes",bjetRegRes_,"bjetRegRes_[n]/F");
-         
       }
       if ( is_patjet_ )  {
          for ( size_t it = 0 ; it < id_vars_.size() ; ++it )
@@ -721,7 +712,7 @@ void Candidates<T>::Branches()
         }
       }
       
-      if ( is_trigobject_ || is_trigobject_reco_ )
+      if ( is_trigobject_ )
       {
          // there may be more than one type for an object, one has to be careful depending on the trigger
          // for now only the first entry is used.

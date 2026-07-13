@@ -146,10 +146,6 @@ namespace analysis {
             JME::JetResolution res_;
             JME::JetResolutionScaleFactor res_sf_;
             analysis::utils::JerESTokens res_tokens_;
-            
-            // bJet regression
-            float bjetRegCorr_[maxCandidates];
-            float bjetRegRes_[maxCandidates];
                         
             int indx_[maxCandidates];
             int pdg_[maxCandidates];
@@ -190,7 +186,6 @@ namespace analysis {
             bool is_genjet_;
             bool is_genparticle_;
             bool is_trigobject_;
-            bool is_trigobject_reco_;
             bool is_patmet_;
             bool is_mc_;
             bool do_kinematics_;
