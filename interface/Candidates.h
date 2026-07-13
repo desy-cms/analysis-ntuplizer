@@ -32,6 +32,10 @@
 #include "JetMETCorrections/Modules/interface/JetResolution.h"
 
 #include "Analysis/Utils/interface/types.h"
+#include "DataFormats/L1Trigger/interface/Jet.h"
+#include "DataFormats/L1Trigger/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
+
 
 #include "TTree.h"
 
@@ -41,6 +45,18 @@
 
 namespace analysis {
    namespace ntuple {
+      template<typename T>
+      struct CollectionTraits {
+         using Collection = std::vector<T>;
+      };
+      template<>
+      struct CollectionTraits<l1t::Jet> {
+         using Collection = l1t::JetBxCollection;
+      };
+      template<>
+      struct CollectionTraits<l1t::Muon> {
+         using Collection = l1t::MuonBxCollection;
+      };
       template <typename T>
       class Candidates {
          public:
@@ -63,7 +79,8 @@ namespace analysis {
             void Fill(const edm::Event&);
             void Fill(const edm::Event&, const edm::EventSetup&);
             void Fill();
-            void Kinematics();
+            void Properties();
+            int AdditionalProperties(int n, size_t i);
             void MinPt(const float& minPt = -1.);
             void MaxEta(const float& maxEta = -1.);
             void JECRecord(const std::string &);

@@ -20,14 +20,6 @@
 #include "Analysis/Ntuplizer/interface/Candidates.h"
 
 #include "FWCore/Framework/interface/ESHandle.h"
-#include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/Candidate/interface/CandidateFwd.h"
-#include "DataFormats/L1Trigger/interface/L1JetParticle.h"
-#include "DataFormats/L1Trigger/interface/L1JetParticleFwd.h"
-#include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
-#include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
-#include "DataFormats/L1Trigger/interface/Jet.h"
-#include "DataFormats/L1Trigger/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
@@ -36,7 +28,6 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
 #include "DataFormats/HLTReco/interface/TriggerTypeDefs.h"
-#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
@@ -55,13 +46,17 @@ using namespace analysis::ntuple;
 // member functions specialization - needed to be declared in the same namespace as the class
 namespace analysis {
    namespace ntuple {
+      template <> void Candidates<pat::Jet>::JECRecord(const std::string & jr);
+      template <> int  Candidates<pat::Jet>::AdditionalProperties(int n, size_t i);
+      template <> int  Candidates<pat::Muon>::AdditionalProperties(int n, size_t i);
+      template <> int  Candidates<pat::MET>::AdditionalProperties(int n, size_t i);
+      template <> int  Candidates<reco::GenJet>::AdditionalProperties(int n, size_t i);
+      template <> int  Candidates<reco::GenParticle>::AdditionalProperties(int n, size_t i);
+      template <> int  Candidates<l1t::Jet>::AdditionalProperties(int n, size_t i);
+      template <> int  Candidates<l1t::Muon>::AdditionalProperties(int n, size_t i);
+      template <> int Candidates<pat::TriggerObject>::AdditionalProperties(int n, size_t i);
       template <> void Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event);
       template <> void Candidates<pat::TriggerObject>::TriggerObjectType(const std::string& trigobj_type);
-      template <> void Candidates<pat::Jet>::JECRecord(const std::string & jr);
-      template <> void Candidates<l1t::Jet>::ReadFromEvent(const edm::Event& event);
-      template <> void Candidates<l1t::Muon>::ReadFromEvent(const edm::Event& event);
-      template <> void Candidates<l1t::Jet>::Kinematics();
-      template <> void Candidates<l1t::Muon>::Kinematics();
    }
 }   
 //
@@ -98,7 +93,7 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    tree_->SetTitle(title.c_str());
    
    // definitions
-   // jetid
+   // jetid -> TODO: move to ntuplizer like btag_vars
    id_vars_.clear();
    id_vars_.push_back({"neutralHadronEnergyFraction", "id_nHadFrac" });
    id_vars_.push_back({"neutralEmEnergyFraction",     "id_nEmFrac"  });
@@ -123,9 +118,6 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    // trigger object split
    trigobj_type_ = "";
    
-   // pat jet user vars default
-   // pujetidInst_ = "";
-    
 }
 
 template <typename T>
@@ -133,72 +125,40 @@ Candidates<T>::~Candidates() {
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 }
-
-
 //
 // member functions
 //
 
-// ------------ method called for each event  ------------
 template <typename T>
 void Candidates<T>::ReadFromEvent(const edm::Event& event) {
-   // Candidates
    candidates_.clear();
-   edm::Handle<std::vector<T> > handler;
+   edm::Handle<typename CollectionTraits<T>::Collection> handler;
    event.getByLabel(input_collection_, handler);
-   candidates_ = *(handler.product());
-}
-
-// Specialization for l1t jets
-template <>
-void Candidates<l1t::Jet>::ReadFromEvent(const edm::Event& event) {
-   // Candidates
-   candidates_.clear();
-   edm::Handle<l1t::JetBxCollection> handler;
-   event.getByLabel(input_collection_, handler);
-   BXVector<l1t::Jet> l1jets = *(handler.product());
-   for ( auto l1jet : l1jets ) {
-      candidates_.push_back(l1jet);
+   for (auto const& candidate : *handler) {
+      candidates_.push_back(candidate);
    }
-   // Sort the objects by pt
-   NumericSafeGreaterByPt<l1t::Jet> l1tjetGreaterByPt;
-   std::sort (candidates_.begin(), candidates_.end(),l1tjetGreaterByPt);
-
-}
-// Specialization for l1t muons
-template <>
-void Candidates<l1t::Muon>::ReadFromEvent(const edm::Event& event) {
-   // Candidates
-   candidates_.clear();
-   edm::Handle<l1t::MuonBxCollection> handler;
-   event.getByLabel(input_collection_, handler);
-   BXVector<l1t::Muon> l1muons = *(handler.product());
-   for ( auto l1muon : l1muons ) {
-      candidates_.push_back(l1muon);
+   if constexpr (std::is_same_v<typename CollectionTraits<T>::Collection,std::vector<T>>) {
+      // already sorted (or no sorting needed)
+    } else {
+      std::sort(candidates_.begin(),
+         candidates_.end(),
+         NumericSafeGreaterByPt<T>{});
    }
-   // Sort the objects by pt
-   NumericSafeGreaterByPt<l1t::Muon> l1tmuonGreaterByPt;
-   std::sort (candidates_.begin(), candidates_.end(),l1tmuonGreaterByPt);
-
 }
 
 // Specialization for trigger objects (pat)
 template <>
 void Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event) {
-   
    edm::Handle<edm::TriggerResults> trhandler;
    event.getByLabel(triggerresults_collection_, trhandler);
    const edm::TriggerResults & trgres = *(trhandler.product());
-   
    candidates_.clear();
    // The stand alone collection
    edm::Handle<pat::TriggerObjectStandAloneCollection> handler;
    event.getByLabel(input_collection_, handler);
-   
    const std::string treename = tree_ -> GetName(); // using the label to name the tree
    const std::string delimiter = "_";
    std::string label = treename.substr(0, treename.find(delimiter));
-
    for ( auto ito : *handler ) {
       ito.unpackFilterLabels(event,trgres);
       if ( ito.filter(label) ) {
@@ -220,7 +180,6 @@ void Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event) {
          }
       }
    }
-   
    // Sort the objects by pt
    NumericSafeGreaterByPt<pat::TriggerObject> triggerObjectGreaterByPt;
    std::sort (candidates_.begin(), candidates_.end(),triggerObjectGreaterByPt);
@@ -231,7 +190,7 @@ void Candidates<pat::TriggerObject>::TriggerObjectType(const std::string& trigob
 }
 
 template <typename T>
-void Candidates<T>::Kinematics() {  
+void Candidates<T>::Properties() {
    int n = 0;
    for ( size_t i = 0 ; i < candidates_.size(); ++i ) {
       if ( n >= maxCandidates ) break;
@@ -239,6 +198,8 @@ void Candidates<T>::Kinematics() {
       if ( minPt_  >= 0. && candidates_[i].pt()  < minPt_  ) continue;
       if ( maxEta_ >= 0. && fabs(candidates_[i].eta()) > maxEta_ ) continue;
 
+      int additional_properties = AdditionalProperties(n, i);
+      if ( additional_properties != 0 ) continue;
       pt_[n]  = candidates_[i].pt();
       eta_[n] = candidates_[i].eta();
       phi_[n] = candidates_[i].phi();
@@ -248,243 +209,228 @@ void Candidates<T>::Kinematics() {
       q_[n]   = candidates_[i].charge();
       e_[n]   = candidates_[i].energy();
       et_[n]  = candidates_[i].et();
+      n++;
+   }
+   n_ = n;
+}
+
+template <>
+int Candidates<pat::Jet>::AdditionalProperties(int n, size_t i) {
+   pat::Jet * cand_jet = dynamic_cast<pat::Jet*> (&candidates_[i]);
+            
+   for ( size_t it = 0 ; it < btag_vars_.size() ; ++it )  {
+      btag_[it][n] = cand_jet->bDiscriminator(btag_vars_[it].title);
+   }
+   if ( cand_jet -> isPFJet() || cand_jet -> isJPTJet() ) {
+      jetid_[0][n] = cand_jet->neutralHadronEnergyFraction();
+      jetid_[1][n] = cand_jet->neutralEmEnergyFraction();
+      if ( cand_jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") ) {
+         jetid_[2][n] = cand_jet->userFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity");
+      }
+      else {
+         jetid_[2][n] = (float)cand_jet->neutralMultiplicity();
+      }
+      jetid_[3][n] = cand_jet->chargedHadronEnergyFraction();
+      jetid_[4][n] = cand_jet->chargedEmEnergyFraction();
+      if ( cand_jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") && cand_jet->hasUserFloat("patPuppiJetSpecificProducer:puppiMultiplicity") ) {
+         jetid_[5][n] = cand_jet->userFloat("patPuppiJetSpecificProducer:puppiMultiplicity") - cand_jet->userFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity");
+         jetid_[7][n] = 1.;
+      } else {
+         jetid_[5][n] = (float)cand_jet->chargedMultiplicity();
+         jetid_[7][n] = -1.;
+      }
+      jetid_[6][n] = cand_jet->muonEnergyFraction();
+      ijetid_[0][n]  = -1;
+      ijetid_[1][n]  = -1;
+      ijetid_[2][n]  = -1;
+      if ( cand_jet->hasUserInt("looseId") ) ijetid_[0][n] = cand_jet->userInt("looseId");
+      if ( cand_jet->hasUserInt("tightId") ) ijetid_[1][n] = cand_jet->userInt("tightId");
+      if ( cand_jet->hasUserInt("tightIdLepVeto") ) ijetid_[2][n] = cand_jet->userInt("tightIdLepVeto");
+   } else {  // set some dummy values
+      for ( size_t ii = 0; ii < id_vars_.size(); ++ii )  jetid_[ii][n] = -1.;
+   }
+   flavour_        [n] = 0;
+   hadronFlavour_  [n] = 0;
+   partonFlavour_  [n] = 0;
+   physicsFlavour_ [n] = 0;
+   if ( is_mc_ ) {
+      flavour_       [n]  = cand_jet->hadronFlavour();
+      hadronFlavour_ [n]  = cand_jet->hadronFlavour();
+      partonFlavour_ [n]  = cand_jet->partonFlavour();
+      if (cand_jet->genParton())
+      physicsFlavour_[n] = cand_jet->genParton()->pdgId();
+   }
+
+   // JEC Uncertainties
+   if ( jecRecord_ != "" ) {
+      jecUnc_->setJetEta(eta_[n]);
+      jecUnc_->setJetPt(pt_[n]);
+      jecUncert_[n] = jecUnc_->getUncertainty(true);
+   } else {
+      jecUncert_[n] = -1.;
+   }
+   //JER
+   if( jerRecord_ != "" ) {
+      // SetUp Jet parameters
+      JME::JetParameters jerParamRes;
+      jerParamRes.setJetPt(pt_[n]);
+      jerParamRes.setJetEta(eta_[n]);
+      jerParamRes.setRho(rho_);
       
-      if ( is_genparticle_ ) {
-         reco::GenParticle * gp = dynamic_cast<reco::GenParticle*> (&candidates_[i]);
-         int pdg    = gp -> pdgId();
-         int status = gp -> status();  // any status selection?
-         if ( abs(pdg) > 38 ) continue;
-         pdg_[n]   = pdg;
-         status_[n]= status;
-         lastcopy_[n] = gp -> isLastCopy();
-         indx_[n] = i;
-         mo1_[n] = -1;
-         mo2_[n] = -1;
-         da1_[n] = -1;
-         da2_[n] = -1;
-         if ( gp->numberOfMothers() > 0 ) {
-            mo1_[n] = gp->motherRef(0).key();
-            mo2_[n] = gp->motherRef(gp->numberOfMothers()-1).key();
-         }
-         if ( gp->numberOfDaughters() > 0 ) {
-            da1_[n] = gp->daughterRef(0).key();
-            da2_[n] = gp->daughterRef(gp->numberOfDaughters()-1).key();
-         }
-         const reco::Candidate * mother = gp->mother(0);
-         higgs_dau_[n] = false;
-         if ( mother != NULL ) {  // initial protons are orphans
-            if ( mother->pdgId() == 36 || mother->pdgId() == 25 )
-               higgs_dau_[n] = true;
-         }
-         mass_[n] = gp->mass();
-      }
-            
-      // PAT MUONS
-      if ( is_patmuon_ ) {
-         pat::Muon * muon = dynamic_cast<pat::Muon*> (&candidates_[i]);
-         const reco::Vertex::Point vtxp  = muon->reco::LeafCandidate::vertex();
-         const reco::Vertex::Error error ; 
-         //const reco::Vertex::Error error = muon->reco::LeafCandidate::vertexCovariance(); not implemented at edm level
-         
-         const reco::Vertex vtx ( vtxp, error ) ;
+      // Return JER
+      jerResolution_[n]    = res_.getResolution(jerParamRes);
 
-         isPFMuon_       [n] = muon->isPFMuon()     ;
-         isGlobalMuon_   [n] = muon->isGlobalMuon() ;
-         isTrackerMuon_  [n] = muon->isTrackerMuon();
-         
-         isLooseMuon_    [n] = muon->isLooseMuon() ; 
-         isMediumMuon_   [n] = muon->isMediumMuon(); 
-         isTightMuon_    [n] = muon->isTightMuon( vtx ) ;
- 
-         // default values
-         segmentCompatibility_      [n] = -1.;
-         validFraction_             [n] = -1.;
-         matchedStations_           [n] = 9999.;
-         validPixelHits_            [n] = 9999.;
-         validMuonHits_             [n] = 9999.;
-         trkLayersWithMeasurement_  [n] = 9999.;
-         trkKink_                   [n] = 9999.;
-         ipxy_                      [n] = 9999.;
-         ipz_                       [n] = 9999.;
-         normChi2_                  [n] = 9999.;
-         chi2LocalPos_              [n] = 9999.;
-    
-         
-         if ( isPFMuon_[n] && ( isGlobalMuon_[n] || isTrackerMuon_[n] ) ) {
-           // muon chamber stations      
-           segmentCompatibility_   [n] = muon->segmentCompatibility()       ; // medium muon
-           matchedStations_        [n] = muon->numberOfMatchedStations()    ; // at least 2 in tight 
- 
-           //inner tracker
-           validFraction_             [n] = muon->innerTrack()->validFraction()                             ;  
-           validPixelHits_            [n] = muon->innerTrack()->hitPattern().numberOfValidPixelHits()       ; 
-           trkLayersWithMeasurement_  [n] = muon->innerTrack()->hitPattern().trackerLayersWithMeasurement() ;
- 
-           //transverse and longitudinal ip - tracker only 
-           ipxy_[n] = fabs(muon->muonBestTrack()->dxy(vtx.position()))     ; 
-           ipz_ [n] = fabs(muon->muonBestTrack()->dz (vtx.position()))     ; 
+      JME::JetParameters jerParamSF;
+      jerParamSF.set(JME::Binning::JetPt, pt_[n]);
+      jerParamSF.set(JME::Binning::JetEta, eta_[n]);
+      jerParamSF.set(JME::Binning::Rho, rho_);
 
-           //global tracker - only for GlobalMuons
-           if ( isGlobalMuon_[n] ) {
-              normChi2_    [n] = muon->normChi2();                         
-              trkKink_     [n] = muon->combinedQuality().trkKink;          
-              chi2LocalPos_[n] = muon->combinedQuality().chi2LocalPosition;
-              validMuonHits_[n] = muon->globalTrack()->hitPattern().numberOfValidMuonHits();
-           }
-        }
-      }
-
-      // PAT JETS
-      if ( is_patjet_ ) {
-         pat::Jet * jet = dynamic_cast<pat::Jet*> (&candidates_[i]);
-                  
-         for ( size_t it = 0 ; it < btag_vars_.size() ; ++it )  {
-            btag_[it][n] = jet->bDiscriminator(btag_vars_[it].title);
-         }
-         
-         if ( jet -> isPFJet() || jet -> isJPTJet() ) {
-            jetid_[0][n] = jet->neutralHadronEnergyFraction();
-            jetid_[1][n] = jet->neutralEmEnergyFraction();
-            if ( jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") ) {
-               jetid_[2][n] = jet->userFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity");
-            }
-            else {
-               jetid_[2][n] = (float)jet->neutralMultiplicity();
-            }
-            jetid_[3][n] = jet->chargedHadronEnergyFraction();
-            jetid_[4][n] = jet->chargedEmEnergyFraction();
-            if ( jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") && jet->hasUserFloat("patPuppiJetSpecificProducer:puppiMultiplicity") ) {
-               jetid_[5][n] = jet->userFloat("patPuppiJetSpecificProducer:puppiMultiplicity") - jet->userFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity");
-               jetid_[7][n] = 1.;
-            } else {
-               jetid_[5][n] = (float)jet->chargedMultiplicity();
-               jetid_[7][n] = -1.;
-            }
-            jetid_[6][n] = jet->muonEnergyFraction();
-            ijetid_[0][n]  = -1;
-            ijetid_[1][n]  = -1;
-            ijetid_[2][n]  = -1;
-            if ( jet->hasUserInt("looseId") ) ijetid_[0][n] = jet->userInt("looseId");
-            if ( jet->hasUserInt("tightId") ) ijetid_[1][n] = jet->userInt("tightId");
-            if ( jet->hasUserInt("tightIdLepVeto") ) ijetid_[2][n] = jet->userInt("tightIdLepVeto");
-         } else {  // set some dummy values
-            for ( size_t ii = 0; ii < id_vars_.size(); ++ii )  jetid_[ii][n] = -1.;
-         }
-         flavour_        [n] = 0;
-         hadronFlavour_  [n] = 0;
-         partonFlavour_  [n] = 0;
-         physicsFlavour_ [n] = 0;
-         if ( is_mc_ ) {
-            flavour_       [n]  = jet->hadronFlavour();
-            hadronFlavour_ [n]  = jet->hadronFlavour();
-            partonFlavour_ [n]  = jet->partonFlavour();
-            if (jet->genParton())
-            physicsFlavour_[n] = jet->genParton()->pdgId();
-         }
-         
-         // JEC Uncertainties
-         if ( jecRecord_ != "" ) {
-            jecUnc_->setJetEta(eta_[n]);
-            jecUnc_->setJetPt(pt_[n]);
-            jecUncert_[n] = jecUnc_->getUncertainty(true);
-         } else {
-            jecUncert_[n] = -1.;
-         }
-         //JER
-         if( jerRecord_ != "" ) {
-          // SetUp Jet parameters
-            JME::JetParameters jerParamRes;
-            jerParamRes.setJetPt(pt_[n]);
-            jerParamRes.setJetEta(eta_[n]);
-            jerParamRes.setRho(rho_);
-            
-            // Return JER
-            jerResolution_[n]    = res_.getResolution(jerParamRes);
-
-            JME::JetParameters jerParamSF;
-            jerParamSF.set(JME::Binning::JetPt, pt_[n]);
-            jerParamSF.set(JME::Binning::JetEta, eta_[n]);
-            jerParamSF.set(JME::Binning::Rho, rho_);
-
-            jerSF_[n]       = res_sf_.getScaleFactor(jerParamSF);
-            jerSFUp_[n]     = res_sf_.getScaleFactor(jerParamSF,Variation::UP);
-            jerSFDown_[n]   = res_sf_.getScaleFactor(jerParamSF,Variation::DOWN);
-            
-         } else {
-            jerResolution_[n] = -1;
-            jerSF_[n]         = -1;
-            jerSFUp_[n]       = -1;
-            jerSFDown_[n]     = -1;
-         } 
-         
-      } // end PAT::Jet
-   
-      if ( is_patmet_ )  {
-         pat::MET * met = dynamic_cast<pat::MET*> (&candidates_[i]);
-         sigxx_[n] = met->getSignificanceMatrix()(0,0);
-         sigxy_[n] = met->getSignificanceMatrix()(0,1);
-         sigyx_[n] = met->getSignificanceMatrix()(1,0);
-         sigyy_[n] = met->getSignificanceMatrix()(1,1);
-         if ( is_mc_ )  {
-            const reco::GenMET * genMET = met->genMET();
-            gen_px_[n] = genMET->px();;
-            gen_py_[n] = genMET->py();;
-            gen_pz_[n] = genMET->pz();;
-         }
-      }
-
-      if ( is_trigobject_ ) {
-         pat::TriggerObject * to = dynamic_cast<pat::TriggerObject*> (&candidates_[i]);
-         type_[n] = 0;
-         if ( to->triggerObjectTypes().size() > 0 )
-            type_[n] = to->triggerObjectTypes().at(0);
-      }
-      ++n;
-   }
-   n_ = n;
+      jerSF_[n]       = res_sf_.getScaleFactor(jerParamSF);
+      jerSFUp_[n]     = res_sf_.getScaleFactor(jerParamSF,Variation::UP);
+      jerSFDown_[n]   = res_sf_.getScaleFactor(jerParamSF,Variation::DOWN);
+      
+   } else {
+      jerResolution_[n] = -1;
+      jerSF_[n]         = -1;
+      jerSFUp_[n]       = -1;
+      jerSFDown_[n]     = -1;
+   } 
+   return 0;
 }
 
 template <>
-void Candidates<l1t::Jet>::Kinematics() {
-   int n = 0;
-   for ( size_t i = 0 ; i < candidates_.size(); ++i ) {
-      l1t::Jet * cand = dynamic_cast<l1t::Jet*> (&candidates_[i]);
-      if ( n >= maxCandidates ) break;
-      pt_[n]  = cand->pt();
-      eta_[n] = cand->eta();
-      phi_[n] = cand->phi();
-      px_[n]  = cand->px();
-      py_[n]  = cand->py();
-      pz_[n]  = cand->pz();
-      e_[n]   = cand->energy();
-      et_[n]  = cand->et();
-      q_[n]   = cand->charge();
-      ++n;
+int Candidates<pat::Muon>::AdditionalProperties(int n, size_t i) {
+   pat::Muon * cand_muon = dynamic_cast<pat::Muon*> (&candidates_[i]);
+   const reco::Vertex::Point muon_vertex_point  = cand_muon->reco::LeafCandidate::vertex();
+   const reco::Vertex::Error muon_vertex_error ; 
+
+   const reco::Vertex vtx ( muon_vertex_point, muon_vertex_error ) ;
+
+   isPFMuon_       [n] = cand_muon->isPFMuon()     ;
+   isGlobalMuon_   [n] = cand_muon->isGlobalMuon() ;
+   isTrackerMuon_  [n] = cand_muon->isTrackerMuon();
+
+   isLooseMuon_    [n] = cand_muon->isLooseMuon() ; 
+   isMediumMuon_   [n] = cand_muon->isMediumMuon(); 
+   isTightMuon_    [n] = cand_muon->isTightMuon( vtx ) ;
+
+   // default values
+   segmentCompatibility_      [n] = -1.;
+   validFraction_             [n] = -1.;
+   matchedStations_           [n] = 9999.;
+   validPixelHits_            [n] = 9999.;
+   validMuonHits_             [n] = 9999.;
+   trkLayersWithMeasurement_  [n] = 9999.;
+   trkKink_                   [n] = 9999.;
+   ipxy_                      [n] = 9999.;
+   ipz_                       [n] = 9999.;
+   normChi2_                  [n] = 9999.;
+   chi2LocalPos_              [n] = 9999.;
+
+
+   if ( isPFMuon_[n] && ( isGlobalMuon_[n] || isTrackerMuon_[n] ) ) {
+      // muon chamber stations      
+      segmentCompatibility_   [n] = cand_muon->segmentCompatibility()       ; // medium muon
+      matchedStations_        [n] = cand_muon->numberOfMatchedStations()    ; // at least 2 in tight 
+
+      //inner tracker
+      validFraction_             [n] = cand_muon->innerTrack()->validFraction()                             ;  
+      validPixelHits_            [n] = cand_muon->innerTrack()->hitPattern().numberOfValidPixelHits()       ; 
+      trkLayersWithMeasurement_  [n] = cand_muon->innerTrack()->hitPattern().trackerLayersWithMeasurement() ;
+
+      //transverse and longitudinal ip - tracker only 
+      ipxy_[n] = fabs(cand_muon->muonBestTrack()->dxy(vtx.position()))     ; 
+      ipz_ [n] = fabs(cand_muon->muonBestTrack()->dz (vtx.position()))     ; 
+
+      //global tracker - only for GlobalMuons
+      if ( isGlobalMuon_[n] ) {
+         normChi2_    [n] = cand_muon->normChi2();                         
+         trkKink_     [n] = cand_muon->combinedQuality().trkKink;          
+         chi2LocalPos_[n] = cand_muon->combinedQuality().chi2LocalPosition;
+         validMuonHits_[n] = cand_muon->globalTrack()->hitPattern().numberOfValidMuonHits();
+      }
    }
-   n_ = n;
+   return 0;
 }
 
 template <>
-void Candidates<l1t::Muon>::Kinematics() {
-   int n = 0;
-   for ( size_t i = 0 ; i < candidates_.size(); ++i ) {
-      l1t::Muon * cand = dynamic_cast<l1t::Muon*> (&candidates_[i]);
-      if ( n >= maxCandidates ) break;
-      pt_[n]       = cand->pt();
-      eta_[n]      = cand->eta();
-      phi_[n]      = cand->phi();
-      px_[n]       = cand->px();
-      py_[n]       = cand->py();
-      pz_[n]       = cand->pz();
-      e_[n]        = cand->energy();
-      et_[n]       = cand->et();
-      q_[n]        = cand->charge();
-      hwQual_[n]   = cand->hwQual();
-      etaAtVtx_[n] = cand->etaAtVtx();
-      phiAtVtx_[n] = cand->phiAtVtx();
-      ++n;
+int Candidates<pat::MET>::AdditionalProperties(int n, size_t i) {
+   pat::MET * cand_met = dynamic_cast<pat::MET*> (&candidates_[i]);
+   sigxx_[n] = cand_met->getSignificanceMatrix()(0,0);
+   sigxy_[n] = cand_met->getSignificanceMatrix()(0,1);
+   sigyx_[n] = cand_met->getSignificanceMatrix()(1,0);
+   sigyy_[n] = cand_met->getSignificanceMatrix()(1,1);
+   if ( is_mc_ )  {
+      const reco::GenMET * genMET = cand_met->genMET();
+      gen_px_[n] = genMET->px();;
+      gen_py_[n] = genMET->py();;
+      gen_pz_[n] = genMET->pz();;
    }
-   n_ = n;
+   return 0;
+}
+
+template <>
+int Candidates<reco::GenJet>::AdditionalProperties(int n, size_t i) {
+   return 0;
+}
+
+template <>
+int Candidates<reco::GenParticle>::AdditionalProperties(int n, size_t i) {
+   reco::GenParticle * cand_genpart = dynamic_cast<reco::GenParticle*> (&candidates_[i]);
+   int pdg    = cand_genpart -> pdgId();
+   if ( abs(pdg) > 38 ) return -1;
+   int status = cand_genpart -> status();  // any status selection?
+   indx_[n] = i;
+   pdg_[n]   = pdg;
+   status_[n]= status;
+   mass_[n] = cand_genpart->mass();
+   lastcopy_[n] = cand_genpart -> isLastCopy();
+   // mothers
+   mo1_[n] = -1;
+   mo2_[n] = -1;
+   if ( cand_genpart->numberOfMothers() > 0 ) {
+      mo1_[n] = cand_genpart->motherRef(0).key();
+      mo2_[n] = cand_genpart->motherRef(cand_genpart->numberOfMothers()-1).key();
+   }
+   // daughters
+   da1_[n] = -1;
+   da2_[n] = -1;
+   if ( cand_genpart->numberOfDaughters() > 0 ) {
+      da1_[n] = cand_genpart->daughterRef(0).key();
+      da2_[n] = cand_genpart->daughterRef(cand_genpart->numberOfDaughters()-1).key();
+   }
+   const reco::Candidate * mother = cand_genpart->mother(0);  // Higgs daughters (TODO: improve)
+   higgs_dau_[n] = false;
+   if ( mother != NULL ) {  // initial protons are orphans
+      if ( mother->pdgId() == 36 || mother->pdgId() == 25 )
+         higgs_dau_[n] = true;
+   }
+   return 0;
+}
+
+template <>
+int Candidates<l1t::Jet>::AdditionalProperties(int n, size_t i) {
+   return 0;
+}
+
+template <>
+int Candidates<l1t::Muon>::AdditionalProperties(int n, size_t i) {
+   l1t::Muon * cand_l1tmuon = dynamic_cast<l1t::Muon*> (&candidates_[i]);
+   hwQual_[n]   = cand_l1tmuon->hwQual();
+   etaAtVtx_[n] = cand_l1tmuon->etaAtVtx();
+   phiAtVtx_[n] = cand_l1tmuon->phiAtVtx();   
+
+   return 0;
+}
+
+template <>
+int Candidates<pat::TriggerObject>::AdditionalProperties(int n, size_t i) {
+   pat::TriggerObject * cand_trigger_object = dynamic_cast<pat::TriggerObject*> (&candidates_[i]);
+   type_[n] = 0;
+   if ( cand_trigger_object->triggerObjectTypes().size() > 0 )
+      type_[n] = cand_trigger_object->triggerObjectTypes().at(0);
+
+   return 0;
 }
 
 template <typename T>
@@ -515,7 +461,7 @@ void Candidates<T>::Fill() {
 template <typename T>
 void Candidates<T>::Fill(const edm::Event& event) {
    ReadFromEvent(event);
-   Kinematics();
+   Properties();
    Fill();
 }
 
@@ -668,8 +614,6 @@ template <typename T>
 void Candidates<T>::UseTriggerResults(edm::InputTag& tr) {
    triggerresults_collection_ = tr;
 }
-
-
 
 template <typename T>
 void Candidates<T>::AddJecInfo( const std::string & jec ) {
