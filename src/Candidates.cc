@@ -28,8 +28,6 @@
 #include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
 #include "DataFormats/L1Trigger/interface/Jet.h"
 #include "DataFormats/L1Trigger/interface/Muon.h"
-#include "DataFormats/MuonReco/interface/Muon.h"
-#include "DataFormats/MuonReco/interface/MuonFwd.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
@@ -60,48 +58,41 @@ namespace analysis {
       template <> void Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event);
       template <> void Candidates<pat::TriggerObject>::TriggerObjectType(const std::string& trigobj_type);
       template <> void Candidates<pat::Jet>::JECRecord(const std::string & jr);
-      template <> void Candidates<trigger::TriggerObject>::ReadFromEvent(const edm::Event& event);
       template <> void Candidates<l1t::Jet>::ReadFromEvent(const edm::Event& event);
       template <> void Candidates<l1t::Muon>::ReadFromEvent(const edm::Event& event);
-      template <> void Candidates<trigger::TriggerObject>::Kinematics();
       template <> void Candidates<l1t::Jet>::Kinematics();
       template <> void Candidates<l1t::Muon>::Kinematics();
- }
+   }
 }   
 //
 // constructors and destructor
 //
 template <typename T>
-Candidates<T>::Candidates()
-{
+Candidates<T>::Candidates() {
    // default constructor
 }
 
 template <typename T>
 Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc, float minPt, float maxEta ) :
-      minPt_(minPt), maxEta_(maxEta)
-{
+      minPt_(minPt), maxEta_(maxEta) {
+   
    input_collection_ = tag;
    tree_ = tree;
    
    is_mc_              = mc;
-   is_recomuon_        = std::is_same<T,reco::Muon>::value;
    is_patjet_          = std::is_same<T,pat::Jet>::value;
    is_patmuon_         = std::is_same<T,pat::Muon>::value;
    is_patmet_          = std::is_same<T,pat::MET>::value;
    is_genjet_          = std::is_same<T,reco::GenJet>::value;
    is_genparticle_     = std::is_same<T,reco::GenParticle>::value;
    is_trigobject_      = std::is_same<T,pat::TriggerObject>::value;
-   is_trigobject_reco_ = std::is_same<T,trigger::TriggerObject>::value;
    is_l1tjet_          = std::is_same<T,l1t::Jet>::value;
    is_l1tmuon_         = std::is_same<T,l1t::Muon>::value;
    
-//   do_kinematics_ = ( is_l1jet_ || is_l1muon_ || is_calojet_ || is_pfjet_ || is_patjet_ || is_patmuon_ || is_genjet_ || is_genparticle_ );
    do_kinematics_ = true;
    do_generator_  = ( is_mc_ && is_genparticle_ );
    
    higgs_pdg_ = 36;
-   
    
    std::string title = boost::core::demangle(typeid(T).name()) + " | " + tree_->GetTitle();
    
@@ -140,8 +131,7 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
 }
 
 template <typename T>
-Candidates<T>::~Candidates()
-{
+Candidates<T>::~Candidates() {
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 }
@@ -153,8 +143,7 @@ Candidates<T>::~Candidates()
 
 // ------------ method called for each event  ------------
 template <typename T>
-void Candidates<T>::ReadFromEvent(const edm::Event& event)
-{
+void Candidates<T>::ReadFromEvent(const edm::Event& event) {
    using namespace edm;
 
    // Candidates
@@ -165,8 +154,7 @@ void Candidates<T>::ReadFromEvent(const edm::Event& event)
 }
 // Specialization for l1t jets
 template <>
-void Candidates<l1t::Jet>::ReadFromEvent(const edm::Event& event)
-{
+void Candidates<l1t::Jet>::ReadFromEvent(const edm::Event& event) {
    using namespace edm;
 
    // Candidates
@@ -174,19 +162,17 @@ void Candidates<l1t::Jet>::ReadFromEvent(const edm::Event& event)
    edm::Handle<l1t::JetBxCollection> handler;
    event.getByLabel(input_collection_, handler);
    BXVector<l1t::Jet> l1jets = *(handler.product());
-   for ( auto l1jet : l1jets )
-   {
+   for ( auto l1jet : l1jets ) {
       candidates_.push_back(l1jet);
    }
-      // Sort the objects by pt
+   // Sort the objects by pt
    NumericSafeGreaterByPt<l1t::Jet> l1tjetGreaterByPt;
    std::sort (candidates_.begin(), candidates_.end(),l1tjetGreaterByPt);
 
 }
 // Specialization for l1t muons
 template <>
-void Candidates<l1t::Muon>::ReadFromEvent(const edm::Event& event)
-{
+void Candidates<l1t::Muon>::ReadFromEvent(const edm::Event& event) {
    using namespace edm;
 
    // Candidates
@@ -194,11 +180,10 @@ void Candidates<l1t::Muon>::ReadFromEvent(const edm::Event& event)
    edm::Handle<l1t::MuonBxCollection> handler;
    event.getByLabel(input_collection_, handler);
    BXVector<l1t::Muon> l1muons = *(handler.product());
-   for ( auto l1muon : l1muons )
-   {
+   for ( auto l1muon : l1muons ) {
       candidates_.push_back(l1muon);
    }
-      // Sort the objects by pt
+   // Sort the objects by pt
    NumericSafeGreaterByPt<l1t::Muon> l1tmuonGreaterByPt;
    std::sort (candidates_.begin(), candidates_.end(),l1tmuonGreaterByPt);
 
@@ -206,13 +191,11 @@ void Candidates<l1t::Muon>::ReadFromEvent(const edm::Event& event)
 
 // Specialization for trigger objects (pat)
 template <>
-void Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event)
-{
-   using namespace edm;
+void Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event) {
    
-   Handle<TriggerResults> trhandler;
+   edm::Handle<edm::TriggerResults> trhandler;
    event.getByLabel(triggerresults_collection_, trhandler);
-   const TriggerResults & trgres = *(trhandler.product());
+   const edm::TriggerResults & trgres = *(trhandler.product());
    
    candidates_.clear();
    // The stand alone collection
@@ -223,37 +206,23 @@ void Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event)
    const std::string delimiter = "_";
    std::string label = treename.substr(0, treename.find(delimiter));
 
-   for ( auto ito : *handler )
-   {
+   for ( auto ito : *handler ) {
       ito.unpackFilterLabels(event,trgres);
-      if ( ito.filter(label) )
-      {
-         if ( trigobj_type_ != "" )
-         {
+      if ( ito.filter(label) ) {
+         if ( trigobj_type_ != "" ) {
             int type = ito.triggerObject().triggerObjectTypes().at(0);
-            if ( trigobj_type_ == "l1muon" )
-            {
+            if ( trigobj_type_ == "l1muon" ) {
                if ( type == trigger::TriggerL1Mu )               candidates_.push_back(ito.triggerObject());
-            }
-            else if ( trigobj_type_ == "l1jet" )
-            {
+            } else if ( trigobj_type_ == "l1jet" ) {
                if ( type == trigger::TriggerL1Jet  )             candidates_.push_back(ito.triggerObject());
-            }
-            else if ( trigobj_type_ == "hltmuon" )
-            {
+            } else if ( trigobj_type_ == "hltmuon" ) {
                if ( type == trigger::TriggerMuon )               candidates_.push_back(ito.triggerObject());
-            }
-            else if ( trigobj_type_ == "hltjet" )
-            {
+            } else if ( trigobj_type_ == "hltjet" ) {
                if ( type == trigger::TriggerJet )                candidates_.push_back(ito.triggerObject());
-            }
-            else if ( trigobj_type_ == "hltbjet" )
-            {
+            } else if ( trigobj_type_ == "hltbjet" ) {
                if ( type == trigger::TriggerBJet )               candidates_.push_back(ito.triggerObject());
             }
-         }
-         else
-         {
+         } else {
             candidates_.push_back(ito.triggerObject());
          }
       }
@@ -264,47 +233,12 @@ void Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event)
    std::sort (candidates_.begin(), candidates_.end(),triggerObjectGreaterByPt);
 }
 template <>
-void Candidates<pat::TriggerObject>::TriggerObjectType(const std::string& trigobj_type)
-{
+void Candidates<pat::TriggerObject>::TriggerObjectType(const std::string& trigobj_type) {
    trigobj_type_ = trigobj_type;
 }
 
-// Specialization for trigger objects (trigger - reco)
-template <>
-void Candidates<trigger::TriggerObject>::ReadFromEvent(const edm::Event& event)
-{
-   using namespace edm;
-   
-   candidates_.clear();
-   // The stand alone collection
-   
-   edm::Handle<trigger::TriggerEvent> handler;
-   event.getByLabel(input_collection_, handler);
-   
-   const std::string treename = tree_ -> GetName(); // using the label to name the tree
-   const std::string delimiter = "_";
-   const std::string processName(handler->usedProcessName());
-   std::string label = treename.substr(0, treename.find(delimiter));
-   const unsigned int filterIndex(handler->filterIndex(InputTag(label,"",processName)));
-   if ( filterIndex < handler->sizeFilters() )
-   {
-      const trigger::Keys& keys(handler->filterKeys(filterIndex));
-      const trigger::TriggerObjectCollection & triggerObjects = handler->getObjects();
-      for ( auto & key : keys )
-      {
-         candidates_.reserve(candidates_.size()+keys.size()); 
-         candidates_.push_back(triggerObjects[key]);
-      }
-   }
-   
-   // Sort the objects by pt
-   NumericSafeGreaterByPt<trigger::TriggerObject> triggerObjectGreaterByPt;
-   std::sort (candidates_.begin(), candidates_.end(),triggerObjectGreaterByPt);
-}
-
 template <typename T>
-void Candidates<T>::Kinematics()
-{
+void Candidates<T>::Kinematics() {
    using namespace edm;
    
    int n = 0;
@@ -314,6 +248,16 @@ void Candidates<T>::Kinematics()
       if ( minPt_  >= 0. && candidates_[i].pt()  < minPt_  ) continue;
       if ( maxEta_ >= 0. && fabs(candidates_[i].eta()) > maxEta_ ) continue;
 
+      pt_[n]  = candidates_[i].pt();
+      eta_[n] = candidates_[i].eta();
+      phi_[n] = candidates_[i].phi();
+      px_[n]  = candidates_[i].px();
+      py_[n]  = candidates_[i].py();
+      pz_[n]  = candidates_[i].pz();
+      q_[n]   = candidates_[i].charge();
+      e_[n]   = candidates_[i].energy();
+      et_[n]  = candidates_[i].et();
+      
       if ( is_genparticle_ ) {
          reco::GenParticle * gp = dynamic_cast<reco::GenParticle*> (&candidates_[i]);
          int pdg    = gp -> pdgId();
@@ -347,16 +291,6 @@ void Candidates<T>::Kinematics()
          mass_[n] = gp->mass();
       }
             
-      pt_[n]  = candidates_[i].pt();
-      eta_[n] = candidates_[i].eta();
-      phi_[n] = candidates_[i].phi();
-      px_[n]  = candidates_[i].px();
-      py_[n]  = candidates_[i].py();
-      pz_[n]  = candidates_[i].pz();
-      q_[n]   = candidates_[i].charge();
-      e_[n]   = candidates_[i].energy();
-      et_[n]  = candidates_[i].et();
-      
       // PAT MUONS
       if ( is_patmuon_ ) {
          pat::Muon * muon = dynamic_cast<pat::Muon*> (&candidates_[i]);
@@ -403,32 +337,18 @@ void Candidates<T>::Kinematics()
            ipz_ [n] = fabs(muon->muonBestTrack()->dz (vtx.position()))     ; 
 
            //global tracker - only for GlobalMuons
-           if ( isGlobalMuon_[n] ) 
-           {
+           if ( isGlobalMuon_[n] ) {
               normChi2_    [n] = muon->normChi2();                         
               trkKink_     [n] = muon->combinedQuality().trkKink;          
               chi2LocalPos_[n] = muon->combinedQuality().chi2LocalPosition;
               validMuonHits_[n] = muon->globalTrack()->hitPattern().numberOfValidMuonHits();
            }
         }
-     }
+      }
 
       // PAT JETS
       if ( is_patjet_ ) {
          pat::Jet * jet = dynamic_cast<pat::Jet*> (&candidates_[i]);
-         
-//         std::string sv = "pfSecondaryVertexTagInfos";
-//         std::cout << "oioi   " << sv << std::endl;
-//         const reco::SecondaryVertexTagInfo * svTI = jet->tagInfoSecondaryVertex("secondaryVertex");
-//         std::cout << "oioi   " << svTI << std::endl;
-
-//          //          
-//          std::vector<std::string> tagNames = jet -> userIntNames();
-//          std::cout << "Jet has " << tagNames.size() << " tags" << std::endl;
-//          for ( size_t it = 0 ; it < tagNames.size() ; ++it ) 
-//          {
-//             std::cout << "    Tag Name = " << tagNames[it] << std::endl;
-//          }
          
          if ( jet->hasUserFloat("bJetRegCorr") ) bjetRegCorr_[n] = jet->userFloat("bJetRegCorr");
          else                                    bjetRegCorr_[n] = 1;
@@ -436,54 +356,43 @@ void Candidates<T>::Kinematics()
          if ( jet->hasUserFloat("bJetRegRes") )  bjetRegRes_[n] = jet->userFloat("bJetRegRes");
          else                                    bjetRegRes_[n] = 1;
          
-         for ( size_t it = 0 ; it < btag_vars_.size() ; ++it )
-         {
+         for ( size_t it = 0 ; it < btag_vars_.size() ; ++it )  {
             btag_[it][n] = jet->bDiscriminator(btag_vars_[it].title);
          }
          
-         if ( jet -> isPFJet() || jet -> isJPTJet() ) 
-         {
+         if ( jet -> isPFJet() || jet -> isJPTJet() ) {
             jetid_[0][n] = jet->neutralHadronEnergyFraction();
             jetid_[1][n] = jet->neutralEmEnergyFraction();
-            if ( jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") )
-            {
+            if ( jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") ) {
                jetid_[2][n] = jet->userFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity");
             }
-            else
-            {
+            else {
                jetid_[2][n] = (float)jet->neutralMultiplicity();
             }
             jetid_[3][n] = jet->chargedHadronEnergyFraction();
             jetid_[4][n] = jet->chargedEmEnergyFraction();
-            if ( jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") && jet->hasUserFloat("patPuppiJetSpecificProducer:puppiMultiplicity") )
-            {
+            if ( jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") && jet->hasUserFloat("patPuppiJetSpecificProducer:puppiMultiplicity") ) {
                jetid_[5][n] = jet->userFloat("patPuppiJetSpecificProducer:puppiMultiplicity") - jet->userFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity");
                jetid_[7][n] = 1.;
-            }
-            else
-            {
+            } else {
                jetid_[5][n] = (float)jet->chargedMultiplicity();
                jetid_[7][n] = -1.;
             }
             jetid_[6][n] = jet->muonEnergyFraction();
-            
             ijetid_[0][n]  = -1;
             ijetid_[1][n]  = -1;
             ijetid_[2][n]  = -1;
             if ( jet->hasUserInt("looseId") ) ijetid_[0][n] = jet->userInt("looseId");
             if ( jet->hasUserInt("tightId") ) ijetid_[1][n] = jet->userInt("tightId");
             if ( jet->hasUserInt("tightIdLepVeto") ) ijetid_[2][n] = jet->userInt("tightIdLepVeto");
-         }
-         else  // set some dummy values
-         {
+         } else {  // set some dummy values
             for ( size_t ii = 0; ii < id_vars_.size(); ++ii )  jetid_[ii][n] = -1.;
          }
          flavour_        [n] = 0;
          hadronFlavour_  [n] = 0;
          partonFlavour_  [n] = 0;
          physicsFlavour_ [n] = 0;
-         if ( is_mc_ )
-         {
+         if ( is_mc_ ) {
             flavour_       [n]  = jet->hadronFlavour();
             hadronFlavour_ [n]  = jet->hadronFlavour();
             partonFlavour_ [n]  = jet->partonFlavour();
@@ -492,19 +401,15 @@ void Candidates<T>::Kinematics()
          }
          
          // JEC Uncertainties
-         if ( jecRecord_ != "" )
-         {
+         if ( jecRecord_ != "" ) {
             jecUnc_->setJetEta(eta_[n]);
             jecUnc_->setJetPt(pt_[n]);
             jecUncert_[n] = jecUnc_->getUncertainty(true);
-         }
-         else
-         {
+         } else {
             jecUncert_[n] = -1.;
          }
          //JER
-         if( jerRecord_ != "" )
-         {
+         if( jerRecord_ != "" ) {
           // SetUp Jet parameters
             JME::JetParameters jerParamRes;
             jerParamRes.setJetPt(pt_[n]);
@@ -523,9 +428,7 @@ void Candidates<T>::Kinematics()
             jerSFUp_[n]     = res_sf_.getScaleFactor(jerParamSF,Variation::UP);
             jerSFDown_[n]   = res_sf_.getScaleFactor(jerParamSF,Variation::DOWN);
             
-         }
-         else
-         {
+         } else {
             jerResolution_[n] = -1;
             jerSF_[n]         = -1;
             jerSFUp_[n]       = -1;
@@ -535,37 +438,30 @@ void Candidates<T>::Kinematics()
          // quark-gluon likelihood
          qgLikelihood_[n] = -10.;
          std::string qgkey = qgtaggerInst_+":qgLikelihood";
-         if ( jet -> hasUserFloat(qgkey) )
-         {
+         if ( jet -> hasUserFloat(qgkey) )  {
             qgLikelihood_[n] = jet->userFloat(qgkey);
          }
          
          // jet pileup id
          puJetIdFullDiscr_[n] = -10.;
          std::string pudisckey = pujetidInst_+":fullDiscriminant";
-         if ( jet -> hasUserFloat(pudisckey) )
-         {
+         if ( jet -> hasUserFloat(pudisckey) ) {
             puJetIdFullDiscr_[n] = jet -> userFloat(pudisckey);
          }
          puJetIdFullId_[n] = -1;
          std::string puidkey = pujetidInst_+":fullId";
-         if ( jet -> hasUserInt(puidkey) )
-         {
+         if ( jet -> hasUserInt(puidkey) ) {
             puJetIdFullId_[n] = jet -> userInt(puidkey);
          }
-         
-         
       } // end PAT::Jet
       
-      if ( is_patmet_ )
-      {
+      if ( is_patmet_ )  {
          pat::MET * met = dynamic_cast<pat::MET*> (&candidates_[i]);
          sigxx_[n] = met->getSignificanceMatrix()(0,0);
          sigxy_[n] = met->getSignificanceMatrix()(0,1);
          sigyx_[n] = met->getSignificanceMatrix()(1,0);
          sigyy_[n] = met->getSignificanceMatrix()(1,1);
-         if ( is_mc_ )
-         {
+         if ( is_mc_ )  {
             const reco::GenMET * genMET = met->genMET();
             gen_px_[n] = genMET->px();;
             gen_py_[n] = genMET->py();;
@@ -573,54 +469,15 @@ void Candidates<T>::Kinematics()
          }
       }
       
-      if ( is_trigobject_ )
-      {
+      if ( is_trigobject_ ) {
          pat::TriggerObject * to = dynamic_cast<pat::TriggerObject*> (&candidates_[i]);
          type_[n] = 0;
          if ( to->triggerObjectTypes().size() > 0 )
             type_[n] = to->triggerObjectTypes().at(0);
       }
-      if ( is_trigobject_reco_ )
-      {
-         trigger::TriggerObject * to = dynamic_cast<trigger::TriggerObject*> (&candidates_[i]);
-         type_[n] = to -> id();
-      }
-      
-      ++n;
-   }
-   
-   n_ = n;
-
-}
-
-template <>
-void Candidates<trigger::TriggerObject>::Kinematics()
-{
-   using namespace edm;
-
-   int n = 0;
-   for ( size_t i = 0 ; i < candidates_.size(); ++i )
-   {
-      if ( n >= maxCandidates ) break;
-      
-      if ( minPt_  >= 0. && candidates_[i].pt()  < minPt_  ) continue;
-      if ( maxEta_ >= 0. && fabs(candidates_[i].eta()) > maxEta_ ) continue;
-
-      pt_[n]  = candidates_[i].pt();
-      eta_[n] = candidates_[i].eta();
-      phi_[n] = candidates_[i].phi();
-      px_[n]  = candidates_[i].px();
-      py_[n]  = candidates_[i].py();
-      pz_[n]  = candidates_[i].pz();
-      e_[n]   = candidates_[i].energy();
-      et_[n]  = candidates_[i].et();
-      q_[n]   = 0;
-      type_[n] = candidates_[i].id();
-      
       ++n;
    }
    n_ = n;
-
 }
 
 template <>
@@ -994,13 +851,11 @@ void Candidates<T>::PileupJetIdInstance(const std::string & instance)
 }
 
 // Need to declare all possible template classes here
-template class Candidates<reco::Muon>;
 template class Candidates<pat::Jet>;
 template class Candidates<pat::Muon>;
 template class Candidates<pat::MET>;
 template class Candidates<reco::GenJet>;
 template class Candidates<reco::GenParticle>;
 template class Candidates<pat::TriggerObject>;
-template class Candidates<trigger::TriggerObject>;
 template class Candidates<l1t::Jet>;
 template class Candidates<l1t::Muon>;

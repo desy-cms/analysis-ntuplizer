@@ -197,7 +197,6 @@ namespace analysis {
             
          private:
             bool is_patjet_;
-            bool is_recomuon_;
             bool is_patmuon_;
             bool is_genjet_;
             bool is_genparticle_;
@@ -226,7 +225,7 @@ namespace analysis {
             
       };
       // for the function specialisation - can also be done in .cc (keeping this comment for reference)
-//      template <> int Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event);
+      // template <> int Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event);
    }
 }
 
