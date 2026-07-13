@@ -208,7 +208,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       TokenMap<reco::VertexCollection>                   primary_vertices_tokens_;
       TokenMap<reco::GenJetCollection>                   genJetTokens_;
       TokenMap<reco::GenParticleCollection>              genPartTokens_;
-      TokenMap<reco::JetTagCollection>                   jetTagTokens_;
 
       std::shared_ptr<HLTPrescaleProvider> hltPrescaleProvider_;
       HLTConfigProvider                    hltConfigProvider_;
