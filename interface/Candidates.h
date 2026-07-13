@@ -84,7 +84,7 @@ namespace analysis {
             void MinPt(const float& minPt = -1.);
             void MaxEta(const float& maxEta = -1.);
             void JECRecord(const std::string &);
-            static const int maxCandidates = 500;
+            static constexpr int maxCandidates = 500;
          protected:
             // ----------member data ---------------------------
             std::vector<T> candidates_;
@@ -131,15 +131,13 @@ namespace analysis {
             float validMuonHits_[maxCandidates];                                                                                 
             float normChi2_[maxCandidates];
             // pat jet additional vars
-            float btag_[15][maxCandidates];
+            std::vector<std::vector<float>> btag_;
             int   flavour_[maxCandidates];
             int   hadronFlavour_[maxCandidates];
             int   partonFlavour_[maxCandidates];
             int   physicsFlavour_[maxCandidates];
-            float jetid_[15][maxCandidates];
-            int   ijetid_[15][maxCandidates];
+            std::vector<std::vector<float>> jetid_;
             std::vector<analysis::utils::TitleAlias>  id_vars_;
-            std::vector<analysis::utils::TitleAlias>  iid_vars_;
             // Jet energy resolution and scale correction
             float jecUncert_[maxCandidates];
             analysis::utils::JecESTokens jec_tokens_;

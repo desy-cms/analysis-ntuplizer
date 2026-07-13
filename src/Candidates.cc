@@ -102,12 +102,8 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    id_vars_.push_back({"chargedEmEnergyFraction",     "id_cEmFrac"  });
    id_vars_.push_back({"chargedMultiplicity",         "id_cMult"    });
    id_vars_.push_back({"muonEnergyFraction",          "id_muonFrac" });
-   id_vars_.push_back({"puppiJetsSpecific",           "id_puppi"    });
-   iid_vars_.clear();
-   iid_vars_.push_back({"looseId",                     "id_loose"    });
-   iid_vars_.push_back({"tightId",                     "id_tight"    });
-   iid_vars_.push_back({"tightIdLepVeto",              "id_tightLepVeto"});
-   
+   id_vars_.push_back({"numberOfDaughters",           "id_numConst" });
+
    // init
    btag_vars_.clear();
    
@@ -224,28 +220,12 @@ int Candidates<pat::Jet>::AdditionalProperties(int n, size_t i) {
    if ( cand_jet -> isPFJet() || cand_jet -> isJPTJet() ) {
       jetid_[0][n] = cand_jet->neutralHadronEnergyFraction();
       jetid_[1][n] = cand_jet->neutralEmEnergyFraction();
-      if ( cand_jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") ) {
-         jetid_[2][n] = cand_jet->userFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity");
-      }
-      else {
-         jetid_[2][n] = (float)cand_jet->neutralMultiplicity();
-      }
+      jetid_[2][n] = (float)cand_jet->neutralMultiplicity();
       jetid_[3][n] = cand_jet->chargedHadronEnergyFraction();
       jetid_[4][n] = cand_jet->chargedEmEnergyFraction();
-      if ( cand_jet->hasUserFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity") && cand_jet->hasUserFloat("patPuppiJetSpecificProducer:puppiMultiplicity") ) {
-         jetid_[5][n] = cand_jet->userFloat("patPuppiJetSpecificProducer:puppiMultiplicity") - cand_jet->userFloat("patPuppiJetSpecificProducer:neutralPuppiMultiplicity");
-         jetid_[7][n] = 1.;
-      } else {
-         jetid_[5][n] = (float)cand_jet->chargedMultiplicity();
-         jetid_[7][n] = -1.;
-      }
+      jetid_[5][n] = (float)cand_jet->chargedMultiplicity();
       jetid_[6][n] = cand_jet->muonEnergyFraction();
-      ijetid_[0][n]  = -1;
-      ijetid_[1][n]  = -1;
-      ijetid_[2][n]  = -1;
-      if ( cand_jet->hasUserInt("looseId") ) ijetid_[0][n] = cand_jet->userInt("looseId");
-      if ( cand_jet->hasUserInt("tightId") ) ijetid_[1][n] = cand_jet->userInt("tightId");
-      if ( cand_jet->hasUserInt("tightIdLepVeto") ) ijetid_[2][n] = cand_jet->userInt("tightIdLepVeto");
+      jetid_[7][n] = cand_jet->numberOfDaughters();
    } else {  // set some dummy values
       for ( size_t ii = 0; ii < id_vars_.size(); ++ii )  jetid_[ii][n] = -1.;
    }
@@ -545,12 +525,15 @@ void Candidates<T>::Branches() {
    }
 
    if ( is_patjet_ ) {
+      btag_.resize(btag_vars_.size());
+      for (auto& btag : btag_)
+         btag.resize(maxCandidates);
       for ( size_t it = 0 ; it < btag_vars_.size() ; ++it )  {
          std::string title = btag_vars_[it].title;
          if (title.find(":") != std::string::npos) {
             title = std::regex_replace(title, std::regex("\\:"), "_");
          }
-         tree_->Branch(btag_vars_[it].alias.c_str(), btag_[it], (title+"[n]/F").c_str());
+         tree_->Branch(btag_vars_[it].alias.c_str(), btag_[it].data(), (title+"[n]/F").c_str());
       }
       tree_->Branch("flavour",        flavour_,         "flavour[n]/I");
       tree_->Branch("hadronFlavour",  hadronFlavour_,   "hadronFlavour[n]/I" );
@@ -564,10 +547,11 @@ void Candidates<T>::Branches() {
       tree_->Branch("jerSFDown",jerSFDown_,"jerSFDown[n]/F");
       tree_->Branch("Rho",&rho_,"Rho/D");
 
+      jetid_.resize(id_vars_.size());
+      for (auto& jetid : jetid_)
+         jetid.resize(maxCandidates);      
       for ( size_t it = 0 ; it < id_vars_.size() ; ++it )
-         tree_->Branch(id_vars_[it].alias.c_str(), jetid_[it], (id_vars_[it].title+"[n]/F").c_str());
-      for ( size_t it = 0 ; it < iid_vars_.size() ; ++it )
-         tree_->Branch(iid_vars_[it].alias.c_str(), ijetid_[it], (iid_vars_[it].title+"[n]/I").c_str());
+         tree_->Branch(id_vars_[it].alias.c_str(), jetid_[it].data(), (id_vars_[it].title+"[n]/F").c_str());
    }
 
    if ( is_patmet_ ) {
