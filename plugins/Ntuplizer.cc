@@ -46,7 +46,6 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "DataFormats/Scalers/interface/LumiScalers.h"
 #include "DataFormats/Common/interface/MergeableCounter.h"
-#include "DataFormats/Common/interface/OwnVector.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
 
@@ -324,7 +323,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       btagging_.push_back({btag, btag_alias});
    }
    metadata_ -> AddDefinitions(btagging_,"btagging");
-   
 
    // --- BRegression algorithms (handles vstring, VPSet, or PSet mapping jet-type -> PSet containing VPSet) ---
    bregression_.clear();
@@ -336,18 +334,15 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    }
    metadata_ -> AddDefinitions(bregression_,"bregression");
    
-
    discriminators_.reserve(btagging_.size() + bregression_.size());
    discriminators_.insert(discriminators_.end(), btagging_.begin(), btagging_.end());
    discriminators_.insert(discriminators_.end(), bregression_.begin(), bregression_.end());
 
-   
    do_metfilters_ = config_.exists("MetFiltersResults");
 
    do_triggeraccepts_   = config_.exists("TriggerResults");
    trig_res_process_.clear();
    
-
    use_full_name_ = false;
    testmode_      = false;
    inputTagsVec_ = config_.getParameterNamesForType<InputTags>();
@@ -577,8 +572,7 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
    // Event info
    eventinfo_ -> Fill(event);
    
-   if ( is_mc_ )
-   {
+   if ( is_mc_ ) {
       // MC only stuff
    }
       
@@ -739,11 +733,6 @@ void Ntuplizer::beginJob() {
          if ( collection.instance() != "" && collections.size() > 1 )
             name += "_" + inst;
          if ( use_full_name_ ) name = fullname;
-         
-         // Initialise trees
-         // if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" )
-         //    tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
-         
          
          // Pat Jets
          if ( inputTags == "PatJets" ) {

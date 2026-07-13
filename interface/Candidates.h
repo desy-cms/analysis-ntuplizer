@@ -24,18 +24,12 @@
 // 
 // user include files
 #include "FWCore/Framework/interface/Event.h"
-// 
 #include "FWCore/Framework/interface/EventSetup.h"
-
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
-#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
-#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
-#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
-#include "JetMETCorrections/Modules/interface/JetResolution.h"
-
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include "JetMETCorrections/Modules/interface/JetResolution.h"
 
 #include "Analysis/Utils/interface/types.h"
 
@@ -142,7 +136,6 @@ namespace analysis {
             std::vector<analysis::utils::TitleAlias>  id_vars_;
             std::vector<analysis::utils::TitleAlias>  iid_vars_;
 
-            
             // Jet energy resolution and scale correction
             float jecUncert_[maxCandidates];
             analysis::utils::JecESTokens jec_tokens_;
@@ -200,12 +193,9 @@ namespace analysis {
             float etaAtVtx_[maxCandidates];
             float phiAtVtx_[maxCandidates];
             
-            
             TTree * tree_;
             
          private:
-            bool is_l1jet_;
-            bool is_l1muon_;
             bool is_patjet_;
             bool is_recomuon_;
             bool is_patmuon_;
