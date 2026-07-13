@@ -41,7 +41,6 @@
 
 namespace analysis {
    namespace ntuple {
-
       template <typename T>
       class Candidates {
          public:
@@ -68,8 +67,7 @@ namespace analysis {
             void MinPt(const float& minPt = -1.);
             void MaxEta(const float& maxEta = -1.);
             void JECRecord(const std::string &);
-            static const int maxCandidates = 250;
-      
+            static const int maxCandidates = 500;
          protected:
             // ----------member data ---------------------------
             std::vector<T> candidates_;
@@ -82,9 +80,7 @@ namespace analysis {
             std::unique_ptr<JetCorrectionUncertainty> jecUnc_;
             std::string jerRecord_;
             std::string jerFile_;
-            std::string jersfFile_;
-
-            
+            std::string jersfFile_;  
             // particles kinematics for the ntuple
             int   n_;
             float eta_[maxCandidates];
@@ -96,7 +92,6 @@ namespace analysis {
             float e_[maxCandidates];
             float et_[maxCandidates];
             int   q_[maxCandidates];
-            
             // pat muons
             bool isPFMuon_[maxCandidates];
             bool isGlobalMuon_[maxCandidates];
@@ -104,36 +99,30 @@ namespace analysis {
             bool isLooseMuon_[maxCandidates];
             bool isMediumMuon_[maxCandidates];
             bool isTightMuon_[maxCandidates];
-
             // Muon chamber stations
             float segmentCompatibility_[maxCandidates];
             float matchedStations_[maxCandidates];
-
             // Inner tracker vars                                                                                                                                                                   
             float validFraction_[maxCandidates];
             float validPixelHits_[maxCandidates];
             float trkLayersWithMeasurement_[maxCandidates];
             float ipxy_[maxCandidates];
             float ipz_[maxCandidates];
-
             // Global tracker vars        
             float trkKink_[maxCandidates];
             float chi2LocalPos_[maxCandidates];
             float validMuonHits_[maxCandidates];                                                                                 
             float normChi2_[maxCandidates];
-
             // pat jet additional vars
             float btag_[15][maxCandidates];
             int   flavour_[maxCandidates];
             int   hadronFlavour_[maxCandidates];
             int   partonFlavour_[maxCandidates];
             int   physicsFlavour_[maxCandidates];
-            
             float jetid_[15][maxCandidates];
             int   ijetid_[15][maxCandidates];
             std::vector<analysis::utils::TitleAlias>  id_vars_;
             std::vector<analysis::utils::TitleAlias>  iid_vars_;
-
             // Jet energy resolution and scale correction
             float jecUncert_[maxCandidates];
             analysis::utils::JecESTokens jec_tokens_;
@@ -157,29 +146,24 @@ namespace analysis {
             int da1_[maxCandidates];
             int da2_[maxCandidates];
             float mass_[maxCandidates];
-            
             // met specifics
             float sigxx_[maxCandidates];
             float sigxy_[maxCandidates];
             float sigyx_[maxCandidates];
             float sigyy_[maxCandidates];
-            
             // gen info (usually from pat objects)
             float gen_px_[maxCandidates];
             float gen_py_[maxCandidates];
             float gen_pz_[maxCandidates];
-            
             // type
             int  type_[maxCandidates];
-            
             // L1 objects
             int  hwQual_[maxCandidates];
             // L1 muons
             float etaAtVtx_[maxCandidates];
             float phiAtVtx_[maxCandidates];
-            
+
             TTree * tree_;
-            
          private:
             bool is_patjet_;
             bool is_patmuon_;
@@ -188,7 +172,6 @@ namespace analysis {
             bool is_trigobject_;
             bool is_patmet_;
             bool is_mc_;
-            bool do_kinematics_;
             bool do_generator_;
             bool is_l1tjet_;
             bool is_l1tmuon_;
@@ -197,16 +180,10 @@ namespace analysis {
             float maxEta_;
             std::vector<std::string>  btagAlgos_;
             std::vector<std::string>  btagAlgosAlias_;
-            
-            std::vector<std::string>  filterLabels_;
-                      
+            std::vector<std::string>  filterLabels_;   
             int higgs_pdg_;
-            
             std::vector<analysis::utils::TitleAlias>  btag_vars_;
-            
             std::string trigobj_type_;
-   
-            
       };
       // for the function specialisation - can also be done in .cc (keeping this comment for reference)
       // template <> int Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event);

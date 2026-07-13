@@ -89,7 +89,6 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    is_l1tjet_          = std::is_same<T,l1t::Jet>::value;
    is_l1tmuon_         = std::is_same<T,l1t::Muon>::value;
    
-   do_kinematics_ = true;
    do_generator_  = ( is_mc_ && is_genparticle_ );
    
    higgs_pdg_ = 36;
@@ -143,19 +142,16 @@ Candidates<T>::~Candidates() {
 // ------------ method called for each event  ------------
 template <typename T>
 void Candidates<T>::ReadFromEvent(const edm::Event& event) {
-   using namespace edm;
-
    // Candidates
    candidates_.clear();
    edm::Handle<std::vector<T> > handler;
    event.getByLabel(input_collection_, handler);
    candidates_ = *(handler.product());
 }
+
 // Specialization for l1t jets
 template <>
 void Candidates<l1t::Jet>::ReadFromEvent(const edm::Event& event) {
-   using namespace edm;
-
    // Candidates
    candidates_.clear();
    edm::Handle<l1t::JetBxCollection> handler;
@@ -172,8 +168,6 @@ void Candidates<l1t::Jet>::ReadFromEvent(const edm::Event& event) {
 // Specialization for l1t muons
 template <>
 void Candidates<l1t::Muon>::ReadFromEvent(const edm::Event& event) {
-   using namespace edm;
-
    // Candidates
    candidates_.clear();
    edm::Handle<l1t::MuonBxCollection> handler;
@@ -237,9 +231,7 @@ void Candidates<pat::TriggerObject>::TriggerObjectType(const std::string& trigob
 }
 
 template <typename T>
-void Candidates<T>::Kinematics() {
-   using namespace edm;
-   
+void Candidates<T>::Kinematics() {  
    int n = 0;
    for ( size_t i = 0 ; i < candidates_.size(); ++i ) {
       if ( n >= maxCandidates ) break;
@@ -429,7 +421,7 @@ void Candidates<T>::Kinematics() {
          } 
          
       } // end PAT::Jet
-      
+   
       if ( is_patmet_ )  {
          pat::MET * met = dynamic_cast<pat::MET*> (&candidates_[i]);
          sigxx_[n] = met->getSignificanceMatrix()(0,0);
@@ -443,7 +435,7 @@ void Candidates<T>::Kinematics() {
             gen_pz_[n] = genMET->pz();;
          }
       }
-      
+
       if ( is_trigobject_ ) {
          pat::TriggerObject * to = dynamic_cast<pat::TriggerObject*> (&candidates_[i]);
          type_[n] = 0;
@@ -456,17 +448,11 @@ void Candidates<T>::Kinematics() {
 }
 
 template <>
-void Candidates<l1t::Jet>::Kinematics()
-{
-   using namespace edm;
-
+void Candidates<l1t::Jet>::Kinematics() {
    int n = 0;
-   
-   for ( size_t i = 0 ; i < candidates_.size(); ++i )
-   {
+   for ( size_t i = 0 ; i < candidates_.size(); ++i ) {
       l1t::Jet * cand = dynamic_cast<l1t::Jet*> (&candidates_[i]);
       if ( n >= maxCandidates ) break;
-      
       pt_[n]  = cand->pt();
       eta_[n] = cand->eta();
       phi_[n] = cand->phi();
@@ -476,25 +462,17 @@ void Candidates<l1t::Jet>::Kinematics()
       e_[n]   = cand->energy();
       et_[n]  = cand->et();
       q_[n]   = cand->charge();
-      
       ++n;
    }
    n_ = n;
-
 }
 
 template <>
-void Candidates<l1t::Muon>::Kinematics()
-{
-   using namespace edm;
-
+void Candidates<l1t::Muon>::Kinematics() {
    int n = 0;
-   
-   for ( size_t i = 0 ; i < candidates_.size(); ++i )
-   {
+   for ( size_t i = 0 ; i < candidates_.size(); ++i ) {
       l1t::Muon * cand = dynamic_cast<l1t::Muon*> (&candidates_[i]);
       if ( n >= maxCandidates ) break;
-      
       pt_[n]       = cand->pt();
       eta_[n]      = cand->eta();
       phi_[n]      = cand->phi();
@@ -507,290 +485,223 @@ void Candidates<l1t::Muon>::Kinematics()
       hwQual_[n]   = cand->hwQual();
       etaAtVtx_[n] = cand->etaAtVtx();
       phiAtVtx_[n] = cand->phiAtVtx();
-
-      
       ++n;
    }
    n_ = n;
-
 }
 
-
-
 template <typename T>
-void Candidates<T>::JECRecord(const std::string& jr)
-{
+void Candidates<T>::JECRecord(const std::string& jr) {
    jecRecord_ = "";
 }
 
 template <>
-void Candidates<pat::Jet>::JECRecord(const std::string& jr)
-{
+void Candidates<pat::Jet>::JECRecord(const std::string& jr) {
    jecRecord_ = jr;
 }
 
-
 template <typename T>
-void Candidates<T>::MinPt(const float& minPt)
-{
+void Candidates<T>::MinPt(const float& minPt) {
    minPt_ = minPt;
 }
 
 template <typename T>
-void Candidates<T>::MaxEta(const float& maxEta)
-{
+void Candidates<T>::MaxEta(const float& maxEta) {
    maxEta_ = maxEta;
 }
 
-
 template <typename T>
-void Candidates<T>::Fill()
-{
+void Candidates<T>::Fill() {
    tree_->Fill();
 }
 
 template <typename T>
-void Candidates<T>::Fill(const edm::Event& event)
-{
+void Candidates<T>::Fill(const edm::Event& event) {
    ReadFromEvent(event);
-   if ( do_kinematics_ ) Kinematics();
+   Kinematics();
    Fill();
 }
 
 template <typename T>
-void Candidates<T>::Fill(const edm::Event& event, const edm::EventSetup& setup)
-{
-   if ( jecRecord_ != "" )
-   {
-      if ( jecFile_ != "" )
-      {
+void Candidates<T>::Fill(const edm::Event& event, const edm::EventSetup& setup) {
+   if ( jecRecord_ != "" )  {
+      if ( jecFile_ != "" )  {
          jecUnc_ = std::unique_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(jecFile_));
-      }
-      else // conddb - see example: https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/PatUtils/plugins/ShiftedPFCandidateProducerForNoPileUpPFMEt.cc
-
-      {
+      } else { // conddb - see example: https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/PatUtils/plugins/ShiftedPFCandidateProducerForNoPileUpPFMEt.cc
          const JetCorrectorParametersCollection& jetCorrParameterSet = setup.getData(jec_tokens_.jecToken);
          const JetCorrectorParameters& jetCorrParameters = (jetCorrParameterSet)["Uncertainty"];
-         jecUnc_ = std::make_unique<JetCorrectionUncertainty>(jetCorrParameters);
-         
-//         edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
-//         setup.get<JetCorrectionsRecord>().get(jecRecord_,JetCorParColl); 
-//         JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
-//         jecUnc_ = std::unique_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(JetCorPar));
+         jecUnc_ = std::make_unique<JetCorrectionUncertainty>(jetCorrParameters);   
       }
    }
-
-   if (jerRecord_ != "" )
-   {
-      if(jerFile_ != "" && jersfFile_ != "")
-      {
+   if (jerRecord_ != "" ) {
+      if(jerFile_ != "" && jersfFile_ != "") {
          res_    = JME::JetResolution(jerFile_);
          res_sf_ = JME::JetResolutionScaleFactor(jersfFile_);
-      }
-      else
-      {
+      } else {
          std::string label_pt = jerRecord_ + "_pt";
          res_    = JME::JetResolution::get(setup, res_tokens_.resolutionsToken);
          std::string label_sf = jerRecord_;
          res_sf_    = JME::JetResolutionScaleFactor::get(setup, res_tokens_.scaleFactorsToken);
       }
-
       edm::Handle<double> rhoHandler;
       event.getByLabel(rho_collection_, rhoHandler);
-      rho_ = *(rhoHandler.product());
-            
+      rho_ = *(rhoHandler.product());     
    }
-      
    Fill(event);
 }
 
 // ------------ method called once each job just before starting event loop  ------------
 
 template <typename T>
-void Candidates<T>::Branches()
-{
+void Candidates<T>::Branches() {
    // kinematics output info
-   if ( do_kinematics_ )
-   {
-      tree_->Branch("n",   &n_,  "n/I");
-      tree_->Branch("pt",  pt_,  "pt[n]/F");
-      tree_->Branch("eta", eta_, "eta[n]/F");
-      tree_->Branch("phi", phi_, "phi[n]/F");
-      tree_->Branch("px",  px_,  "px[n]/F");
-      tree_->Branch("py",  py_,  "py[n]/F");
-      tree_->Branch("pz",  pz_,  "pz[n]/F");
-      tree_->Branch("q",   q_,   "q[n]/I");
-      
-
-      
-      if ( is_genparticle_ )
-      {
-         tree_->Branch("index",indx_,   "index[n]/I");
-         tree_->Branch("pdg",   pdg_,   "pdg[n]/I");
-         tree_->Branch("status",status_,"status[n]/I");
-         tree_->Branch("last_copy",lastcopy_,"last_copy[n]/O");
-         tree_->Branch("higgs_dau",higgs_dau_,"higgs_dau[n]/O");
-         tree_->Branch("mother1",mo1_,"mother1[n]/I");
-         tree_->Branch("mother2",mo2_,"mother2[n]/I");
-         tree_->Branch("daughter1",da1_,"daughter1[n]/I");
-         tree_->Branch("daughter2",da2_,"daughter2[n]/I");
-         tree_->Branch("mass",mass_,"mass[n]/F");
-      }
-
-      if ( is_patmuon_ )
-        {
-           tree_->Branch("isPFMuon",     isPFMuon_,     "isPFMuon[n]/O");
-           tree_->Branch("isGlobalMuon", isGlobalMuon_, "isGlobalMuon[n]/O");
-           tree_->Branch("isTrackerMuon",isTrackerMuon_,"isTrackerMuon[n]/O");
-           tree_->Branch("isLooseMuon",  isLooseMuon_,  "isLooseMuon[n]/O");
-           tree_->Branch("isMediumMuon", isMediumMuon_, "isMediumMuon[n]/O");
-           tree_->Branch("isTightMuon",  isTightMuon_,  "isTightMuon[n]/O"); 
-          
-           tree_->Branch("validFraction",          validFraction_,          "validFraction[n]/F");
-           tree_->Branch("segmentCompatibility",   segmentCompatibility_,   "segmentCompatibility[n]/F");
-
-           tree_->Branch("matchedStations",       matchedStations_,        "matchedStations[n]/F");
-           tree_->Branch("validPixelHits",        validPixelHits_,         "validPixelHits[n]/F" );
-           tree_->Branch("validMuonHits",         validMuonHits_,           "validMuonHits[n]/F"  );
-           tree_->Branch("trkLayersWithMeasurement",      trkLayersWithMeasurement_,        "trkLayersWithMeasurement[n]/F");
-           tree_->Branch("ipxy",       ipxy_,        "ipxy[n]/F" );
-           tree_->Branch("ipz",        ipz_,         "ipz[n]/F"  );
-
-
-          tree_->Branch("normChi2",     normChi2_,     "normChi2[n]/F");
-          tree_->Branch("trkKink",      trkKink_,      "trkKink[n]/F");
-          tree_->Branch("chi2LocalPos", chi2LocalPos_, "chi2LocalPos[n]/F");
-
-        }
-
-      if ( is_patjet_ )
-      {
-         for ( size_t it = 0 ; it < btag_vars_.size() ; ++it )
-         {
-            std::string title = btag_vars_[it].title;
-            if (title.find(":") != std::string::npos)
-            {
-               title = std::regex_replace(title, std::regex("\\:"), "_");
-            }
-            tree_->Branch(btag_vars_[it].alias.c_str(), btag_[it], (title+"[n]/F").c_str());
-//            tree_->Branch(btag_vars_[it].alias.c_str(), btag_[it], (btag_vars_[it].title+"[n]/F").c_str());
-//            std::cout << btag_vars_[it].alias.c_str() << "   " << title.c_str() << std::endl;
-         }
-            
-         tree_->Branch("flavour",        flavour_,         "flavour[n]/I");
-         tree_->Branch("hadronFlavour",  hadronFlavour_,   "hadronFlavour[n]/I" );
-         tree_->Branch("partonFlavour",  partonFlavour_,   "partonFlavour[n]/I" );
-         tree_->Branch("physicsFlavour", physicsFlavour_,  "physicsFlavour[n]/I");
-         
-//         if ( jecRecord_ != "" )
-//         {
-             tree_->Branch("jecUncert", jecUncert_, "jecUncert[n]/F");
-             tree_->Branch("jerResolution",jerResolution_,"jerResolution[n]/F");
-             tree_->Branch("jerSF",jerSF_,"jerSF[n]/F");
-             tree_->Branch("jerSFUp",jerSFUp_,"jerSFUp[n]/F");
-             tree_->Branch("jerSFDown",jerSFDown_,"jerSFDown[n]/F");
-             tree_->Branch("Rho",&rho_,"Rho/D");
-//         }
-          
-      }
-      if ( is_patjet_ )  {
-         for ( size_t it = 0 ; it < id_vars_.size() ; ++it )
-            tree_->Branch(id_vars_[it].alias.c_str(), jetid_[it], (id_vars_[it].title+"[n]/F").c_str());
-         for ( size_t it = 0 ; it < iid_vars_.size() ; ++it )
-            tree_->Branch(iid_vars_[it].alias.c_str(), ijetid_[it], (iid_vars_[it].title+"[n]/I").c_str());
-      }
-      if ( is_patmet_ ) {
-         tree_->Branch("sigxx",  sigxx_,  "sigxx[n]/F");
-         tree_->Branch("sigxy",  sigxy_,  "sigxy[n]/F");
-         tree_->Branch("sigyx",  sigyx_,  "sigyx[n]/F");
-         tree_->Branch("sigyy",  sigyy_,  "sigyy[n]/F");
-         if ( is_mc_ )
-         {
-            tree_->Branch("gen_px",  gen_px_,  "gen_px[n]/F");
-            tree_->Branch("gen_py",  gen_py_,  "gen_py[n]/F");
-            tree_->Branch("gen_pz",  gen_pz_,  "gen_pz[n]/F");
-        }
-      }
-      
-      if ( is_trigobject_ )
-      {
-         // there may be more than one type for an object, one has to be careful depending on the trigger
-         // for now only the first entry is used.
-         // definitions in DataFormats/HLTReco/interface/TriggerTypeDefs.h
-         tree_->Branch("type", type_, "type[n]/I");
-      }
-      
-      if ( is_l1tmuon_ )
-      {
-         tree_->Branch("hwQual"  ,  hwQual_  , "hwQual[n]/I");
-         tree_->Branch("etaAtVtx",  etaAtVtx_, "etaAtVtx[n]/F");
-         tree_->Branch("phiAtVtx",  phiAtVtx_, "phiAtVtx[n]/F");
-      }
-      
-      
-
-   }
-      
+   tree_->Branch("n",   &n_,  "n/I");
+   tree_->Branch("pt",  pt_,  "pt[n]/F");
+   tree_->Branch("eta", eta_, "eta[n]/F");
+   tree_->Branch("phi", phi_, "phi[n]/F");
+   tree_->Branch("px",  px_,  "px[n]/F");
+   tree_->Branch("py",  py_,  "py[n]/F");
+   tree_->Branch("pz",  pz_,  "pz[n]/F");
+   tree_->Branch("q",   q_,   "q[n]/I");
    
+   if ( is_genparticle_ ) {
+      tree_->Branch("index",indx_,   "index[n]/I");
+      tree_->Branch("pdg",   pdg_,   "pdg[n]/I");
+      tree_->Branch("status",status_,"status[n]/I");
+      tree_->Branch("last_copy",lastcopy_,"last_copy[n]/O");
+      tree_->Branch("higgs_dau",higgs_dau_,"higgs_dau[n]/O");
+      tree_->Branch("mother1",mo1_,"mother1[n]/I");
+      tree_->Branch("mother2",mo2_,"mother2[n]/I");
+      tree_->Branch("daughter1",da1_,"daughter1[n]/I");
+      tree_->Branch("daughter2",da2_,"daughter2[n]/I");
+      tree_->Branch("mass",mass_,"mass[n]/F");
+   }
+
+   if ( is_patmuon_ ) {
+      tree_->Branch("isPFMuon",     isPFMuon_,     "isPFMuon[n]/O");
+      tree_->Branch("isGlobalMuon", isGlobalMuon_, "isGlobalMuon[n]/O");
+      tree_->Branch("isTrackerMuon",isTrackerMuon_,"isTrackerMuon[n]/O");
+      tree_->Branch("isLooseMuon",  isLooseMuon_,  "isLooseMuon[n]/O");
+      tree_->Branch("isMediumMuon", isMediumMuon_, "isMediumMuon[n]/O");
+      tree_->Branch("isTightMuon",  isTightMuon_,  "isTightMuon[n]/O"); 
+      
+      tree_->Branch("validFraction",          validFraction_,          "validFraction[n]/F");
+      tree_->Branch("segmentCompatibility",   segmentCompatibility_,   "segmentCompatibility[n]/F");
+
+      tree_->Branch("matchedStations",       matchedStations_,        "matchedStations[n]/F");
+      tree_->Branch("validPixelHits",        validPixelHits_,         "validPixelHits[n]/F" );
+      tree_->Branch("validMuonHits",         validMuonHits_,           "validMuonHits[n]/F"  );
+      tree_->Branch("trkLayersWithMeasurement",      trkLayersWithMeasurement_,        "trkLayersWithMeasurement[n]/F");
+      tree_->Branch("ipxy",       ipxy_,        "ipxy[n]/F" );
+      tree_->Branch("ipz",        ipz_,         "ipz[n]/F"  );
+
+
+      tree_->Branch("normChi2",     normChi2_,     "normChi2[n]/F");
+      tree_->Branch("trkKink",      trkKink_,      "trkKink[n]/F");
+      tree_->Branch("chi2LocalPos", chi2LocalPos_, "chi2LocalPos[n]/F");
+   }
+
+   if ( is_patjet_ ) {
+      for ( size_t it = 0 ; it < btag_vars_.size() ; ++it )  {
+         std::string title = btag_vars_[it].title;
+         if (title.find(":") != std::string::npos) {
+            title = std::regex_replace(title, std::regex("\\:"), "_");
+         }
+         tree_->Branch(btag_vars_[it].alias.c_str(), btag_[it], (title+"[n]/F").c_str());
+      }
+      tree_->Branch("flavour",        flavour_,         "flavour[n]/I");
+      tree_->Branch("hadronFlavour",  hadronFlavour_,   "hadronFlavour[n]/I" );
+      tree_->Branch("partonFlavour",  partonFlavour_,   "partonFlavour[n]/I" );
+      tree_->Branch("physicsFlavour", physicsFlavour_,  "physicsFlavour[n]/I");
+      
+      tree_->Branch("jecUncert", jecUncert_, "jecUncert[n]/F");
+      tree_->Branch("jerResolution",jerResolution_,"jerResolution[n]/F");
+      tree_->Branch("jerSF",jerSF_,"jerSF[n]/F");
+      tree_->Branch("jerSFUp",jerSFUp_,"jerSFUp[n]/F");
+      tree_->Branch("jerSFDown",jerSFDown_,"jerSFDown[n]/F");
+      tree_->Branch("Rho",&rho_,"Rho/D");
+
+      for ( size_t it = 0 ; it < id_vars_.size() ; ++it )
+         tree_->Branch(id_vars_[it].alias.c_str(), jetid_[it], (id_vars_[it].title+"[n]/F").c_str());
+      for ( size_t it = 0 ; it < iid_vars_.size() ; ++it )
+         tree_->Branch(iid_vars_[it].alias.c_str(), ijetid_[it], (iid_vars_[it].title+"[n]/I").c_str());
+   }
+
+   if ( is_patmet_ ) {
+      tree_->Branch("sigxx",  sigxx_,  "sigxx[n]/F");
+      tree_->Branch("sigxy",  sigxy_,  "sigxy[n]/F");
+      tree_->Branch("sigyx",  sigyx_,  "sigyx[n]/F");
+      tree_->Branch("sigyy",  sigyy_,  "sigyy[n]/F");
+      if ( is_mc_ ) {
+         tree_->Branch("gen_px",  gen_px_,  "gen_px[n]/F");
+         tree_->Branch("gen_py",  gen_py_,  "gen_py[n]/F");
+         tree_->Branch("gen_pz",  gen_pz_,  "gen_pz[n]/F");
+      }
+   }
+   
+   if ( is_trigobject_ ) {
+      // there may be more than one type for an object, one has to be careful depending on the trigger
+      // for now only the first entry is used.
+      // definitions in DataFormats/HLTReco/interface/TriggerTypeDefs.h
+      tree_->Branch("type", type_, "type[n]/I");
+   }
+   
+   if ( is_l1tmuon_ ) {
+      tree_->Branch("hwQual"  ,  hwQual_  , "hwQual[n]/I");
+      tree_->Branch("etaAtVtx",  etaAtVtx_, "etaAtVtx[n]/F");
+      tree_->Branch("phiAtVtx",  phiAtVtx_, "phiAtVtx[n]/F");
+   }
 }
 
 // Initialisation
 
 template <typename T>
-void Candidates<T>::Init()
-{
+void Candidates<T>::Init() {
    Branches();
 }
 
 template <typename T>
-void Candidates<T>::Init( const std::vector<analysis::utils::TitleAlias> & btagVars )
-{
+void Candidates<T>::Init( const std::vector<analysis::utils::TitleAlias> & btagVars ) {
    btag_vars_ = btagVars;
    Init();
    
 }
 
 template <typename T>
-void Candidates<T>::UseTriggerResults(edm::InputTag& tr)
-{
+void Candidates<T>::UseTriggerResults(edm::InputTag& tr) {
    triggerresults_collection_ = tr;
 }
 
 
 
 template <typename T>
-void Candidates<T>::AddJecInfo( const std::string & jec )
-{
+void Candidates<T>::AddJecInfo( const std::string & jec ) {
    // Will use confDB
    jecRecord_ = jec;
 }
 
 template <typename T>
-void Candidates<T>::AddJecInfo( const analysis::utils::JecESTokens & jec )
-{
+void Candidates<T>::AddJecInfo( const analysis::utils::JecESTokens & jec ) {
    // Will use confDB
    jec_tokens_ = jec;
 }
 
 template <typename T>
-void Candidates<T>::AddJecInfo( const std::string & jec , const std::string & jec_file )
-{
+void Candidates<T>::AddJecInfo( const std::string & jec , const std::string & jec_file ) {
    // Will use txt file
    jecRecord_ = jec;
    jecFile_   = jec_file;
 }
 
 template <typename T>
-void Candidates<T>::AddJerInfo( const std::string & jer, const edm::InputTag & rho )
-{
+void Candidates<T>::AddJerInfo( const std::string & jer, const edm::InputTag & rho ) {
    // Will use confDB
    jerRecord_ = jer;
    rho_collection_ = rho;
 }
 
 template <typename T>
-void Candidates<T>::AddJerInfo( const analysis::utils::JerESTokens & jer, const edm::InputTag & rho )
-{
+void Candidates<T>::AddJerInfo( const analysis::utils::JerESTokens & jer, const edm::InputTag & rho ) {
    // Will use confDB
    jerRecord_ = jer.record;
    res_tokens_ = jer;
@@ -798,14 +709,12 @@ void Candidates<T>::AddJerInfo( const analysis::utils::JerESTokens & jer, const 
 }
 
 template <typename T>
-void Candidates<T>::AddJerInfo(const std::string & jer, const std::string & res_file, const std::string & sf_file, const edm::InputTag & rho)
-{
+void Candidates<T>::AddJerInfo(const std::string & jer, const std::string & res_file, const std::string & sf_file, const edm::InputTag & rho) {
    // Will use txt file
    jerRecord_ = jer;
    jerFile_   = res_file;
    jersfFile_ = sf_file;
    rho_collection_ = rho;
-   
 }
 
 
