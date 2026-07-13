@@ -265,24 +265,18 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       
       // metadata
       double xsection_;
-      
       EventCounts event_counts_;
       WeightedEventCounts gen_event_counts_;
-      
       // ESTokens
       std::vector<analysis::utils::JerESTokens> jer_es_tokens_;
       std::vector<analysis::utils::JecESTokens> jec_es_tokens_;
-      
       // JER
       Strings jer_files_;
       Strings jersf_files_;
-      
       // File
       TFileDirectory eventsDir_;
 
-      int analyze_count_;
-      
-      
+      int analyze_count_;     
 };
 
 //
@@ -349,14 +343,12 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    inputTags_    = config_.getParameterNamesForType<InputTag>();
    
    hltPrescaleProvider_ = std::make_shared<HLTPrescaleProvider>(config_, consumesCollector(), *this);
-   
    std::string name;
    std::string fullname;
 
    // Table-driven dispatch
    using RegistersFn = std::function<void(InputTags const&)>;
    std::unordered_map<std::string, RegistersFn> inputTagsDispatch;
-
    // Main stuff
    inputTagsDispatch["PatJets"] = [&](InputTags const& collections) {
       for (auto const& collection : collections) makeCollectionTree(collection);
@@ -385,8 +377,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       for (auto const& collection : collections) makeCollectionTree(collection);
       registerTokens<reco::GenParticleCollection>(collections, genPartTokens_);
    };
-
-
    // Trigger stuff
    inputTagsDispatch["TriggerObjectStandAlone"] = [&](InputTags const& collections) {
       registerTokens<pat::TriggerObjectStandAloneCollection>(collections, triggerObjTokens_);
@@ -394,7 +384,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    inputTagsDispatch["TriggerEvent"] = [&](InputTags const& collections) {
       registerTokens<trigger::TriggerEvent>(collections, triggerEventTokens_);
    };
-
    inputTagsDispatch["TriggerResults"] = [&](InputTags const& collections) {
       registerTokens<edm::TriggerResults>(collections, triggerResultsTokens_);
       Strings triggerpaths;
@@ -411,7 +400,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          triggeraccepts_collections_.back()->ReadPrescaleInfo(store_prescale_);
       }
    };
-   
    inputTagsDispatch["L1TJets"] = [&](InputTags const& collections) { // TODO: make it single inputtag, since we only want to make one collection of L1TJets in the ntuple
       registerTokens<l1t::JetBxCollection>(collections, l1tJetTokens_);
       for (auto const& collection : collections) {
@@ -432,24 +420,19 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          }
       }
    };
-
    // Loop over configured input tag categories, retrieve the collection tags for each category,
    // and inputTagsDispatch registration of the corresponding tokens based on the category name.
    for ( auto & inputTags : inputTagsVec_ ) {
-
       InputTags collections = config_.getParameter<InputTags>(inputTags);
       auto it = inputTagsDispatch.find(inputTags);
       if (it == inputTagsDispatch.end()) {
          throw cms::Exception("Configuration") << "Unknown input tag category '" << inputTags << "'\n";
       }
       it->second(collections);
-
    }
-   
    // Single InputTag
    using RegisterFn = std::function<void(InputTag const&)>;
    std::unordered_map<std::string, RegisterFn> inputTagDispatch;
-
    inputTagDispatch["PileupSummaryInfo"] = [&](InputTag const& collection) {
       registerToken< std::vector<PileupSummaryInfo> >(collection,pileup_info_token_,pileup_info_);
    };
@@ -471,7 +454,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    inputTagDispatch["PrefiringWeightDown"] = [&](InputTag const& collection) {
       registerToken<double>(collection,prefWeightDownToken_,prefWeightDown_);
    };
-
    inputTagDispatch["GenFilterInfo"] = [&](InputTag const& collection) {
       registerToken<GenFilterInfo,edm::InLumi>(collection,genFilterInfoToken_,genFilterInfo_);
    };
@@ -490,18 +472,14 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    inputTagDispatch["MetFiltersResults"] = [&](InputTag const& collection) {
       registerToken<edm::TriggerResults>(collection, metfilters_tokens_, metfilters_);
    };
-
-
    for ( auto & inputTag : inputTags_ ) {
       InputTag collection = config_.getParameter<InputTag>(inputTag);
       auto it = inputTagDispatch.find(inputTag);
       if (it != inputTagDispatch.end())
          it->second(collection);
    }
-   
    // flags
    do_patjets_          = config_.exists("PatJets");
-
    // ESTokens
    // JER Record (from TXT files)
    // JER Record (from CondDB)
@@ -541,91 +519,65 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          }
       }
    }
-
    analyze_count_ = 0;
-
 }
-
-
 Ntuplizer::~Ntuplizer() {
    printf_info("==> Ntuplizer::~Ntuplizer() destructor...\n");
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
    printf_info("*** THE END!!! ***\n");
-
 }
-
-
 //
 // member functions
 //
 
 // ------------ method called for each event  ------------
 void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
-   using namespace edm;
-
    ++analyze_count_;
    if ( analyze_count_ == 1 ) {
       printf_info("==> Ntuplizer::analyze()...\n");
    }
-
    // Event info
    eventinfo_ -> Fill(event);
-   
    if ( is_mc_ ) {
       // MC only stuff
    }
-      
-      // Pat jets (pat)
-      for ( auto & collection : patjets_collections_ )
-         collection -> Fill(event, setup);
-   
-      // Pat mets (pat)
-      for ( auto & collection : patmets_collections_ )
-         collection -> Fill(event);
-   
-      // Pat muon (pat)
-      for ( auto & collection : patmuons_collections_ )
-         collection -> Fill(event);
-   
-      // Gen jets (reco)
-      for ( auto & collection : genjets_collections_ )
-         collection -> Fill(event);
-      
-      // Gen particles (reco)
-      for ( auto & collection : genparticles_collections_ )
-         collection -> Fill(event);
-      
-      
-      // trigger accepts
-      for ( auto & collection : triggeraccepts_collections_ )
-         collection -> Fill(event, setup);
-      
-      // primary vertices
-      for ( auto & collection : primary_vertices_collections_ )
-         collection -> Fill(event);
-   
-      // trigger objects
-      for ( auto & collection : triggerobjects_collections_ )
-         collection -> Fill(event);
-      
-      // L1T jets
-      for ( auto & collection : l1tjets_collections_ )
-         collection -> Fill(event);
-      // L1T muons
-      for ( auto & collection : l1tmuons_collections_ )
-         collection -> Fill(event);
-
+   // Pat jets (pat)
+   for ( auto & collection : patjets_collections_ )
+      collection -> Fill(event, setup);
+   // Pat mets (pat)
+   for ( auto & collection : patmets_collections_ )
+      collection -> Fill(event);
+   // Pat muon (pat)
+   for ( auto & collection : patmuons_collections_ )
+      collection -> Fill(event);
+   // Gen jets (reco)
+   for ( auto & collection : genjets_collections_ )
+      collection -> Fill(event);
+   // Gen particles (reco)
+   for ( auto & collection : genparticles_collections_ )
+      collection -> Fill(event);
+   // trigger accepts
+   for ( auto & collection : triggeraccepts_collections_ )
+      collection -> Fill(event, setup);
+   // primary vertices
+   for ( auto & collection : primary_vertices_collections_ )
+      collection -> Fill(event);
+   // trigger objects
+   for ( auto & collection : triggerobjects_collections_ )
+      collection -> Fill(event);
+   // L1T jets
+   for ( auto & collection : l1tjets_collections_ )
+      collection -> Fill(event);
+   // L1T muons
+   for ( auto & collection : l1tmuons_collections_ )
+      collection -> Fill(event);
 }
-
 
 // ------------ method called once each job just before starting event loop  ------------
 void Ntuplizer::beginJob() {
-
    printf_info("==> Ntuplizer::beginJob()...\n");
-
    // TODO: move all below to constructor?
-   
    do_pileup_info_      = config_.exists("PileupSummaryInfo") && is_mc_;
    do_geneventinfo_     = config_.exists("GenEventInfo") && is_mc_;
    do_lumiscalers_      = config_.exists("LumiScalers");
@@ -641,16 +593,12 @@ void Ntuplizer::beginJob() {
    
    if ( config_.exists("TestMode") ) // This is DANGEROUS! but can be useful. So BE CAREFUL!!!!
       testmode_ = config_.getParameter<bool> ("TestMode");
-   
    if ( config_.exists("UseFullName") )
       use_full_name_ = config_.getParameter<bool> ("UseFullName");
-
    std::string name;
    std::string fullname;
-   
    gen_event_counts_  = {};
    event_counts_ = {};
-   
    // -------------------------------
    // JEC Record (from TXT files)
    Strings jec_files;
@@ -660,11 +608,9 @@ void Ntuplizer::beginJob() {
          jec_files = config_.getParameter< Strings >("JECUncertaintyFiles");
       }
    }
-   
    size_t nPatJets = 0;
    if ( do_patjets_ )
       nPatJets = config_.getParameter<InputTags>("PatJets").size();
-   
    if ( nPatJets > jecRecords_.size() && jecRecords_.size() != 0 ) {
       printf_error("Ntuplizer::beginJob *** ERROR ***  Number of JEC Records less than the number of PatJet collections.\n");
       exit(-1);
@@ -677,8 +623,6 @@ void Ntuplizer::beginJob() {
       printf_error("Ntuplizer::beginJob *** ERROR *** Number of JER Records are not the same as number of provided input files.\n");
       exit(-1);
    }
-   
-   
    // Event info tree
    eventinfo_ = EventInfoPtr(new EventInfo(eventsDir_));
    if ( config_.exists("FixedGridRhoAll") )
@@ -689,17 +633,13 @@ void Ntuplizer::beginJob() {
       eventinfo_ -> GenEventInfo(config_.getParameter<InputTag>("GenEventInfo"));
    if ( do_lumiscalers_ )
       eventinfo_ -> LumiScalersInfo(config_.getParameter<InputTag>("LumiScalers"));
-   
    if ( config_.exists("PrefiringWeight") &&  config_.exists("PrefiringWeightUp") && config_.exists("PrefiringWeightDown"))
       eventinfo_ -> PrefiringWeightInfo(prefWeight_, prefWeightUp_, prefWeightDown_);
-
-   
    InputTag trgRes;
    if ( do_triggeraccepts_ ) {
       InputTags trs = config_.getParameter<InputTags>("TriggerResults");
       trgRes = trs[0];
    }
-   
    // split trigger objects
    bool splitTriggerObject = config_.exists("TriggerObjectSplits");
    if ( do_triggerobjects_ && triggerObjectSplits_.empty() && splitTriggerObject ) {
@@ -710,19 +650,16 @@ void Ntuplizer::beginJob() {
          splitTriggerObject = !triggerObjectSplitsTypes_.empty();
       }
    }
-   
    if ( triggerObjectSplits_.size() != triggerObjectSplitsTypes_.size() ) {
       std::cout << "-w- Ntuplizer: Size of trigger splits and splits types do not match!" << std::endl;
       std::cout << "               No splitting will be done" << std::endl;
       splitTriggerObject = false;
    }
-   
    // Input tags (vector)
    for ( auto & inputTags : inputTagsVec_ ) {
       InputTags collections = config_.getParameter<InputTags>(inputTags);
       int patJetCounter = 0;
       for ( auto & collection : collections ) {
-   
          // Names for the trees, from inputs
          std::string label = collection.label();
          std::string inst  = collection.instance();
@@ -733,7 +670,6 @@ void Ntuplizer::beginJob() {
          if ( collection.instance() != "" && collections.size() > 1 )
             name += "_" + inst;
          if ( use_full_name_ ) name = fullname;
-         
          // Pat Jets
          if ( inputTags == "PatJets" ) {
             patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
@@ -749,7 +685,6 @@ void Ntuplizer::beginJob() {
                   patjets_collections_.back() -> AddJecInfo(jec_es_tokens_[patJetCounter]);                           // use confdb
 
             }
-            
             if ( patJetCounter == 0 && jerRecords_.size() > 0  ) std::cout << "*** Jet Energy Resolutions Records - PatJets ***" << std::endl;
             if ( jerRecords_.size() > 0 && is_mc_  ) {
                if ( jer_files_.size() > 0 && jer_files_[patJetCounter] != "" )
@@ -780,8 +715,7 @@ void Ntuplizer::beginJob() {
          if ( inputTags == "GenParticles" ) {
             genparticles_collections_.push_back( pGenParticleCandidates( new GenParticleCandidates(collection, tree_[name], is_mc_ ) ));
             genparticles_collections_.back() -> Init();
-        }
-         
+        }  
          // Trigger Objects
          if ( do_triggeraccepts_  && do_triggerobjects_ && inputTags == "TriggerObjectStandAlone"  ) {
             if ( triggerObjectLabels_.empty() )
@@ -790,7 +724,6 @@ void Ntuplizer::beginJob() {
             triggerObjectLabels_.erase( unique( triggerObjectLabels_.begin(), triggerObjectLabels_.end() ), triggerObjectLabels_.end() );
             std::string dir = name;
             TFileDirectory triggerObjectsDir = eventsDir_.mkdir(dir);
-      
             for ( auto & triggerObjectLabel : triggerObjectLabels_ ) {
                name = triggerObjectLabel;
                if ( use_full_name_ ) name += "_" + dir;
@@ -816,12 +749,9 @@ void Ntuplizer::beginJob() {
                      triggerobjects_collections_.back() -> UseTriggerResults(trgRes);
                      triggerobjects_collections_.back() -> TriggerObjectType(tot);
                   }
-
-               }
-               
+               } 
             }
-         }   
-
+         }
          if ( do_triggerobjects_ && inputTags == "TriggerEvent"  ) {
             if ( triggerObjectLabels_.empty() )
                triggerObjectLabels_ = config_.getParameter< Strings >("TriggerObjectLabels");
@@ -830,15 +760,12 @@ void Ntuplizer::beginJob() {
             std::string dir = name;
             TFileDirectory triggerObjectsDir = eventsDir_.mkdir(dir);
       
-         }
-         
+         }       
       }
    }
-
    // Metadata stuff
    int n_filter_counters = 0;
    int n_mhat_filter_counters = 0;
-
    // InputTag (single, i.e. not vector)
    for ( auto & inputTag : inputTags_ ) { 
       InputTag collection = config_.getParameter<InputTag>(inputTag);
@@ -848,12 +775,10 @@ void Ntuplizer::beginJob() {
       std::string proc  = collection.process();
       name = label;
       fullname = name + "_" + inst + "_" + proc;
-      if ( use_full_name_ ) name = fullname;
-         
+      if ( use_full_name_ ) name = fullname;       
       // Generator filter
       if ( do_genfilter_ && inputTag == "GenFilterInfo" )
          metadata_ -> SetGeneratorFilter(config_.getParameter<InputTag> ("GenFilterInfo"));
-
       // Event filter
       if ( do_event_count_summary_ ) {
          if ( inputTag == "TotalEvents" ) {
@@ -870,7 +795,6 @@ void Ntuplizer::beginJob() {
             mHatEventCounters_[1] = filteredMHatEvents_;
             ++n_mhat_filter_counters;
          }
-
          if ( n_filter_counters == 2 ) 		metadata_ -> SetEventCountSummary(eventCounters_);
          if ( n_mhat_filter_counters == 2)	metadata_ -> SetMHatEventCountSummary(mHatEventCounters_);
       }
@@ -908,7 +832,6 @@ void Ntuplizer::beginRun(edm::Run const& run, edm::EventSetup const& setup) {
 
 }
 
-
 // ------------ method called when ending the processing of a run  ------------
 void Ntuplizer::endRun(edm::Run const& run, edm::EventSetup const& setup) {
    printf_info("==> Ntuplizer::endRun(): Run = %d ...\n", (int)run.run());
@@ -924,7 +847,6 @@ void  Ntuplizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::Eve
    printf_info("==> Ntuplizer::beginLuminosityBlock(): Run = %d, LumiSection = %d ...\n", (int)lumi.run(), (int)lumi.id().value());
 
 }
-
 
 // ------------ method called when ending the processing of a luminosity block  ------------
 void Ntuplizer::endLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup) {
