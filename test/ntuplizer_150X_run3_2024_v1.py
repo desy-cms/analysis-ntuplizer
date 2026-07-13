@@ -25,6 +25,7 @@ if hasattr(command_line_options, 'outputFile') and command_line_options.outputFi
     except Exception as e:
         print('Warning: could not remove existing output file:', e)
 
+
 # General CMS stuff
 import FWCore.ParameterSet.Config as cms
 from Configuration.StandardSequences.Eras import eras
@@ -156,8 +157,15 @@ secFiles.extend( [] )
 
 ## ============ Output MiniAOD ======================
 ## !!! Produces a large file!
+# output_pattuple = "patTuple.root"
+# try:
+#     if os.path.exists(output_pattuple):
+#         print('Removing existing patTuple file:', output_pattuple)
+#         os.remove(output_pattuple)
+# except Exception as e:
+#     print('Warning: could not remove existing patTuple file:', e)
 # process.out = cms.OutputModule("PoolOutputModule",
-#                                fileName = cms.untracked.string('patTuple.root'),
+#                                fileName = cms.untracked.string(output_pattuple),
 #                                outputCommands = cms.untracked.vstring('keep *_*_*_MssmHbb' )
 #                                )
 # process.outpath = cms.EndPath(process.out)
