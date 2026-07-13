@@ -200,27 +200,6 @@ namespace analysis {
             float etaAtVtx_[maxCandidates];
             float phiAtVtx_[maxCandidates];
             
-            // reco tracks
-            float trkchi2_[maxCandidates];
-            float trkndof_[maxCandidates];
-            float trkd0_  [maxCandidates];
-            float trkdxy_ [maxCandidates];
-            bool  trkqual_[10][maxCandidates];
-            // hitpattern
-            int trkhp_lostmu_[maxCandidates];
-            int trkhp_valmu_[maxCandidates];
-            int trkhp_badmu_[maxCandidates];
-            int trkhp_valtrkhits_[maxCandidates];
-            int trkhp_valtechits_[maxCandidates];
-            int trkhp_valtibhits_[maxCandidates];
-            int trkhp_valtidhits_[maxCandidates];
-            int trkhp_valtobhits_[maxCandidates];
-            int trkhp_stationsvalhits_[maxCandidates];
-            int trkhp_stationsbadhits_[maxCandidates];
-            int trkhp_innerstationsvalhits_[maxCandidates];
-            int trkhp_outerstationsvalhits_[maxCandidates];
-           
-            
             
             TTree * tree_;
             
@@ -229,7 +208,6 @@ namespace analysis {
             bool is_l1muon_;
             bool is_patjet_;
             bool is_recomuon_;
-            bool is_recotrack_;
             bool is_patmuon_;
             bool is_genjet_;
             bool is_genparticle_;

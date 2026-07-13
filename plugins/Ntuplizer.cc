@@ -36,8 +36,6 @@
 #include "DataFormats/L1Trigger/interface/Muon.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
-#include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
@@ -109,7 +107,6 @@ using TriggerAccepts               = analysis::ntuple::TriggerAccepts;
 using PrimaryVertices              = analysis::ntuple::Vertices;
 using L1TJetCandidates             = analysis::ntuple::Candidates<l1t::Jet>;
 using L1TMuonCandidates            = analysis::ntuple::Candidates<l1t::Muon>;
-using RecoTrackCandidates          = analysis::ntuple::Candidates<reco::Track>;
 
 using EventCounts = analysis::ntuple::EventCounts<unsigned int>;
 using WeightedEventCounts = analysis::ntuple::EventCounts<double>;
@@ -131,7 +128,6 @@ using pTriggerAccepts               = Ptr<TriggerAccepts>;
 using PrimaryVerticesPtr            = Ptr<PrimaryVertices>;
 using pL1TJetCandidates             = Ptr<L1TJetCandidates>;
 using pL1TMuonCandidates            = Ptr<L1TMuonCandidates>;
-using pRecoTrackCandidates          = Ptr<RecoTrackCandidates>;
 
 //
 // class declaration
@@ -170,7 +166,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool use_full_name_;
       bool do_l1jets_;
       bool do_l1muons_;
-      bool do_recotracks_;
       bool do_patjets_;
       bool do_patmets_;
       bool do_patmuons_;
@@ -213,7 +208,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       TokenMap<reco::VertexCollection>                   primary_vertices_tokens_;
       TokenMap<reco::GenJetCollection>                   genJetTokens_;
       TokenMap<reco::GenParticleCollection>              genPartTokens_;
-      TokenMap<reco::TrackCollection>                    recoTrackTokens_;
       TokenMap<reco::JetTagCollection>                   jetTagTokens_;
 
       std::shared_ptr<HLTPrescaleProvider> hltPrescaleProvider_;
@@ -267,7 +261,6 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Collections<PrimaryVertices>              primary_vertices_collections_;
       Collections<GenJetCandidates>             genjets_collections_;
       Collections<GenParticleCandidates>        genparticles_collections_;
-      Collections<RecoTrackCandidates>          recotracks_collections_;
       Collections<TriggerAccepts>               triggeraccepts_collections_;
       
       // Collections for the ntuples (single)
@@ -446,11 +439,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       }
    };
 
-   // Technical stuff
-   inputTagsDispatch["RecoTracks"] = [&](InputTags const& collections) {
-      for (auto const& collection : collections) makeCollectionTree(collection);
-      registerTokens<reco::TrackCollection>(collections, recoTrackTokens_);
-   };
    // Loop over configured input tag categories, retrieve the collection tags for each category,
    // and inputTagsDispatch registration of the corresponding tokens based on the category name.
    for ( auto & inputTags : inputTagsVec_ ) {
@@ -595,10 +583,6 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       // MC only stuff
    }
       
-      // Reco track (reco)
-      for ( auto & collection : recotracks_collections_ )
-         collection -> Fill(event);
-   
       // Pat jets (pat)
       for ( auto & collection : patjets_collections_ )
          collection -> Fill(event, setup);
@@ -652,7 +636,6 @@ void Ntuplizer::beginJob() {
    do_pileup_info_      = config_.exists("PileupSummaryInfo") && is_mc_;
    do_geneventinfo_     = config_.exists("GenEventInfo") && is_mc_;
    do_lumiscalers_      = config_.exists("LumiScalers");
-   do_recotracks_       = config_.exists("RecoTracks");
    do_patmets_          = config_.exists("PatMETs");
    do_patmuons_         = config_.exists("PatMuons");
    do_genjets_          = config_.exists("GenJets");
@@ -762,11 +745,6 @@ void Ntuplizer::beginJob() {
          // if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" )
          //    tree_[name] = eventsDir_.make<TTree>(name.c_str(),fullname.c_str());
          
-         // Reco Tracks
-         if ( inputTags == "RecoTracks" ) {
-            recotracks_collections_.push_back( pRecoTrackCandidates( new RecoTrackCandidates(collection, tree_[name], is_mc_ ) ));
-            recotracks_collections_.back() -> Init();
-         }
          
          // Pat Jets
          if ( inputTags == "PatJets" ) {
