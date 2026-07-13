@@ -262,20 +262,17 @@ void Candidates<T>::Kinematics() {
          mo2_[n] = -1;
          da1_[n] = -1;
          da2_[n] = -1;
-         if ( gp->numberOfMothers() > 0 )
-         {
+         if ( gp->numberOfMothers() > 0 ) {
             mo1_[n] = gp->motherRef(0).key();
             mo2_[n] = gp->motherRef(gp->numberOfMothers()-1).key();
          }
-         if ( gp->numberOfDaughters() > 0 )
-         {
+         if ( gp->numberOfDaughters() > 0 ) {
             da1_[n] = gp->daughterRef(0).key();
             da2_[n] = gp->daughterRef(gp->numberOfDaughters()-1).key();
          }
          const reco::Candidate * mother = gp->mother(0);
          higgs_dau_[n] = false;
-         if ( mother != NULL )  // initial protons are orphans
-         {
+         if ( mother != NULL ) {  // initial protons are orphans
             if ( mother->pdgId() == 36 || mother->pdgId() == 25 )
                higgs_dau_[n] = true;
          }
@@ -554,7 +551,7 @@ void Candidates<T>::Fill(const edm::Event& event, const edm::EventSetup& setup) 
 
 template <typename T>
 void Candidates<T>::Branches() {
-   // kinematics output info
+   // kinematics basic output info
    tree_->Branch("n",   &n_,  "n/I");
    tree_->Branch("pt",  pt_,  "pt[n]/F");
    tree_->Branch("eta", eta_, "eta[n]/F");
