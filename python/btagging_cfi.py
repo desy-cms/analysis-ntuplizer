@@ -2,6 +2,7 @@ import FWCore.ParameterSet.Config as cms
 from Analysis.Utils.config_utils import merge_vpsets
 
 # https://btv-wiki.docs.cern.ch/ScaleFactors/#taggers-and-definitions-of-discriminators
+# https://github.com/cms-sw/cmssw/tree/CMSSW_15_0_X/RecoBTag/ONNXRuntime/python
 # Also see: https://github.com/cms-sw/cmssw/blob/CMSSW_15_0_X/PhysicsTools/NanoAOD/python/jetsAK4_Puppi_cff.py
 
 BTagging = {}
@@ -136,7 +137,46 @@ BTagging['AK4PFPuppi'] = {
     ),
 }
 
+BTagging['AK8PF'] = {
+    'ParticleNet': cms.VPSet(
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK8DiscriminatorsJetTags:HbbvsQCD'),
+            alias     = cms.string('btag_pnet_ak8_hbbvsqcd'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK8DiscriminatorsJetTags:HccvsQCD'),
+            alias     = cms.string('btag_pnet_ak8_hccvsqcd'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK8DiscriminatorsJetTags:HttvsQCD'),
+            alias     = cms.string('btag_pnet_ak8_httvsqcd'),
+        ),
+    ),
+    'GlobalParticleTransformer': cms.VPSet(
+        cms.PSet(
+            discriminator = cms.string('pfGlobalParticleTransformerAK8JetTags:probXbb'),
+            alias     = cms.string('btag_ak8_gpart_xbb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfGlobalParticleTransformerAK8JetTags:probXcc'),
+            alias     = cms.string('btag_ak8_gpart_xcc'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfGlobalParticleTransformerAK8JetTags:probXcs'),
+            alias     = cms.string('btag_ak8_gpart_xcs'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfGlobalParticleTransformerAK8JetTags:probXqq'),
+            alias     = cms.string('btag_ak8_gpart_xqq'),
+        ),
+    ),
+}
+
+
 AllBTagging = {}
 AllBTagging['AK4PFPuppi'] =  merge_vpsets(
     *BTagging['AK4PFPuppi'].values()
+)
+AllBTagging['AK8PF'] =  merge_vpsets(
+    *BTagging['AK8PF'].values()
 )

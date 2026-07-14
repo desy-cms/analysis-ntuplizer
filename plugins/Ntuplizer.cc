@@ -157,7 +157,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       template<typename Collection>
          void registerTokens(InputTags const& , TokenMap<Collection>& );
       String makeCollectionTree(InputTag const& collection, bool useFullName = false, String const& custom_tree_name = "");
-      
+      void AddJetCollection(const edm::InputTag& collection, size_t index );
+
       // ----------member data ---------------------------
       edm::ParameterSet config_;
       
@@ -194,6 +195,9 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       std::vector<analysis::utils::TitleAlias>  btagging_;
       std::vector<analysis::utils::TitleAlias>  bregression_;
       std::vector<analysis::utils::TitleAlias>  discriminators_;
+      std::vector<std::vector<analysis::utils::TitleAlias>>  jet_btagging_;
+      std::vector<std::vector<analysis::utils::TitleAlias>>  jet_bregression_;
+      std::vector<std::vector<analysis::utils::TitleAlias>>  jet_discriminators_;
 
       TokenMap<pat::JetCollection>                       patJetTokens_;
       TokenMap<pat::MuonCollection>                      patMuonTokens_;
@@ -361,30 +365,61 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       jecRecords_.clear();
       jerRecords_.clear();
       pileupJetIds_.clear();
+      jet_btagging_.clear();
+      jet_bregression_.clear();
+      jet_discriminators_.clear();
 
       for (auto const& jet : jets) {
          auto collection = jet.getParameter<InputTag>("collection");
-         auto original = jet.getParameter<InputTag>("original");
          patJets_.push_back(collection);
-         patJets_.push_back(original);
-         if (jet.existsAs<std::string>("jecRecord")) {
-            auto jecRecord = jet.getParameter<std::string>("jecRecord");
-            jecRecords_.push_back(jecRecord);
-            jecRecords_.push_back(jecRecord); // for original
-         }
-         if (jet.existsAs<std::string>("jerRecord")) {
-            auto jerRecord = jet.getParameter<std::string>("jerRecord");
-            jerRecords_.push_back(jerRecord); 
-            jerRecords_.push_back(jerRecord); // for original
-         }
-         pileupJetIds_.push_back(jet.getParameter<std::string>("pileupJetId"));
-         pileupJetIds_.push_back(jet.getParameter<std::string>("pileupJetId")); // original has the same records as the main colleciton
          makeCollectionTree(collection);
-         makeCollectionTree(original);
-      }
+         std::vector<analysis::utils::TitleAlias>  btagging;
+         if ( jet.exists("btagging") ) {
+            auto vpset_btag = jet.getParameter<std::vector<edm::ParameterSet>>("btagging");
+            for ( auto const & pset_btag : vpset_btag ) {
+               String btag = pset_btag.getParameter<std::string>("discriminator");
+               String btag_alias = pset_btag.getParameter<std::string>("alias"); // alias is obligatory!!!
+               btagging.push_back({btag, btag_alias});
+            }
+            jet_btagging_.push_back(btagging);
+            metadata_ -> AddDefinitions(btagging,std::string("btagging_") + collection.label());
+         }
+         std::vector<analysis::utils::TitleAlias>  bregression;
+         if ( jet.exists("bregression") ) {
+            auto vpset_breg = jet.getParameter<std::vector<edm::ParameterSet>>("bregression");
+            for ( auto const & pset_breg : vpset_breg ) {
+               String breg = pset_breg.getParameter<std::string>("discriminator");
+               String breg_alias = pset_breg.getParameter<std::string>("alias"); // alias is obligatory!!!
+               bregression.push_back({breg, breg_alias});
+            }
+            jet_bregression_.push_back(bregression);
+            metadata_ -> AddDefinitions(bregression,std::string("bregression_") + collection.label());
+         }
+         std::vector<analysis::utils::TitleAlias>  discriminators;
+         discriminators.reserve(btagging.size() + bregression.size());
+         discriminators.insert(discriminators.end(), btagging.begin(), btagging.end());
+         discriminators.insert(discriminators.end(), bregression.begin(), bregression.end());
+         jet_discriminators_.push_back(discriminators);
+         if ( jet.exists("jecRecord") )    jecRecords_.push_back(jet.getParameter<std::string>("jecRecord"));
+         if ( jet.exists("jerRecord") )    jerRecords_.push_back(jet.getParameter<std::string>("jerRecord")); 
+         if ( jet.exists("pileupJetId") )  pileupJetIds_.push_back(jet.getParameter<std::string>("pileupJetId"));
 
+         if ( jet.exists("original") ) {
+            auto original = jet.getParameter<InputTag>("original");
+            patJets_.push_back(original);
+            makeCollectionTree(original);
+            // duplicates what used by collection
+            if ( ! jecRecords_.empty() ) jecRecords_.push_back(jecRecords_.back());
+            if ( ! jerRecords_.empty() ) jerRecords_.push_back(jerRecords_.back());
+            if ( ! pileupJetIds_.empty() ) pileupJetIds_.push_back(pileupJetIds_.back());
+            if ( ! jet_btagging_.empty() ) jet_btagging_.push_back(jet_btagging_.back());
+            if ( ! jet_bregression_.empty() ) jet_bregression_.push_back(jet_bregression_.back());
+            if ( ! jet_discriminators_.empty() ) jet_discriminators_.push_back(jet_discriminators_.back());
+
+         } 
+      }
       registerTokens<pat::JetCollection>(patJets_, patJetTokens_);
-};   
+   };   
 
    // Table-driven dispatch
    using RegistersFn = std::function<void(InputTags const&)>;
@@ -705,36 +740,14 @@ void Ntuplizer::beginJob() {
    // Input tags (vector)
    // auto pileupJetIds = config_.getParameter<Strings>("PileupJetIds");
 
+   // Jets
+   size_t patJetCounter = 0;
    auto jetCollections = config_.getParameter<std::vector<edm::ParameterSet>>("JetCollections");
-   int patJetCounter = 0;
    for (auto const& jet : jetCollections) {
-      auto collection  = jet.getParameter<InputTag>("collection");
-      std::string label = collection.label();
-      std::string inst  = collection.instance();
-      std::string proc  = collection.process();
-      name = label;
-      fullname = name + "_" + inst + "_" + proc;
-      if ( collection.instance() != "" && jetCollections.size() > 1 )
-         name += "_" + inst;
-      if ( use_full_name_ ) name = fullname;
-      patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
-      patjets_collections_.back() -> Init(discriminators_);
-      // patjets_collections_.back() -> PileupJetIdInstance(pileupJetIds[patJetCounter]);
-
-      auto original  = jet.getParameter<InputTag>("original");
-      label = original.label();
-      inst  = original.instance();
-      proc  = original.process();
-      name = label;
-      fullname = name + "_" + inst + "_" + proc;
-      if ( original.instance() != "" && jetCollections.size() > 1 )
-         name += "_" + inst;
-      if ( use_full_name_ ) name = fullname;
-      patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(original, tree_[name], is_mc_ ) ));
-      patjets_collections_.back() -> Init(discriminators_);
-      // patjets_collections_.back() -> PileupJetIdInstance(pileupJetIds[patJetCounter]);
-
-
+      AddJetCollection(jet.getParameter<InputTag>("collection"), patJetCounter);
+      if (jet.existsAs<InputTag>("original"))
+         AddJetCollection(jet.getParameter<InputTag>("original"), ++patJetCounter);
+      patJetCounter++;
    }
    
    for ( auto & inputTags : inputTagsVec_ ) {
@@ -969,6 +982,21 @@ String Ntuplizer::makeCollectionTree(InputTag const& collection, bool use_full_n
    }
    tree_[tree_name] = eventsDir_.make<TTree>(tree_name.c_str(), full_name.c_str());
    return tree_name;
+}
+
+void Ntuplizer::AddJetCollection(const edm::InputTag& collection, size_t index) {
+   std::string label = collection.label();
+   std::string inst  = collection.instance();
+   std::string proc  = collection.process();
+   std::string name = label;
+   std::string fullname = name + "_" + inst + "_" + proc;
+   if (!inst.empty() && patJets_.size() > 1)
+      name += "_" + inst;
+   if (use_full_name_)
+      name = fullname;
+   patjets_collections_.push_back(std::make_unique<PatJetCandidates>(collection, tree_[name], is_mc_));
+   patjets_collections_.back()->Init(jet_discriminators_[index]);
+   // patjets_collections_.back() -> PileupJetIdInstance(pileupJetIds[patJetCounter]);
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------

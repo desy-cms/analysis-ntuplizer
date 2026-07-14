@@ -83,6 +83,10 @@ AK4Puppi_BTagging = cms.VPSet(
     *BTagging['AK4PFPuppi']['UnifiedParticleTransformer'],
     *BTagging['AK4PFPuppi']['DeepFlavour']
 )
+AK8_BTagging = cms.VPSet(
+    *BTagging['AK8PF']['ParticleNet'],
+    *BTagging['AK8PF']['GlobalParticleTransformer'],
+)
 
 from Analysis.Ntuplizer.bregression_cfi import BRegression, AllBRegression
 
@@ -96,31 +100,26 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
                                                     cms.InputTag('TriggerResults','','HLT'), ),
     TriggerObjectStandAlone     = cms.VInputTag(
                                                     cms.InputTag('slimmedPatTrigger'), ),
-    # PatJets                     = cms.VInputTag( 
-    #                                                 cms.InputTag('correctedJetsPuppi'),
-    #                                                 cms.InputTag('slimmedJetsPuppi'),),
-    # JECRecords                  = cms.vstring  (
-    #                                                 'AK4PFPuppi',
-    #                                                 'AK4PFPuppi',), # for the JEC uncertainties
-    # JERRecords                  = cms.vstring  (
-    #                                                 'AK4PFPuppi',
-    #                                                 'AK4PFPuppi',), # for the JER uncertainties
-    # PileupJetIds                = cms.vstring  (
-    #                                                 'pileupJetIdPuppi',
-    #                                                 'pileupJetIdPuppi',),
     JetCollections              = cms.VPSet(
                                                 cms.PSet(
-                                                    collection    = cms.InputTag('correctedJetsPuppi'),
+                                                    collection    = cms.InputTag('updatedJetsPuppi'),
                                                     original      = cms.InputTag('slimmedJetsPuppi'),
+                                                    btagging      = AllBTagging['AK4PFPuppi'], # TODO:
+                                                    bregression   = AllBRegression['AK4PFPuppi'], # TODO:
                                                     # jecRecord     = cms.string('AK4PFPuppi'),
                                                     # jerRecord     = cms.string('AK4PFPuppi'),
-                                                    pileupJetId   = cms.string('pileupJetIdPuppi'),
-                                                    btagging      = AK4Puppi_BTagging, # TODO:
-                                                    bregression   = AllBRegression['AK4PFPuppi'], # TODO:
+                                                    # pileupJetId   = cms.string('pileupJetIdPuppi'),
                                                     ),
+                                                cms.PSet(
+                                                    collection    = cms.InputTag('updatedJetsAK8'),
+                                                    original      = cms.InputTag('slimmedJetsAK8'),
+                                                    btagging      = AllBTagging['AK8PF'], # TODO:
+                                                    # jecRecord     = cms.string('AK4PFPuppi'),
+                                                    # jerRecord     = cms.string('AK4PFPuppi'),
+                                                    # pileupJetId   = cms.string('pileupJetIdPuppi'),
+                                                    ),
+                                                
                                                 ),
-    # BTagging                    = AK4Puppi_BTagging,
-    # BRegression                 = AllBRegression['AK4PFPuppi'],
     PatMuons                    = cms.VInputTag(
                                                     cms.InputTag('slimmedMuons'), ),
     PrimaryVertices             = cms.VInputTag(
@@ -155,16 +154,16 @@ process.p = cms.Path(
                         process.nFilteredEvents +
                         process.MssmHbb
 )
-process.p.associate(process.jecJetsPuppi)
-process.p.associate(process.jecJets)
-process.p.associate(process.jecJetsAK8)
+process.p.associate(process.jetPuppiTask)
+process.p.associate(process.jetAK4Task)
+process.p.associate(process.jetAK8Task)
 
 ## Inputs
 readFiles = cms.untracked.vstring()
 secFiles = cms.untracked.vstring()
 processingMode=cms.untracked.string('RunsLumisAndEvents')
-process.source = cms.Source ('PoolSource',fileNames = readFiles)
-# process.source = cms.Source ('PoolSource',fileNames = readFiles, secondaryFileNames = secFiles)
+# process.source = cms.Source ('PoolSource',fileNames = readFiles)
+process.source = cms.Source ('PoolSource',fileNames = readFiles, secondaryFileNames = secFiles)
 readFiles.extend(command_line_options.inputFiles)
 secFiles.extend( [] )
 
