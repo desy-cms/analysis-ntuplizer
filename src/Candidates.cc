@@ -115,7 +115,7 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    trigobj_type_ = "";
 
    // pileup id
-   pileup_id_instance_ = "";
+   pileup_id_name_ = "";
    
 }
 
@@ -245,14 +245,17 @@ int Candidates<pat::Jet>::AdditionalProperties(int n, size_t i) {
    }
 
    // JEC Uncertainties
+   jecUncert_[n] = -1.;
    if ( jecRecord_ != "" ) {
       jecUnc_->setJetEta(eta_[n]);
       jecUnc_->setJetPt(pt_[n]);
       jecUncert_[n] = jecUnc_->getUncertainty(true);
-   } else {
-      jecUncert_[n] = -1.;
    }
    //JER
+   jerResolution_[n] = -1;
+   jerSF_[n]         = -1;
+   jerSFUp_[n]       = -1;
+   jerSFDown_[n]     = -1;
    if( jerRecord_ != "" ) {
       // SetUp Jet parameters
       JME::JetParameters jerParamRes;
@@ -272,18 +275,13 @@ int Candidates<pat::Jet>::AdditionalProperties(int n, size_t i) {
       jerSFUp_[n]     = res_sf_.getScaleFactor(jerParamSF,Variation::UP);
       jerSFDown_[n]   = res_sf_.getScaleFactor(jerParamSF,Variation::DOWN);
       
-   } else {
-      jerResolution_[n] = -1;
-      jerSF_[n]         = -1;
-      jerSFUp_[n]       = -1;
-      jerSFDown_[n]     = -1;
    }
 
    // jet pileup id
-   pileup_id_fulldiscr_[n] = -10.;
-   std::string pileup_id_disc_key = pileup_id_instance_+":fullDiscriminant";
+   pileup_id_discr_[n] = -10.;
+   std::string pileup_id_disc_key = pileup_id_name_;
    if ( cand_jet -> hasUserFloat(pileup_id_disc_key) ) {
-      pileup_id_fulldiscr_[n] = cand_jet -> userFloat(pileup_id_disc_key);
+      pileup_id_discr_[n] = cand_jet -> userFloat(pileup_id_disc_key);
    }
 
    return 0;
@@ -556,7 +554,7 @@ void Candidates<T>::Branches() {
       tree_->Branch("jerSF",jerSF_,"jerSF[n]/F");
       tree_->Branch("jerSFUp",jerSFUp_,"jerSFUp[n]/F");
       tree_->Branch("jerSFDown",jerSFDown_,"jerSFDown[n]/F");
-      tree_->Branch("Rho",&rho_,"Rho/D");
+      tree_->Branch("jerRho",&rho_,"jerRho/D");
 
       jetid_.resize(id_vars_.size());
       for (auto& jetid : jetid_)
@@ -564,7 +562,7 @@ void Candidates<T>::Branches() {
       for ( size_t it = 0 ; it < id_vars_.size() ; ++it )
          tree_->Branch(id_vars_[it].alias.c_str(), jetid_[it].data(), (id_vars_[it].title+"[n]/F").c_str());
 
-      tree_->Branch("pileup_id_fulldiscr", pileup_id_fulldiscr_, "pileup_id_fulldiscr[n]/F");
+      tree_->Branch("pileup_id_discr", pileup_id_discr_, "pileup_id_discr[n]/F");
    }
 
    if ( is_patmet_ ) {
@@ -656,8 +654,8 @@ void Candidates<T>::AddJerInfo(const std::string & jer, const std::string & res_
 }
 
 template <typename T>
-void Candidates<T>::PileupJetIdInstance(const std::string & instance) {
-   pileup_id_instance_ = instance;
+void Candidates<T>::PileupJetId(const std::string & name) {
+   pileup_id_name_ = name;
 }
 
 // Need to declare all possible template classes here: candidates types

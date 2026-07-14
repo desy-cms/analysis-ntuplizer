@@ -76,14 +76,14 @@ process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
 # Apply JES corrections
 process.load('Analysis.Ntuplizer.jet_corrections_cff')
 
-from Analysis.Ntuplizer.btagging_cfi import BTagging
-AK4Puppi_BTagging = cms.VPSet(
+from Analysis.Ntuplizer.btagging_cfi import BTagging, AllBTagging
+BTagging_AK4PFPuppi = cms.VPSet(
     *BTagging['AK4PFPuppi']['ParticleNet'],
     *BTagging['AK4PFPuppi']['ParticleTransformer'],
     *BTagging['AK4PFPuppi']['UnifiedParticleTransformer'],
     *BTagging['AK4PFPuppi']['DeepFlavour']
 )
-AK8_BTagging = cms.VPSet(
+BTagging_AK8PF = cms.VPSet(
     *BTagging['AK8PF']['ParticleNet'],
     *BTagging['AK8PF']['GlobalParticleTransformer'],
 )
@@ -103,31 +103,34 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     JetCollections              = cms.VPSet(
                                                 cms.PSet(
                                                     collection    = cms.InputTag('updatedJetsPuppi'),
-                                                    original      = cms.InputTag('slimmedJetsPuppi'),
-                                                    btagging      = AllBTagging['AK4PFPuppi'], # TODO:
-                                                    bregression   = AllBRegression['AK4PFPuppi'], # TODO:
-                                                    # jecRecord     = cms.string('AK4PFPuppi'),
-                                                    # jerRecord     = cms.string('AK4PFPuppi'),
-                                                    # pileupJetId   = cms.string('pileupJetIdPuppi'),
+                                                    # original      = cms.InputTag('slimmedJetsPuppi'),
+                                                    btagging      = BTagging_AK4PFPuppi,
+                                                    bregression   = AllBRegression['AK4PFPuppi'],
+                                                    pileupJetId   = cms.string('pileupJetIdPuppi:fullDiscriminant'),
+                                                    jecRecord     = cms.string('AK4PFPuppi'),
+                                                    jerRecord     = cms.string('AK4PFPuppi'),
                                                     ),
-                                                cms.PSet(
-                                                    collection    = cms.InputTag('updatedJetsAK8'),
-                                                    original      = cms.InputTag('slimmedJetsAK8'),
-                                                    btagging      = AllBTagging['AK8PF'], # TODO:
-                                                    # jecRecord     = cms.string('AK4PFPuppi'),
-                                                    # jerRecord     = cms.string('AK4PFPuppi'),
-                                                    # pileupJetId   = cms.string('pileupJetIdPuppi'),
-                                                    ),
-                                                
+                                                # cms.PSet(
+                                                #     collection    = cms.InputTag('updatedJetsAK8'),
+                                                #     original      = cms.InputTag('slimmedJetsAK8'),
+                                                #     btagging      = BTagging['AK8PF']['ParticleNet'],
+                                                #     jecRecord     = cms.string('AK8PFPuppi'),
+                                                #     jerRecord     = cms.string('AK8PFPuppi'),
+                                                #     ),         
                                                 ),
+    FixedGridRhoAll             = cms.InputTag ('fixedGridRhoAll'),
     PatMuons                    = cms.VInputTag(
-                                                    cms.InputTag('slimmedMuons'), ),
+                                                    cms.InputTag('slimmedMuons'),
+                                                    ),
     PrimaryVertices             = cms.VInputTag(
-                                                    cms.InputTag('offlineSlimmedPrimaryVertices'), ),
+                                                    cms.InputTag('offlineSlimmedPrimaryVertices'),
+                                                    ),
     L1TJets                     = cms.VInputTag(
-                                                    cms.InputTag('caloStage2Digis','Jet','RECO'), ),
+                                                    cms.InputTag('caloStage2Digis','Jet','RECO'),
+                                                    ),
     L1TMuons                    = cms.VInputTag(
-                                                    cms.InputTag('gmtStage2Digis','Muon','RECO'), ),
+                                                    cms.InputTag('gmtStage2Digis','Muon','RECO'), 
+                                                    ),
     MetFiltersResults           = cms.InputTag('TriggerResults', '', 'PAT'),
     TriggerPaths                = TriggerInfo['TriggerPaths'],
     L1Seeds                     = TriggerInfo['L1Seeds'],    
@@ -139,12 +142,17 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
    ## MC only
 if command_line_options.type == 'mc':
    process.MssmHbb.CrossSection        = cms.double(command_line_options.xsection)  # in pb
+   process.MssmHbb.PileupSummaryInfo   = cms.InputTag("slimmedAddPileupInfo")
    process.MssmHbb.GenFilterInfo       = cms.InputTag("genFilterEfficiencyProducer")
    process.MssmHbb.GenRunInfo          = cms.InputTag("generator")
    process.MssmHbb.GenEventInfo        = cms.InputTag("generator")
-   process.MssmHbb.GenJets             = cms.VInputTag(cms.InputTag("slimmedGenJets"))
-   process.MssmHbb.GenParticles        = cms.VInputTag(cms.InputTag("prunedGenParticles"))
-   process.MssmHbb.PileupSummaryInfo   = cms.InputTag("slimmedAddPileupInfo")
+   process.MssmHbb.GenJets             = cms.VInputTag(
+                                                        cms.InputTag("slimmedGenJets"),
+                                                        # cms.InputTag("slimmedGenJetsAK8"),
+                                                        )
+   process.MssmHbb.GenParticles        = cms.VInputTag(
+                                                        cms.InputTag("prunedGenParticles"),
+                                                        )
 
 
 ## !!! Do the stuff!

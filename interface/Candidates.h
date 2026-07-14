@@ -84,7 +84,7 @@ namespace analysis {
             void MinPt(const float& minPt = -1.);
             void MaxEta(const float& maxEta = -1.);
             void JECRecord(const std::string &);
-            void PileupJetIdInstance(const std::string &);
+            void PileupJetId(const std::string &);
             static constexpr int maxCandidates = 500;
          protected:
             // ----------member data ---------------------------
@@ -153,8 +153,8 @@ namespace analysis {
             analysis::utils::JerESTokens res_tokens_;
 
             // Jet pileup id
-            float pileup_id_fulldiscr_[maxCandidates];
-            std::string pileup_id_instance_;
+            float pileup_id_discr_[maxCandidates];
+            std::string pileup_id_name_;
                         
             int indx_[maxCandidates];
             int pdg_[maxCandidates];
