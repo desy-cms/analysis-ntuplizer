@@ -28,12 +28,25 @@ if hasattr(command_line_options, 'outputFile') and command_line_options.outputFi
 
 # General CMS stuff
 import FWCore.ParameterSet.Config as cms
-from Configuration.StandardSequences.Eras import eras
 from Configuration.AlCa.GlobalTag import GlobalTag
 
+# Modifiers
+from Configuration.StandardSequences.Eras import eras
+from Analysis.Ntuplizer.modifiers_per_year_cff import run2022, run2023, run2024, run2025, run2026
+year_modifiers = {
+    2022: run2022,
+    2023: run2023,
+    2024: run2024,
+    2025: run2025,
+    2026: run2026
+}
+year_modifier = year_modifiers.get(command_line_options.year)
+modifiers = []
+if year_modifier is not None:
+    modifiers.append(year_modifier)
+
 ## Let it begin
-process = cms.Process('MssmHbb',eras.Run3_2024)
-# process = cms.Process('MssmHbb')
+process = cms.Process("MssmHbb", *modifiers)
 # # process options
 process.options = cms.untracked.PSet()
 process.options.numberOfThreads=cms.untracked.uint32(4) # execution with 4cores
@@ -61,7 +74,6 @@ process.nFilteredEvents = cms.EDProducer('EventCountProducer')
 ## Trigger information
 from Analysis.Ntuplizer.utils.trigger_info import trigger_info_reader
 TriggerInfo = trigger_info_reader(command_line_options.triggerInfo)
-
 # Trigger filter: FOR DATA ONLY!!!
 process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
     triggerConditions = TriggerInfo['TriggerConditions'],
@@ -121,7 +133,6 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
                                                     jerRecord     = cms.string('AK8PFPuppi'),
                                                     ),         
                                                 ),
-    FixedGridRhoAll             = cms.InputTag ('fixedGridRhoAll'),
     PatMuons                    = cms.VInputTag(
                                                     cms.InputTag('slimmedMuons'),
                                                     ),
@@ -134,15 +145,20 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     L1TMuons                    = cms.VInputTag(
                                                     cms.InputTag('gmtStage2Digis','Muon','RECO'), 
                                                     ),
-    MetFiltersResults           = cms.InputTag('TriggerResults', '', 'PAT'),
     TriggerPaths                = TriggerInfo['TriggerPaths'],
     L1Seeds                     = TriggerInfo['L1Seeds'],    
     TriggerObjectLabels         = TriggerInfo['TriggerObjectLabels'],
     TriggerObjectSplits         = TriggerInfo['TriggerObjectSplits'],
     TriggerObjectSplitsTypes    = TriggerInfo['TriggerObjectSplitsTypes'],
+    MetFiltersResults           = cms.InputTag('TriggerResults', '', 'RECO'),
+    FixedGridRhoAll             = cms.InputTag ('fixedGridRhoAll'),
 )
+# to modify according to year
+run2022.toModify(process.MssmHbb, MetFiltersResults=cms.InputTag('TriggerResults', '', 'PAT'))
+run2023.toModify(process.MssmHbb, MetFiltersResults=cms.InputTag('TriggerResults', '', 'PAT'))
 
-   ## MC only
+
+## MC only
 if command_line_options.type == 'mc':
    process.MssmHbb.CrossSection        = cms.double(command_line_options.xsection)  # in pb
    process.MssmHbb.PileupSummaryInfo   = cms.InputTag("slimmedAddPileupInfo")
@@ -156,7 +172,6 @@ if command_line_options.type == 'mc':
    process.MssmHbb.GenParticles        = cms.VInputTag(
                                                         cms.InputTag("prunedGenParticles"),
                                                         )
-
 
 ## !!! Do the stuff!
 path = process.nTotalEvents
@@ -173,8 +188,6 @@ process.p.associate(process.jetAK8Task)
 ## Inputs
 readFiles = cms.untracked.vstring()
 secFiles = cms.untracked.vstring()
-processingMode=cms.untracked.string('RunsLumisAndEvents')
-# process.source = cms.Source ('PoolSource',fileNames = readFiles)
 process.source = cms.Source ('PoolSource',fileNames = readFiles, secondaryFileNames = secFiles)
 readFiles.extend(command_line_options.inputFiles)
 secFiles.extend( [] )
