@@ -103,7 +103,7 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     JetCollections              = cms.VPSet(
                                                 cms.PSet(
                                                     collection    = cms.InputTag('updatedJetsPuppi'),
-                                                    # original      = cms.InputTag('slimmedJetsPuppi'),
+                                                    original      = cms.InputTag('slimmedJetsPuppi'),
                                                     btagging      = BTagging_AK4PFPuppi,
                                                     bregression   = AllBRegression['AK4PFPuppi'],
                                                     pileupJetId   = cms.string('pileupJetIdPuppi:fullDiscriminant'),
