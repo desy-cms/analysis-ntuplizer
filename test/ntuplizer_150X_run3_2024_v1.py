@@ -76,6 +76,7 @@ process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
 # Apply JES corrections
 process.load('Analysis.Ntuplizer.jet_corrections_cff')
 
+# BTagging
 from Analysis.Ntuplizer.btagging_cfi import BTagging, AllBTagging
 BTagging_AK4PFPuppi = cms.VPSet(
     *BTagging['AK4PFPuppi']['ParticleNet'],
@@ -88,7 +89,9 @@ BTagging_AK8PF = cms.VPSet(
     *BTagging['AK8PF']['GlobalParticleTransformer'],
 )
 
+# BRegression
 from Analysis.Ntuplizer.bregression_cfi import BRegression, AllBRegression
+
 
 ## Ntuplizer
 process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
@@ -103,20 +106,20 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     JetCollections              = cms.VPSet(
                                                 cms.PSet(
                                                     collection    = cms.InputTag('updatedJetsPuppi'),
-                                                    original      = cms.InputTag('slimmedJetsPuppi'),
+                                                    # original      = cms.InputTag('slimmedJetsPuppi'),
                                                     btagging      = BTagging_AK4PFPuppi,
                                                     bregression   = AllBRegression['AK4PFPuppi'],
                                                     pileupJetId   = cms.string('pileupJetIdPuppi:fullDiscriminant'),
                                                     jecRecord     = cms.string('AK4PFPuppi'),
                                                     jerRecord     = cms.string('AK4PFPuppi'),
                                                     ),
-                                                # cms.PSet(
-                                                #     collection    = cms.InputTag('updatedJetsAK8'),
-                                                #     original      = cms.InputTag('slimmedJetsAK8'),
-                                                #     btagging      = BTagging['AK8PF']['ParticleNet'],
-                                                #     jecRecord     = cms.string('AK8PFPuppi'),
-                                                #     jerRecord     = cms.string('AK8PFPuppi'),
-                                                #     ),         
+                                                cms.PSet(
+                                                    collection    = cms.InputTag('updatedJetsAK8'),
+                                                    # original      = cms.InputTag('slimmedJetsAK8'),
+                                                    btagging      = BTagging['AK8PF']['ParticleNet'],
+                                                    jecRecord     = cms.string('AK8PFPuppi'),
+                                                    jerRecord     = cms.string('AK8PFPuppi'),
+                                                    ),         
                                                 ),
     FixedGridRhoAll             = cms.InputTag ('fixedGridRhoAll'),
     PatMuons                    = cms.VInputTag(
@@ -148,7 +151,7 @@ if command_line_options.type == 'mc':
    process.MssmHbb.GenEventInfo        = cms.InputTag("generator")
    process.MssmHbb.GenJets             = cms.VInputTag(
                                                         cms.InputTag("slimmedGenJets"),
-                                                        # cms.InputTag("slimmedGenJetsAK8"),
+                                                        cms.InputTag("slimmedGenJetsAK8"),
                                                         )
    process.MssmHbb.GenParticles        = cms.VInputTag(
                                                         cms.InputTag("prunedGenParticles"),
@@ -156,12 +159,13 @@ if command_line_options.type == 'mc':
 
 
 ## !!! Do the stuff!
-process.p = cms.Path(
-                        process.nTotalEvents +
-                        process.triggerSelection +
-                        process.nFilteredEvents +
-                        process.MssmHbb
+path = process.nTotalEvents
+if command_line_options.type != 'mc':
+    path += process.triggerSelection
+path += ( process.nFilteredEvents +
+            process.MssmHbb
 )
+process.p = cms.Path(path)
 process.p.associate(process.jetPuppiTask)
 process.p.associate(process.jetAK4Task)
 process.p.associate(process.jetAK8Task)
