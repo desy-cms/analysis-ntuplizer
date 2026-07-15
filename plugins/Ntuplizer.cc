@@ -1028,7 +1028,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.add<InputTags>( "L1TJets", { InputTag("caloStage2Digis","Jet","RECO") });
    desc.add<InputTags>( "L1TMuons", { InputTag("gmtStage2Digis","Muon","RECO") });
    desc.add<InputTags>( "PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
-   desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "PAT"));
+   desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "RECO"));
 
    desc_btagging.add<std::string>("discriminator");
    desc_btagging.add<std::string>("alias");
