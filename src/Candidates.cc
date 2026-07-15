@@ -54,7 +54,7 @@ namespace analysis {
       template <> int  Candidates<reco::GenParticle>::AdditionalProperties(int n, size_t i);
       template <> int  Candidates<l1t::Jet>::AdditionalProperties(int n, size_t i);
       template <> int  Candidates<l1t::Muon>::AdditionalProperties(int n, size_t i);
-      template <> int Candidates<pat::TriggerObject>::AdditionalProperties(int n, size_t i);
+      template <> int  Candidates<pat::TriggerObject>::AdditionalProperties(int n, size_t i);
       template <> void Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event);
       template <> void Candidates<pat::TriggerObject>::TriggerObjectType(const std::string& trigobj_type);
    }
@@ -95,14 +95,14 @@ Candidates<T>::Candidates(const edm::InputTag& tag, TTree* tree, const bool & mc
    // definitions
    // jetid -> TODO: move to ntuplizer like btag_vars
    id_vars_.clear();
-   id_vars_.push_back({"neutralHadronEnergyFraction", "id_nHadFrac" });
-   id_vars_.push_back({"neutralEmEnergyFraction",     "id_nEmFrac"  });
-   id_vars_.push_back({"neutralMultiplicity",         "id_nMult"    });
-   id_vars_.push_back({"chargedHadronEnergyFraction", "id_cHadFrac" });
-   id_vars_.push_back({"chargedEmEnergyFraction",     "id_cEmFrac"  });
-   id_vars_.push_back({"chargedMultiplicity",         "id_cMult"    });
-   id_vars_.push_back({"muonEnergyFraction",          "id_muonFrac" });
-   id_vars_.push_back({"numberOfDaughters",           "id_numConst" });
+   id_vars_.push_back({"neutralHadronEnergyFraction", "id_neutralHadronEnergyFraction" });
+   id_vars_.push_back({"neutralEmEnergyFraction",     "id_neutralEmEnergyFraction"     });
+   id_vars_.push_back({"neutralMultiplicity",         "id_neutralMultiplicity"         });
+   id_vars_.push_back({"chargedHadronEnergyFraction", "id_chargedHadronEnergyFraction" });
+   id_vars_.push_back({"chargedEmEnergyFraction",     "id_chargedEmEnergyFraction"     });
+   id_vars_.push_back({"chargedMultiplicity",         "id_chargedMultiplicity"         });
+   id_vars_.push_back({"muonEnergyFraction",          "id_muonEnergyFraction"          });
+   id_vars_.push_back({"numberOfDaughters",           "id_numberConstituents"          });
 
    // init
    btag_vars_.clear();
