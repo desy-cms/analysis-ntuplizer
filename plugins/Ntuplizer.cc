@@ -402,6 +402,7 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
             makeCollectionTree(original);
             metadata_->AddDefinitions(btagging, "btagging_" + original.label());
             metadata_->AddDefinitions(bregression, "bregression_" + original.label());
+            if ( ! jet_discriminators_[jet_collection_label].empty() )  jet_discriminators_[jet_original_label] = jet_discriminators_[jet_collection_label];
             // duplicates what used by collection
             if ( jet.exists("jecRecord") ) {
                jet_jec_records_   [jet_original_label] = jet_jec_records_   [jet_collection_label];
@@ -412,7 +413,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
                jer_es_tokens_     [jet_original_label] = jer_es_tokens_     [jet_collection_label];
             }
             if ( jet.exists("pileupJetId") ) jet_pileup_id_     [jet_original_label] = jet_pileup_id_     [jet_collection_label];
-            if ( ! discriminators.empty() )  jet_discriminators_[jet_original_label] = jet_discriminators_[jet_collection_label];
          } 
       }
       registerTokensMap<pat::JetCollection>(jet_collections_, patJetTokens_);
