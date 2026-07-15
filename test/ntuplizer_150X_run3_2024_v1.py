@@ -150,12 +150,14 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     TriggerObjectLabels         = TriggerInfo['TriggerObjectLabels'],
     TriggerObjectSplits         = TriggerInfo['TriggerObjectSplits'],
     TriggerObjectSplitsTypes    = TriggerInfo['TriggerObjectSplitsTypes'],
-    MetFiltersResults           = cms.InputTag('TriggerResults', '', 'RECO'),
+    MetFiltersResults           = cms.InputTag('TriggerResults', '', 'PAT'),
     FixedGridRhoAll             = cms.InputTag ('fixedGridRhoAll'),
 )
 # to modify according to year
-run2022.toModify(process.MssmHbb, MetFiltersResults=cms.InputTag('TriggerResults', '', 'PAT'))
-run2023.toModify(process.MssmHbb, MetFiltersResults=cms.InputTag('TriggerResults', '', 'PAT'))
+if command_line_options.type != 'mc':
+    run2024.toModify(process.MssmHbb, MetFiltersResults=cms.InputTag('TriggerResults', '','RECO'))
+    run2025.toModify(process.MssmHbb, MetFiltersResults=cms.InputTag('TriggerResults', '','RECO'))
+    run2026.toModify(process.MssmHbb, MetFiltersResults=cms.InputTag('TriggerResults', '','RECO'))
 
 
 ## MC only

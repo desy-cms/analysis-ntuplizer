@@ -25,7 +25,10 @@
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "DataFormats/Scalers/interface/LumiScalers.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "FWCore/Common/interface/TriggerNames.h"
 
+#include "Analysis/Utils/interface/color_printf.h"
 
 //
 // class declaration
@@ -135,6 +138,10 @@ void EventInfo::Fill(const edm::Event& event) {
       
    if ( do_prefw_ ) {
       ReadPrefiringWeight(event);
+   }
+
+   if ( do_met_filters_ ) {
+      ReadMetFilters(event);
    }
 
    tree_ -> Fill();
@@ -273,3 +280,40 @@ void EventInfo::ReadPrefiringWeight(const edm::Event& event) {
 
 }
 
+void EventInfo::MetFilters(const edm::InputTag & tag) {
+   do_met_filters_ = true;
+   met_filters_results_ = tag;
+
+   tree_->Branch("flag_goodVertices"                       , &flag_goodVertices_                        , "flag_goodVertices/O");
+   tree_->Branch("flag_globalSuperTightHalo2016Filter"     , &flag_globalSuperTightHalo2016Filter_      , "flag_globalSuperTightHalo2016Filter/O");
+   tree_->Branch("flag_EcalDeadCellTriggerPrimitiveFilter" , &flag_EcalDeadCellTriggerPrimitiveFilter_  , "flag_EcalDeadCellTriggerPrimitiveFilter/O");
+   tree_->Branch("flag_BadPFMuonFilter"                    , &flag_BadPFMuonFilter_                     , "flag_BadPFMuonFilter/O");
+   tree_->Branch("flag_BadPFMuonDzFilter"                  , &flag_BadPFMuonDzFilter_                   , "flag_BadPFMuonDzFilter/O");
+   tree_->Branch("flag_hfNoisyHitsFilter"                  , &flag_hfNoisyHitsFilter_                   , "flag_hfNoisyHitsFilter/O");
+   tree_->Branch("flag_eeBadScFilter"                      , &flag_eeBadScFilter_                       , "flag_eeBadScFilter/O");
+   tree_->Branch("flag_ecalBadCalibFilter"                 , &flag_ecalBadCalibFilter_                  , "flag_ecalBadCalibFilter/O");
+}
+
+void EventInfo::ReadMetFilters(const edm::Event& event) {
+   flag_goodVertices_                        = false;
+   flag_globalSuperTightHalo2016Filter_      = false;
+   flag_EcalDeadCellTriggerPrimitiveFilter_  = false;
+   flag_BadPFMuonFilter_                     = false;
+   flag_BadPFMuonDzFilter_                   = false;
+   flag_hfNoisyHitsFilter_                   = false;
+   flag_eeBadScFilter_                       = false;
+   flag_ecalBadCalibFilter_                  = false;
+   edm::Handle<edm::TriggerResults> met_filter_handler;
+   event.getByLabel(met_filters_results_, met_filter_handler);
+   if ( met_filter_handler.isValid() ) {
+      const edm::TriggerNames & met_filter_name = event.triggerNames(*met_filter_handler);
+      flag_goodVertices_                        = met_filter_handler.product()->accept(met_filter_name.triggerIndex("Flag_goodVertices"));
+      flag_globalSuperTightHalo2016Filter_      = met_filter_handler.product()->accept(met_filter_name.triggerIndex("Flag_globalSuperTightHalo2016Filter"));
+      flag_EcalDeadCellTriggerPrimitiveFilter_  = met_filter_handler.product()->accept(met_filter_name.triggerIndex("Flag_EcalDeadCellTriggerPrimitiveFilter"));
+      flag_BadPFMuonFilter_                     = met_filter_handler.product()->accept(met_filter_name.triggerIndex("Flag_BadPFMuonFilter"));
+      flag_BadPFMuonDzFilter_                   = met_filter_handler.product()->accept(met_filter_name.triggerIndex("Flag_BadPFMuonDzFilter"));
+      flag_hfNoisyHitsFilter_                   = met_filter_handler.product()->accept(met_filter_name.triggerIndex("Flag_hfNoisyHitsFilter"));
+      flag_eeBadScFilter_                       = met_filter_handler.product()->accept(met_filter_name.triggerIndex("Flag_eeBadScFilter"));
+      flag_ecalBadCalibFilter_                  = met_filter_handler.product()->accept(met_filter_name.triggerIndex("Flag_ecalBadCalibFilter")); 
+   }
+}

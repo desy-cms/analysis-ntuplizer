@@ -714,6 +714,9 @@ void Ntuplizer::beginJob() {
       eventinfo_ -> LumiScalersInfo(config_.getParameter<InputTag>("LumiScalers"));
    if ( config_.exists("PrefiringWeight") &&  config_.exists("PrefiringWeightUp") && config_.exists("PrefiringWeightDown"))
       eventinfo_ -> PrefiringWeightInfo(prefWeight_, prefWeightUp_, prefWeightDown_);
+   if ( config_.exists("MetFiltersResults") )
+      eventinfo_ -> MetFilters(config_.getParameter<InputTag>("MetFiltersResults"));
+
    InputTag trgRes;
    if ( do_triggeraccepts_ ) {
       InputTags trs = config_.getParameter<InputTags>("TriggerResults");
@@ -1028,7 +1031,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.add<InputTags>( "L1TJets", { InputTag("caloStage2Digis","Jet","RECO") });
    desc.add<InputTags>( "L1TMuons", { InputTag("gmtStage2Digis","Muon","RECO") });
    desc.add<InputTags>( "PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
-   desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "RECO"));
+   desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "PAT"));
 
    desc_btagging.add<std::string>("discriminator");
    desc_btagging.add<std::string>("alias");
