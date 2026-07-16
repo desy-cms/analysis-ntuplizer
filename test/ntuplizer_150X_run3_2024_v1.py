@@ -12,7 +12,7 @@ import sys
 python_config_name = os.path.basename(__file__)
 cmssw_base = os.getenv("CMSSW_BASE")
 ## Get parameters from command line
-from Analysis.Ntuplizer.utils.ntuplizer_parser import ntuplizer_parser
+from Analysis.Ntuplizer.ntuplizer_parser import ntuplizer_parser
 command_line_options = ntuplizer_parser()
 
 # If the output file already exists, remove it so ROOT/TFileService can recreate it
@@ -72,7 +72,7 @@ process.nTotalEvents    = cms.EDProducer('EventCountProducer')
 process.nFilteredEvents = cms.EDProducer('EventCountProducer')
 
 ## Trigger information
-from Analysis.Ntuplizer.utils.trigger_info import trigger_info_reader
+from Analysis.Ntuplizer.trigger_info import trigger_info_reader
 TriggerInfo = trigger_info_reader(command_line_options.triggerInfo)
 # Trigger filter: FOR DATA ONLY!!!
 process.triggerSelection = cms.EDFilter( 'TriggerResultsFilter',
@@ -103,7 +103,6 @@ BTagging_AK8PF = cms.VPSet(
 
 # BRegression
 from Analysis.Ntuplizer.bregression_cfi import BRegression, AllBRegression
-
 
 ## Ntuplizer
 process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
@@ -158,7 +157,6 @@ if command_line_options.type != 'mc':
     run2024.toModify(process.MssmHbb, MetFiltersResults=cms.InputTag('TriggerResults', '','RECO'))
     run2025.toModify(process.MssmHbb, MetFiltersResults=cms.InputTag('TriggerResults', '','RECO'))
     run2026.toModify(process.MssmHbb, MetFiltersResults=cms.InputTag('TriggerResults', '','RECO'))
-
 
 ## MC only
 if command_line_options.type == 'mc':
