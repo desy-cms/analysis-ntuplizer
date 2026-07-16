@@ -1055,6 +1055,9 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<Strings>("TriggerObjectLabels");
    desc.addOptional<Strings>("TriggerObjectSplits");
    desc.addOptional<Strings>("TriggerObjectSplitsTypes");
+   desc.addOptional<InputTag>("PrefiringWeight");
+   desc.addOptional<InputTag>("PrefiringWeightUp");
+   desc.addOptional<InputTag>("PrefiringWeightDown");
 
    desc.add<double>("CrossSection", -1.0);
    desc.addOptional<InputTag>("GenEventInfo");
