@@ -251,6 +251,15 @@ int Candidates<pat::Jet>::AdditionalProperties(int n, size_t i) {
       jecUnc_->setJetPt(pt_[n]);
       jecUncert_[n] = jecUnc_->getUncertainty(true);
    }
+   const auto& levels = cand_jet->availableJECLevels();
+   auto hasLevel = [&](const std::string& level) {
+      return std::find(levels.begin(), levels.end(), level) != levels.end();
+   };
+   jec_factor_[n]               = hasLevel("Uncorrected")  ? cand_jet->jecFactor("Uncorrected") : -1.0f;
+   jec_factor_l1fastjet_[n]     = hasLevel("L1FastJet")    ? cand_jet->jecFactor("L1FastJet")   : -1.0f;
+   jec_factor_l2relative_[n]    = hasLevel("L2Relative")   ? cand_jet->jecFactor("L2Relative")  : -1.0f;
+   jec_factor_l3absolute_[n]    = hasLevel("L3Absolute")   ? cand_jet->jecFactor("L3Absolute")  : -1.0f;
+   jec_factor_l2l3residual_[n]  = hasLevel("L2L3Residual") ? cand_jet->jecFactor("L2L3Residual"): -1.0f;  
    //JER
    jerResolution_[n] = -1;
    jerSF_[n]         = -1;
@@ -550,6 +559,11 @@ void Candidates<T>::Branches() {
       tree_->Branch("physicsFlavour", physicsFlavour_,  "physicsFlavour[n]/I");
       
       tree_->Branch("jecUncert", jecUncert_, "jecUncert[n]/F");
+      tree_->Branch("fec_factor"              , jec_factor_             , "jec_factor[n]/F");
+      tree_->Branch("jec_factor_l1fastjet_"   , jec_factor_l1fastjet_   , "jec_factor_l1fastjet_[n]/F");
+      tree_->Branch("jec_factor_l2relative_"  , jec_factor_l2relative_  , "jec_factor_l2relative_[n]/F");
+      tree_->Branch("jec_factor_l3absolute_"  , jec_factor_l3absolute_  , "jec_factor_l3absolute_[n]/F");
+      tree_->Branch("jec_factor_l2l3residual_", jec_factor_l2l3residual_, "jec_factor_l2l3residual_[n]/F");
       tree_->Branch("jerResolution",jerResolution_,"jerResolution[n]/F");
       tree_->Branch("jerSF",jerSF_,"jerSF[n]/F");
       tree_->Branch("jerSFUp",jerSFUp_,"jerSFUp[n]/F");

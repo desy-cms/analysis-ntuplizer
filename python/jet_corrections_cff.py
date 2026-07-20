@@ -3,6 +3,8 @@ import FWCore.ParameterSet.Config as cms
 from  PhysicsTools.PatAlgos.recoLayer0.jetCorrFactors_cfi import *
 # Note: Safe to always add 'L2L3Residual' as MC contains dummy L2L3Residual corrections (always set to 1)
 #      (cf. https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#CMSSW_7_6_4_and_above )
+# https://cms-jerc.web.cern.ch/
+
 
 from  PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cfi import *
 

@@ -140,6 +140,11 @@ namespace analysis {
             std::vector<std::vector<float>> jetid_;
             std::vector<analysis::utils::TitleAlias>  id_vars_;
             // Jet energy resolution and scale correction
+            float jec_factor_[maxCandidates];
+            float jec_factor_l1fastjet_[maxCandidates];
+            float jec_factor_l2relative_[maxCandidates];
+            float jec_factor_l3absolute_[maxCandidates];
+            float jec_factor_l2l3residual_[maxCandidates];
             float jecUncert_[maxCandidates];
             analysis::utils::JecESTokens jec_tokens_;
             edm::InputTag rho_collection_;
