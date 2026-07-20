@@ -557,47 +557,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       if (it != inputTagDispatch.end())
          it->second(collection);
    }
-   // flags
-   // do_patjets_          = config_.exists("PatJets");
-   // ESTokens
-   // JER Record (from TXT files)
-   // JER Record (from CondDB)
-   // jerRecords_.clear();
-   // if ( do_patjets_ && config_.exists("JERRecords") ) {
-   //    jerRecords_ = config_.getParameter< Strings >("JERRecords");
-   //    for ( auto & rcd : jerRecords_ ) {
-   //       if ( rcd != "" ) {
-   //          std::string label_pt = rcd + "_pt";
-   //          std::string label_sf = rcd;
-   //          JerESTokens est;
-   //          est.record = rcd;
-   //          est.resolutionsToken = esConsumes(edm::ESInputTag("", label_pt));
-   //          est.scaleFactorsToken = esConsumes(edm::ESInputTag("", label_sf));
-   //          jer_es_tokens_.push_back(est);
-   //       }
-   //    }
-   //    if(config_.exists("JERResFiles")) {
-   //    	jer_files_ = config_.getParameter< Strings >("JERResFiles");
-   //    }
-   //    if(config_.exists("JERSfFiles")) {
-   //    	jersf_files_ = config_.getParameter< Strings >("JERSfFiles");
-   //    }
-      
-   // }
-   // JEC record (from CondDB)
-   // see example: https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/PatUtils/plugins/ShiftedPFCandidateProducerForNoPileUpPFMEt.cc
-   // jecRecords_.clear();
-   // if ( do_patjets_ && config_.exists("JECRecords") ) {
-   //    jecRecords_ = config_.getParameter< Strings >("JECRecords");
-   //    for ( auto & rcd : jecRecords_ ) {
-   //       if ( rcd != "" ) {
-   //          JecESTokens est;
-   //          est.record = rcd;
-   //          est.jecToken = esConsumes(edm::ESInputTag("", rcd));
-   //          jec_es_tokens_.push_back(est);
-   //       }
-   //    }
-   // }
    analyze_count_ = 0;
 }
 Ntuplizer::~Ntuplizer() {
@@ -678,30 +637,6 @@ void Ntuplizer::beginJob() {
    std::string fullname;
    gen_event_counts_  = {};
    event_counts_ = {};
-   // -------------------------------
-   // JEC Record (from TXT files)
-   // Strings jec_files;
-   // // JEC Record (from CondDB)
-   // if ( do_patjets_ && config_.exists("JECRecords") ) {
-   //    if(config_.exists("JECUncertaintyFiles")) {
-   //       jec_files = config_.getParameter< Strings >("JECUncertaintyFiles");
-   //    }
-   // }
-   // size_t nPatJets = 0;
-   // if ( do_patjets_ )
-   //    nPatJets = config_.getParameter<InputTags>("PatJets").size();
-   // if ( nPatJets > jecRecords_.size() && jecRecords_.size() != 0 ) {
-   //    printf_error("Ntuplizer::beginJob *** ERROR ***  Number of JEC Records less than the number of PatJet collections.\n");
-   //    exit(-1);
-   // }
-   // if ( nPatJets > jerRecords_.size() && jerRecords_.size() != 0 ) {
-   //    printf_error("Ntuplizer::beginJob *** ERROR ***  Number of JER Records less than the number of PatJet collections.\n");
-   //    exit(-1);
-   // }
-   // if ( jerRecords_.size() != 0 && jer_files_.size() != 0 && jersf_files_.size()!=0 &&(jerRecords_.size() != jer_files_.size() || jerRecords_.size() != jersf_files_.size()) ) {
-   //    printf_error("Ntuplizer::beginJob *** ERROR *** Number of JER Records are not the same as number of provided input files.\n");
-   //    exit(-1);
-   // }
    // Event info tree
    eventinfo_ = EventInfoPtr(new EventInfo(eventsDir_));
    if ( config_.exists("FixedGridRhoAll") )
@@ -760,37 +695,9 @@ void Ntuplizer::beginJob() {
          std::string proc  = collection.process();
          name = label;
          fullname = name + "_" + inst + "_" + proc;
-         // name += inputTags == "L1ExtraJets" && ! use_full_name_ ? "_" + inst : "";
          if ( collection.instance() != "" && collections.size() > 1 )
             name += "_" + inst;
          if ( use_full_name_ ) name = fullname;
-         // Pat Jets
-         // if ( inputTags == "PatJets" ) {
-         //    patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
-         //    patjets_collections_.back() -> Init(discriminators_);
-         //    patjets_collections_.back() -> PileupJetIdInstance(pileupJetIds[patJetCounter]);
-            
-         //    if ( patJetCounter == 0 && jecRecords_.size() > 0  ) 
-         //    std::cout << "*** Jet Energy Corrections Records - PatJets ***" << std::endl;
-         //    if ( jecRecords_.size() > 0  ) {
-         //       if ( jec_files.size() > 0 && jec_files[patJetCounter] != "" )
-         //          patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter],jec_files[patJetCounter]);  // use txt file
-         //       else
-         //       //   patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter]);                           // use confdb
-         //          patjets_collections_.back() -> AddJecInfo(jec_es_tokens_[patJetCounter]);                           // use confdb
-
-         //    }
-         //    if ( patJetCounter == 0 && jerRecords_.size() > 0  ) std::cout << "*** Jet Energy Resolutions Records - PatJets ***" << std::endl;
-         //    if ( jerRecords_.size() > 0 && is_mc_  ) {
-         //       if ( jer_files_.size() > 0 && jer_files_[patJetCounter] != "" )
-         //          patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],jer_files_[patJetCounter], jersf_files_[patJetCounter],fixedGridRhoAll_);  // use txt file
-         //       else
-         //       //   patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],fixedGridRhoAll_);  // use txt file
-         //          patjets_collections_.back() -> AddJerInfo(jer_es_tokens_[patJetCounter],fixedGridRhoAll_);  // use txt file
-
-         //    }
-         //    ++patJetCounter;
-         // }
          // Pat METs
          if ( inputTags == "PatMETs" ) {
             patmets_collections_.push_back( pPatMETCandidates( new PatMETCandidates(collection, tree_[name], is_mc_) ));
