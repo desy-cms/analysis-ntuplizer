@@ -60,6 +60,8 @@ namespace analysis {
             void ReadFixedGridRhoInfo(const edm::Event&);
             void PrefiringWeightInfo(const edm::InputTag &, const edm::InputTag &, const edm::InputTag & );
             void ReadPrefiringWeight(const edm::Event&);
+            void MetFilters(const edm::InputTag&);
+            void ReadMetFilters(const edm::Event&);
             TTree * Tree();
       
          private:
@@ -76,7 +78,7 @@ namespace analysis {
             TTree * tree_;
             
             // PileupInfo
-            edm::InputTag puInfo_;
+            edm::InputTag pileup_info_;
             bool do_pu_;
             int n_pu_;
             float n_true_pu_;
@@ -111,6 +113,17 @@ namespace analysis {
             double prefw_up_;
             double prefw_down_;
 
+            // MET filters
+            bool do_met_filters_;
+            edm::InputTag met_filters_results_;
+            bool flag_goodVertices_;
+            bool flag_globalSuperTightHalo2016Filter_;
+            bool flag_EcalDeadCellTriggerPrimitiveFilter_;
+            bool flag_BadPFMuonFilter_;
+            bool flag_BadPFMuonDzFilter_;
+            bool flag_hfNoisyHitsFilter_;
+            bool flag_eeBadScFilter_;
+            bool flag_ecalBadCalibFilter_;
       };
    }
 }

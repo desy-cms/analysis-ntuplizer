@@ -9,12 +9,14 @@
 <use name="DataFormats/PatCandidates"/>
 <use name="DataFormats/TrackReco"/>
 <use name="SimDataFormats/PileupSummaryInfo"/>
+<use name="SimDataFormats/GeneratorProducts"/>
 <use name="DataFormats/Common"/>
 <use name="HLTrigger/HLTcore"/>
 <use name="CondFormats/JetMETObjects"/>
 <use name="JetMETCorrections/Objects"/>
 <use name="JetMETCorrections/Modules"/>
 <use name="DataFormats/Scalers"/>
+<use name="Analysis/Utils"/>
 <use name="root"/>
 <use name="rootmath"/>
 <use name="boost" />

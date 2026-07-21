@@ -1,0 +1,182 @@
+import FWCore.ParameterSet.Config as cms
+from Analysis.Utils.config_utils import merge_vpsets
+
+# https://btv-wiki.docs.cern.ch/ScaleFactors/#taggers-and-definitions-of-discriminators
+# https://github.com/cms-sw/cmssw/tree/CMSSW_15_0_X/RecoBTag/ONNXRuntime/python
+# Also see: https://github.com/cms-sw/cmssw/blob/CMSSW_15_0_X/PhysicsTools/NanoAOD/python/jetsAK4_Puppi_cff.py
+
+BTagging = {}
+BTagging['AK4PFPuppi'] = {
+    'ParticleNet': cms.VPSet(
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:BvsAll'),
+            alias     = cms.string('btag_pnet_bvsall'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:CvsL'),
+            alias     = cms.string('btag_pnet_cvsl'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:CvsB'),
+            alias     = cms.string('btag_pnet_cvsb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probb'),
+            alias     = cms.string('btag_pnet_b'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probc'),
+            alias     = cms.string('btag_pnet_c'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probg'),
+            alias     = cms.string('btag_pnet_g'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probuds'),
+            alias     = cms.string('btag_pnet_uds'),
+        ),
+    ),
+    'ParticleTransformer': cms.VPSet(
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:probb'),
+            alias     = cms.string('btag_part_b'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:probbb'),
+            alias     = cms.string('btag_part_bb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:problepb'),
+            alias     = cms.string('btag_part_lepb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:probc'),
+            alias     = cms.string('btag_part_c'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:probg'),
+            alias     = cms.string('btag_part_g'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleTransformerAK4JetTags:probuds'),
+            alias     = cms.string('btag_part_uds'),
+        ),
+    ),
+    'UnifiedParticleTransformer': cms.VPSet(
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4DiscriminatorsJetTags:BvsAll'),
+            alias     = cms.string('btag_upart_bvsall'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4DiscriminatorsJetTags:CvsL'),
+            alias     = cms.string('btag_upart_cvsl'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4DiscriminatorsJetTags:CvsB'),
+            alias     = cms.string('btag_upart_cvsb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probb'),
+            alias     = cms.string('btag_upart_b'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probbb'),
+            alias     = cms.string('btag_upart_bb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:problepb'),
+            alias     = cms.string('btag_upart_lepb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probc'),
+            alias     = cms.string('btag_upart_c'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probg'),
+            alias     = cms.string('btag_upart_g'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probs'),
+            alias     = cms.string('btag_upart_s'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probd'),
+            alias     = cms.string('btag_upart_d'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfUnifiedParticleTransformerAK4JetTags:probu'),
+            alias     = cms.string('btag_upart_u'),
+        ),
+    ),
+    'DeepFlavour': cms.VPSet(
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:probb'),
+            alias     = cms.string('btag_deepflav_b'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:probbb'),
+            alias     = cms.string('btag_deepflav_bb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:problepb'),
+            alias     = cms.string('btag_deepflav_lepb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:probc'),
+            alias     = cms.string('btag_deepflav_c'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:probg'),
+            alias     = cms.string('btag_deepflav_g'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfDeepFlavourJetTags:probuds'),
+            alias     = cms.string('btag_deepflav_uds'),
+        ),        
+    ),
+}
+
+BTagging['AK8PF'] = {
+    'ParticleNet': cms.VPSet(
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK8DiscriminatorsJetTags:HbbvsQCD'),
+            alias     = cms.string('btag_pnet_ak8_hbbvsqcd'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK8DiscriminatorsJetTags:HccvsQCD'),
+            alias     = cms.string('btag_pnet_ak8_hccvsqcd'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfParticleNetFromMiniAODAK8DiscriminatorsJetTags:HttvsQCD'),
+            alias     = cms.string('btag_pnet_ak8_httvsqcd'),
+        ),
+    ),
+    'GlobalParticleTransformer': cms.VPSet(
+        cms.PSet(
+            discriminator = cms.string('pfGlobalParticleTransformerAK8JetTags:probXbb'),
+            alias     = cms.string('btag_ak8_gpart_xbb'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfGlobalParticleTransformerAK8JetTags:probXcc'),
+            alias     = cms.string('btag_ak8_gpart_xcc'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfGlobalParticleTransformerAK8JetTags:probXcs'),
+            alias     = cms.string('btag_ak8_gpart_xcs'),
+        ),
+        cms.PSet(
+            discriminator = cms.string('pfGlobalParticleTransformerAK8JetTags:probXqq'),
+            alias     = cms.string('btag_ak8_gpart_xqq'),
+        ),
+    ),
+}
+
+
+AllBTagging = {}
+AllBTagging['AK4PFPuppi'] =  merge_vpsets(
+    *BTagging['AK4PFPuppi'].values()
+)
+AllBTagging['AK8PF'] =  merge_vpsets(
+    *BTagging['AK8PF'].values()
+)

@@ -16,161 +16,123 @@
 //
 //
 
-
 // system include files
+#include <cstdlib>
 #include <memory>
-#include <boost/algorithm/string.hpp>
 #include <type_traits>
 
 // user include files
 #include "DataFormats/Provenance/interface/Provenance.h"
-
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
-
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include "DataFormats/L1Trigger/interface/Jet.h"
 #include "DataFormats/L1Trigger/interface/L1JetParticle.h"
 #include "DataFormats/L1Trigger/interface/L1JetParticleFwd.h"
-
+#include "DataFormats/L1Trigger/interface/Muon.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
-
-#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
-#include "DataFormats/RecoCandidate/interface/RecoChargedCandidateFwd.h"
-
-
-#include "DataFormats/JetReco/interface/CaloJet.h"
-#include "DataFormats/JetReco/interface/CaloJetCollection.h"
-
-#include "DataFormats/JetReco/interface/PFJet.h"
-#include "DataFormats/JetReco/interface/PFJetCollection.h"
-
-#include "DataFormats/MuonReco/interface/Muon.h"
-#include "DataFormats/MuonReco/interface/MuonFwd.h"
-
-#include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/TrackReco/interface/TrackFwd.h"
-
-
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
-
-#include "DataFormats/L1Trigger/interface/Jet.h"
-#include "DataFormats/L1Trigger/interface/Muon.h"
-
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
 #include "DataFormats/PatCandidates/interface/TriggerObject.h"
-
 #include "DataFormats/JetReco/interface/GenJet.h"
-
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
-
-#include "Analysis/Ntuplizer/interface/EventInfo.h"
-#include "Analysis/Ntuplizer/interface/Definitions.h"
-#include "Analysis/Ntuplizer/interface/Metadata.h"
-#include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
-#include "Analysis/Ntuplizer/interface/PileupInfo.h"
-#include "Analysis/Ntuplizer/interface/Candidates.h"
-#include "Analysis/Ntuplizer/interface/JetsTags.h"
-#include "Analysis/Ntuplizer/interface/TriggerAccepts.h"
-//#include "Analysis/Ntuplizer/interface/TriggerInfo.h"
-#include "Analysis/Ntuplizer/interface/Vertices.h"
-
-#include "SimDataFormats/GeneratorProducts/interface/GenFilterInfo.h"
+#include "DataFormats/Scalers/interface/LumiScalers.h"
 #include "DataFormats/Common/interface/MergeableCounter.h"
-
-#include "DataFormats/Common/interface/OwnVector.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
 
+#include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenFilterInfo.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
-#include "DataFormats/Scalers/interface/LumiScalers.h"
 
-#include "Analysis/Ntuplizer/interface/EventFilter.h"
-#include "Analysis/Ntuplizer/interface/Utils.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+
+#include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
+#include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
+
+#include "Analysis/Ntuplizer/interface/Candidates.h"
+#include "Analysis/Ntuplizer/interface/TriggerAccepts.h"
+#include "Analysis/Ntuplizer/interface/Vertices.h"
+#include "Analysis/Ntuplizer/interface/EventInfo.h"
+#include "Analysis/Ntuplizer/interface/Metadata.h"
+
+#include "Analysis/Utils/interface/color_printf.h"
+#include "Analysis/Utils/interface/string_utils.h"
+#include "Analysis/Utils/interface/types.h"
 
 #include <TH1.h>
 #include <TFile.h>
 #include <TTree.h>
 
-#include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
+using analysis::utils::string_split;
 
-using namespace boost;
-using namespace boost::algorithm;
+// Template aliases
+template<typename T>
+using Ptr = std::unique_ptr<T>;
+template<typename Collection>
+using Token = edm::EDGetTokenT<Collection>;
+template<typename Collection>
+using TokenMap = std::map<std::string, Token<Collection>>;
+template<typename T>
+using Collections = std::vector<Ptr<T>>;
 
-typedef analysis::ntuple::TitleIndex TitleIndex;
-typedef analysis::ntuple::TitleAlias TitleAlias;
-
-typedef std::vector<edm::InputTag> InputTags;
-typedef std::vector<std::string> strings;
+// Aliases
+using TitleIndex                   = analysis::utils::TitleIndex;
+using TitleAlias                   = analysis::utils::TitleAlias;
+using InputTag                     = edm::InputTag;
+using InputTags                    = std::vector<InputTag>;
+using String                       = std::string;
+using Strings                      = std::vector<String>;
 
 // Alias to the collections classes of candidates for the ntuple
-typedef analysis::ntuple::EventInfo EventInfo;
-typedef analysis::ntuple::Metadata Metadata;
-typedef analysis::ntuple::Definitions Definitions;
-typedef analysis::ntuple::PileupInfo PileupInfo;
-typedef analysis::ntuple::Candidates<l1extra::L1JetParticle> L1JetCandidates;
-typedef analysis::ntuple::Candidates<l1extra::L1MuonParticle> L1MuonCandidates;
-typedef analysis::ntuple::Candidates<reco::CaloJet> CaloJetCandidates;
-typedef analysis::ntuple::Candidates<reco::PFJet> PFJetCandidates;
-typedef analysis::ntuple::Candidates<reco::Muon> RecoMuonCandidates;
-typedef analysis::ntuple::Candidates<reco::Track> RecoTrackCandidates;
-typedef analysis::ntuple::Candidates<pat::Jet> PatJetCandidates;
-typedef analysis::ntuple::Candidates<pat::MET> PatMETCandidates;
-typedef analysis::ntuple::Candidates<pat::Muon> PatMuonCandidates;
-typedef analysis::ntuple::Candidates<reco::GenJet> GenJetCandidates;
-typedef analysis::ntuple::Candidates<reco::GenParticle> GenParticleCandidates;
-typedef analysis::ntuple::Candidates<pat::TriggerObject> TriggerObjectCandidates;
-typedef analysis::ntuple::Candidates<trigger::TriggerObject> TriggerObjectRecoCandidates;
-typedef analysis::ntuple::JetsTags JetsTags;
-typedef analysis::ntuple::TriggerAccepts TriggerAccepts;
-//typedef analysis::ntuple::TriggerInfo TriggerInfo;
-typedef analysis::ntuple::Vertices PrimaryVertices;
-typedef analysis::ntuple::Candidates<l1t::Jet> L1TJetCandidates;
-typedef analysis::ntuple::Candidates<l1t::Muon> L1TMuonCandidates;
-typedef analysis::ntuple::Candidates<reco::RecoChargedCandidate> ChargedCandidates;
+using EventInfo                    = analysis::ntuple::EventInfo;
+using Metadata                     = analysis::ntuple::Metadata;
+using PatJetCandidates             = analysis::ntuple::Candidates<pat::Jet>;
+using PatMuonCandidates            = analysis::ntuple::Candidates<pat::Muon>;
+using PatMETCandidates             = analysis::ntuple::Candidates<pat::MET>;
+using GenJetCandidates             = analysis::ntuple::Candidates<reco::GenJet>;
+using GenParticleCandidates        = analysis::ntuple::Candidates<reco::GenParticle>;
+using TriggerObjectCandidates      = analysis::ntuple::Candidates<pat::TriggerObject>;
+using TriggerAccepts               = analysis::ntuple::TriggerAccepts;
+using PrimaryVertices              = analysis::ntuple::Vertices;
+using L1TJetCandidates             = analysis::ntuple::Candidates<l1t::Jet>;
+using L1TMuonCandidates            = analysis::ntuple::Candidates<l1t::Muon>;
+
+using EventCounts = analysis::ntuple::EventCounts<unsigned int>;
+using WeightedEventCounts = analysis::ntuple::EventCounts<double>;
+
+using JerESTokens                  = analysis::utils::JerESTokens;
+using JecESTokens                  = analysis::utils::JecESTokens;
 
 
 // Alias to the pointers to the above classes
-typedef std::unique_ptr<EventInfo> pEventInfo;
-typedef std::unique_ptr<Metadata> pMetadata;
-typedef std::unique_ptr<Definitions> pDefinitions;
-typedef std::unique_ptr<PileupInfo> pPileupInfo;
-typedef std::unique_ptr<L1JetCandidates> pL1JetCandidates;
-typedef std::unique_ptr<L1MuonCandidates> pL1MuonCandidates;
-typedef std::unique_ptr<CaloJetCandidates> pCaloJetCandidates;
-typedef std::unique_ptr<PFJetCandidates> pPFJetCandidates;
-typedef std::unique_ptr<RecoMuonCandidates> pRecoMuonCandidates;
-typedef std::unique_ptr<RecoTrackCandidates> pRecoTrackCandidates;
-typedef std::unique_ptr<PatJetCandidates> pPatJetCandidates;
-typedef std::unique_ptr<PatMETCandidates> pPatMETCandidates;
-typedef std::unique_ptr<PatMuonCandidates> pPatMuonCandidates;
-typedef std::unique_ptr<GenJetCandidates> pGenJetCandidates;
-typedef std::unique_ptr<GenParticleCandidates> pGenParticleCandidates;
-typedef std::unique_ptr<TriggerObjectCandidates> pTriggerObjectCandidates;
-typedef std::unique_ptr<TriggerObjectRecoCandidates> pTriggerObjectRecoCandidates;
-typedef std::unique_ptr<JetsTags> pJetsTags;
-typedef std::unique_ptr<TriggerAccepts> pTriggerAccepts;
-//typedef std::unique_ptr<TriggerInfo> pTriggerInfo;
-typedef std::unique_ptr<PrimaryVertices> pPrimaryVertices;
-typedef std::unique_ptr<L1TJetCandidates> pL1TJetCandidates;
-typedef std::unique_ptr<L1TMuonCandidates> pL1TMuonCandidates;
-typedef std::unique_ptr<ChargedCandidates> pChargedCandidates;
+using EventInfoPtr                  = Ptr<EventInfo>;
+using MetadataPtr                   = Ptr<Metadata>;
+using pPatJetCandidates             = Ptr<PatJetCandidates>;
+using pPatMuonCandidates            = Ptr<PatMuonCandidates>;
+using pPatMETCandidates             = Ptr<PatMETCandidates>;
+using pGenJetCandidates             = Ptr<GenJetCandidates>;
+using pGenParticleCandidates        = Ptr<GenParticleCandidates>;
+using pTriggerObjectCandidates      = Ptr<TriggerObjectCandidates>;
+using pTriggerAccepts               = Ptr<TriggerAccepts>;
+using PrimaryVerticesPtr            = Ptr<PrimaryVertices>;
+using pL1TJetCandidates             = Ptr<L1TJetCandidates>;
+using pL1TMuonCandidates            = Ptr<L1TMuonCandidates>;
 
 //
 // class declaration
 //
 
-class Ntuplizer : public edm::EDAnalyzer {
+class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one::WatchRuns,edm::one::WatchLuminosityBlocks> {
    public:
       explicit Ntuplizer(const edm::ParameterSet&);
       ~Ntuplizer();
@@ -180,17 +142,26 @@ class Ntuplizer : public edm::EDAnalyzer {
       */
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-
    private:
-      virtual void beginJob() override;
-      virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
-      virtual void endJob() override;
+      void analyze(const edm::Event&, const edm::EventSetup&) override;
+      void beginJob() override;
+      void endJob() override;
+      void beginRun(edm::Run const&, edm::EventSetup const&) override;
+      void endRun(edm::Run const&, edm::EventSetup const&) override;
+      void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
+      void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
+      template<typename Product>
+         void registerToken(InputTag const&, Token<Product>&, InputTag& );
+      template<typename Product, edm::BranchType B>
+         void registerToken(InputTag const&, Token<Product>&, InputTag& );
+      template<typename Collection>
+         void registerTokens(InputTags const& , TokenMap<Collection>& );
+      template<typename Collection>
+         void registerTokensMap(std::map<String,InputTag> const& , TokenMap<Collection>& );
+      String makeCollectionTree(InputTag const& collection, bool useFullName = false, String const& custom_tree_name = "");
+      void AddJetCollection(const edm::InputTag& collection );
 
-      virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
-      virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
-      virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
-      virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
-      
+
       // ----------member data ---------------------------
       edm::ParameterSet config_;
       
@@ -198,142 +169,124 @@ class Ntuplizer : public edm::EDAnalyzer {
       bool use_full_name_;
       bool do_l1jets_;
       bool do_l1muons_;
-      bool do_calojets_;
-      bool do_pfjets_;
-      bool do_recomuons_;
-      bool do_recotracks_;
-      bool do_patjets_;
       bool do_patmets_;
       bool do_patmuons_;
       bool do_genjets_;
       bool do_genparticles_;
-      bool do_jetstags_;
-      bool do_pileupinfo_;
+      bool do_pileup_info_;
       bool do_geneventinfo_;
       bool do_triggeraccepts_;
-//      bool do_triggerinfo_;
-      bool do_primaryvertices_;
-      bool do_eventfilter_;
+      bool do_event_count_summary_;
       bool do_genfilter_;
       bool do_triggerobjects_;
       bool do_genruninfo_;
       bool do_lumiscalers_;
-      bool do_l1tjets_;
-      bool do_l1tmuons_;
-      bool do_chargedcands_;
-      
-      bool readprescale_;
-      
+      bool store_prescale_;
       bool testmode_;
-      
-      std::vector< std::string > inputTagsVec_;
-      std::vector< std::string > inputTags_;
-      std::vector< std::string > btagAlgos_;
-      std::vector< std::string > btagAlgosAlias_;
-      std::vector< std::string > triggerObjectLabels_;
-      std::vector< std::string > triggerObjectSplits_;
-      std::vector< std::string > triggerObjectSplitsTypes_;
-      std::vector< TitleAlias >  btagVars_;
-      std::vector< std::string > jecRecords_;
-      std::vector< std::string > jerRecords_;
-      
-      std::map<std::string, edm::EDGetTokenT<l1extra::L1JetParticleCollection> > l1JetTokens_;
-      std::map<std::string, edm::EDGetTokenT<l1extra::L1MuonParticleCollection> > l1MuonTokens_;
-      std::map<std::string, edm::EDGetTokenT<reco::CaloJetCollection> > caloJetTokens_;
-      std::map<std::string, edm::EDGetTokenT<reco::PFJetCollection> > pfJetTokens_;
-      std::map<std::string, edm::EDGetTokenT<reco::MuonCollection> > recoMuonTokens_;
-      std::map<std::string, edm::EDGetTokenT<reco::TrackCollection> > recoTrackTokens_;
-      std::map<std::string, edm::EDGetTokenT<pat::JetCollection> > patJetTokens_;
-      std::map<std::string, edm::EDGetTokenT<pat::METCollection> > patMETTokens_;
-      std::map<std::string, edm::EDGetTokenT<pat::MuonCollection> > patMuonTokens_;
-      std::map<std::string, edm::EDGetTokenT<reco::GenJetCollection> > genJetTokens_;
-      std::map<std::string, edm::EDGetTokenT<reco::GenParticleCollection> > genPartTokens_;
-      std::map<std::string, edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> > triggerObjTokens_;
-      std::map<std::string, edm::EDGetTokenT<trigger::TriggerEvent> > triggerEventTokens_;
-      std::map<std::string, edm::EDGetTokenT<edm::TriggerResults> > triggerResultsTokens_;
-      std::map<std::string, edm::EDGetTokenT<reco::VertexCollection> > primaryVertexTokens_;
-      std::map<std::string, edm::EDGetTokenT<reco::JetTagCollection> > jetTagTokens_;
-      std::map<std::string, edm::EDGetTokenT<l1t::JetBxCollection> > l1tJetTokens_;
-      std::map<std::string, edm::EDGetTokenT<l1t::MuonBxCollection> > l1tMuonTokens_;
-      std::map<std::string, edm::EDGetTokenT<reco::RecoChargedCandidateCollection> > chargedCandTokens_;
+      bool do_metfilters_;
+
+      Strings trig_res_process_;
+      Strings inputTagsVec_;
+      Strings inputTags_;
+      Strings psetsVec_;
+      Strings btag_discriminators_;
+      Strings btag_discriminators_alias_;
+      Strings triggerObjectLabels_;
+      Strings triggerObjectSplits_;
+      Strings triggerObjectSplitsTypes_;
+
+      TokenMap<pat::JetCollection>                       patJetTokens_;
+      TokenMap<pat::MuonCollection>                      patMuonTokens_;
+      TokenMap<pat::METCollection>                       patMETTokens_;
+      TokenMap<pat::TriggerObjectStandAloneCollection>   triggerObjTokens_;
+      TokenMap<edm::TriggerResults>                      triggerResultsTokens_;
+      TokenMap<l1t::JetBxCollection>                     l1tJetTokens_;
+      TokenMap<l1t::MuonBxCollection>                    l1tMuonTokens_;
+      TokenMap<trigger::TriggerEvent>                    triggerEventTokens_;
+      TokenMap<reco::VertexCollection>                   primary_vertices_tokens_;
+      TokenMap<reco::GenJetCollection>                   genJetTokens_;
+      TokenMap<reco::GenParticleCollection>              genPartTokens_;
 
       std::shared_ptr<HLTPrescaleProvider> hltPrescaleProvider_;
-           
-      edm::InputTag genFilterInfo_;
-      edm::InputTag totalEvents_;
-      edm::InputTag filteredEvents_;
-      edm::InputTag filteredMHatEvents_;
-      edm::InputTag genRunInfo_;
-      
-      edm::InputTag pileupInfo_;
-      edm::InputTag genEventInfo_;
-      edm::InputTag lumiScalers_;
-      
-      edm::InputTag fixedGridRhoAll_;
+      HLTConfigProvider                    hltConfigProvider_;
 
-      edm::InputTag prefWeight_;
-      edm::InputTag prefWeightUp_;
-      edm::InputTag prefWeightDown_;
-     
-      edm::EDGetTokenT<GenFilterInfo> genFilterInfoToken_;      
-      edm::EDGetTokenT<edm::MergeableCounter> totalEventsToken_;      
-      edm::EDGetTokenT<edm::MergeableCounter> filteredEventsToken_;
-      edm::EDGetTokenT<edm::MergeableCounter> filteredMHatEventsToken_;
-      edm::EDGetTokenT<GenRunInfoProduct> genRunInfoToken_;
-           
-      edm::EDGetTokenT<std::vector<PileupSummaryInfo> > pileupInfoToken_;      
-      edm::EDGetTokenT<GenEventInfoProduct> genEventInfoToken_;      
-      edm::EDGetTokenT<LumiScalersCollection> lumiScalersToken_;      
-      
-      edm::EDGetTokenT<double> fixedGridRhoAllToken_;
+      InputTag genFilterInfo_;
+      InputTag totalEvents_;
+      InputTag filteredEvents_;
+      InputTag filteredMHatEvents_;
+      InputTag genRunInfo_;
+      InputTag pileup_info_;
+      InputTag genEventInfo_;
+      InputTag lumiScalers_;
+      InputTag fixedGridRhoAll_;
+      InputTag prefWeight_;
+      InputTag prefWeightUp_;
+      InputTag prefWeightDown_;
+      InputTag metfilters_;
 
-      edm::EDGetTokenT< double > prefWeightToken_;
-      edm::EDGetTokenT< double > prefWeightUpToken_;
-      edm::EDGetTokenT< double > prefWeightDownToken_;
+      Token<GenFilterInfo>                    genFilterInfoToken_;
+      Token<edm::MergeableCounter>            totalEventsToken_;
+      Token<edm::MergeableCounter>            filteredEventsToken_;
+      Token<edm::MergeableCounter>            filteredMHatEventsToken_;
+      Token<GenRunInfoProduct>                genRunInfoToken_;
+      Token<std::vector<PileupSummaryInfo>>   pileup_info_token_;
+      Token<GenEventInfoProduct>              genEventInfoToken_;
+      Token<LumiScalersCollection>            lumiScalersToken_;
+      Token<double>                           fixedGridRhoAllToken_;
+      Token<double>                           prefWeightToken_;
+      Token<double>                           prefWeightUpToken_;
+      Token<double>                           prefWeightDownToken_;
+      Token<edm::TriggerResults>              metfilters_tokens_;
 
       
       InputTags eventCounters_;
       InputTags mHatEventCounters_;
       
-      std::map<std::string, TTree*> tree_; // using pointers instead of smart pointers, could not Fill() with smart pointer???
+      std::map<std::string, TTree*> tree_; // Non-owning pointers. TTree objects are created and owned by TFileService.
 
       // Ntuple stuff
-      pEventInfo eventinfo_;
-      pMetadata  metadata_;
-      pPileupInfo pileupinfo_;
+      EventInfoPtr eventinfo_;
+      MetadataPtr  metadata_;
       
       // Collections for the ntuples (vector)
-      std::vector<pL1JetCandidates> l1jets_collections_;
-      std::vector<pL1MuonCandidates> l1muons_collections_;
-      std::vector<pCaloJetCandidates> calojets_collections_;
-      std::vector<pPFJetCandidates> pfjets_collections_;
-      std::vector<pRecoMuonCandidates> recomuons_collections_;
-      std::vector<pRecoTrackCandidates> recotracks_collections_;
-      std::vector<pPatJetCandidates> patjets_collections_;
-      std::vector<pPatMETCandidates> patmets_collections_;
-      std::vector<pPatMuonCandidates> patmuons_collections_;
-      std::vector<pGenJetCandidates> genjets_collections_;
-      std::vector<pGenParticleCandidates> genparticles_collections_;
-      std::vector<pJetsTags> jetstags_collections_;
-      std::vector<pPrimaryVertices> primaryvertices_collections_;
-      std::vector<pTriggerAccepts> triggeraccepts_collections_;
-//      std::vector<pTriggerInfo> triggerinfo_collections_;
-      std::vector<pTriggerObjectCandidates> triggerobjects_collections_;
-      std::vector<pTriggerObjectRecoCandidates> triggerobjectsreco_collections_;
-      std::vector<pL1TJetCandidates> l1tjets_collections_;
-      std::vector<pL1TMuonCandidates> l1tmuons_collections_;
-      std::vector<pChargedCandidates> chargedcands_collections_;
-      
-      
+      Collections<PatJetCandidates>             patjets_collections_;
+      Collections<PatMuonCandidates>            patmuons_collections_;
+      Collections<PatMETCandidates>             patmets_collections_;
+      Collections<TriggerObjectCandidates>      triggerobjects_collections_;
+      Collections<L1TJetCandidates>             l1tjets_collections_;
+      Collections<L1TMuonCandidates>            l1tmuons_collections_;
+      Collections<PrimaryVertices>              primary_vertices_collections_;
+      Collections<GenJetCandidates>             genjets_collections_;
+      Collections<GenParticleCandidates>        genparticles_collections_;
+      Collections<TriggerAccepts>               triggeraccepts_collections_;
       
       // Collections for the ntuples (single)
       
       // metadata
       double xsection_;
-      
-      analysis::ntuple::FilterResults eventFilterResults_;
-      analysis::ntuple::FilterResults genFilterResults_;
-      
+      EventCounts event_counts_;
+      WeightedEventCounts gen_event_counts_;
+      // JER
+      Strings jer_files_;
+      Strings jersf_files_;
+      // File
+      TFileDirectory eventsDir_;
+
+      int analyze_count_;     
+
+      Strings jecRecords_;
+      Strings jerRecords_;
+      std::map<String,InputTag> jet_collections_;
+      std::map<String,std::vector<analysis::utils::TitleAlias>>  jet_btagging_;
+      std::map<String,std::vector<analysis::utils::TitleAlias>>  jet_bregression_;
+      std::map<String,std::vector<analysis::utils::TitleAlias>>  jet_discriminators_;
+      std::map<String,String> jet_pileup_id_;
+      std::map<String,String> jet_jec_records_;
+      std::map<String,String> jet_jer_records_;
+      // ESTokens
+      std::map<String,analysis::utils::JerESTokens> jer_es_tokens_;
+      std::map<String,analysis::utils::JecESTokens> jec_es_tokens_;
+
 };
 
 //
@@ -347,613 +300,450 @@ class Ntuplizer : public edm::EDAnalyzer {
 //
 // constructors and destructor
 //
-Ntuplizer::Ntuplizer(const edm::ParameterSet& config) //:   // initialization of ntuple classes
-{
-   
+Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   // initialization of ntuple classes
+   printf_info("==> Ntuplizer::Ntuplizer() constructor...\n");
+
+   usesResource(TFileService::kSharedResource);
+   edm::Service<TFileService> file_service; // TODO:  book TTrees and branches during construction (seems CMSSW style) or during beginJob() (seems ROOT style)?  For now, do it in the constructor.
+   eventsDir_ = file_service -> mkdir("Events");   
+
+   // Functions
+   auto read_definitions = [&](const edm::ParameterSet& jet, const std::string& parameter, const std::string& metadata_name ) {
+      std::vector<analysis::utils::TitleAlias> defs;
+      if (!jet.existsAs<std::vector<edm::ParameterSet>>(parameter))
+         return defs;
+      auto const& vpset = jet.getParameter<std::vector<edm::ParameterSet>>(parameter);
+      for (auto const& pset : vpset) {
+         defs.push_back({pset.getParameter<std::string>("discriminator"), pset.getParameter<std::string>("alias")});
+      }
+      metadata_->AddDefinitions(defs, metadata_name);
+      return defs;
+   };   
+
+
    //now do what ever initialization is needed
-   is_mc_         = config.getParameter<bool> ("MonteCarlo");
-   readprescale_  = true;
-   if ( config.exists("ReadPrescale") )
-   {
-      readprescale_ = config.getParameter<bool> ("ReadPrescale");
-   }
+   is_mc_           = config_.getParameter<bool> ("MonteCarlo");
+   xsection_        = config_.getParameter<double>("CrossSection");
+   store_prescale_  = config_.getParameter<bool> ("StorePrescale");
+   eventCounters_.resize(2);
+   mHatEventCounters_.resize(2);
+
+
+   // Metadata 
+   metadata_ = std::make_unique<Metadata>(file_service, is_mc_);
+   metadata_ -> Init();
+   // Definitions of the variables to be stored in the metadata tree
+
+   do_metfilters_ = config_.exists("MetFiltersResults");
+
+   do_triggeraccepts_   = config_.exists("TriggerResults");
+   trig_res_process_.clear();
+   
    use_full_name_ = false;
    testmode_      = false;
-   inputTagsVec_ = config.getParameterNamesForType<InputTags>();
-   inputTags_    = config.getParameterNamesForType<edm::InputTag>();
+   inputTagsVec_ = config_.getParameterNamesForType<InputTags>();
+   inputTags_    = config_.getParameterNamesForType<InputTag>();
+   psetsVec_     = config_.getParameterNamesForType<std::vector<edm::ParameterSet>>();
    
-   config_  = config;
-   for ( auto & inputTags : inputTagsVec_ )
-   {
+   hltPrescaleProvider_ = std::make_shared<HLTPrescaleProvider>(config_, consumesCollector(), *this);
+   std::string name;
+   std::string fullname;
+
+   using RegistersPSetFn = std::function<void(std::vector<edm::ParameterSet> const&)>;
+   std::unordered_map<std::string, RegistersPSetFn> psetDispatch;
+   psetDispatch["JetCollections"] = [&](std::vector<edm::ParameterSet> const& jets) {
+      jet_jec_records_.clear();
+      jet_jer_records_.clear();
+      jet_collections_.clear();
+      jet_btagging_.clear();
+      jet_bregression_.clear();
+      jet_discriminators_.clear();
+      jet_pileup_id_.clear();
+
+      for (auto const& jet : jets) {
+         auto collection = jet.getParameter<InputTag>("collection");
+         String jet_collection_label = collection.label();
+         jet_collections_[jet_collection_label] = collection;
+         makeCollectionTree(collection);
+         auto btagging = read_definitions(jet,"btagging","btagging_" + jet_collection_label);
+         jet_btagging_[jet_collection_label] = btagging;
+         auto bregression = read_definitions(jet,"bregression","bregression_" + jet_collection_label);
+         jet_bregression_[jet_collection_label] = bregression;
+         std::vector<analysis::utils::TitleAlias>  discriminators;
+         discriminators.reserve(btagging.size() + bregression.size());
+         discriminators.insert(discriminators.end(), btagging.begin(), btagging.end());
+         discriminators.insert(discriminators.end(), bregression.begin(), bregression.end());
+         jet_discriminators_[jet_collection_label] = std::move(discriminators);
+         if ( jet.exists("jecRecord") ) {
+            jet_jec_records_[jet_collection_label] = jet.getParameter<std::string>("jecRecord");
+            auto rcd = jet_jec_records_[jet_collection_label];
+            JecESTokens est;
+            est.record = rcd;
+            est.jecToken = esConsumes(edm::ESInputTag("", rcd));
+            jec_es_tokens_[jet_collection_label] = est;
+         }
+         if ( jet.exists("jerRecord") ) {
+            jet_jer_records_[jet_collection_label] = jet.getParameter<std::string>("jerRecord");
+            auto rcd = jet_jer_records_[jet_collection_label];
+            std::string label_pt = rcd + "_pt";
+            std::string label_sf = rcd;
+            JerESTokens est;
+            est.record = rcd;
+            est.resolutionsToken = esConsumes(edm::ESInputTag("", label_pt));
+            est.scaleFactorsToken = esConsumes(edm::ESInputTag("", label_sf));
+            jer_es_tokens_[jet_collection_label] = est;
+         }
+         if ( jet.exists("pileupJetId") )  jet_pileup_id_  [jet_collection_label] = jet.getParameter<std::string>("pileupJetId");
+
+         if ( jet.exists("original") ) {
+            auto original = jet.getParameter<InputTag>("original");
+            String jet_original_label = original.label();
+            jet_collections_[jet_original_label] = original;
+            makeCollectionTree(original);
+            metadata_->AddDefinitions(btagging, "btagging_" + original.label());
+            metadata_->AddDefinitions(bregression, "bregression_" + original.label());
+            if ( ! jet_discriminators_[jet_collection_label].empty() )  jet_discriminators_[jet_original_label] = jet_discriminators_[jet_collection_label];
+            // duplicates what used by collection
+            if ( jet.exists("jecRecord") ) {
+               jet_jec_records_   [jet_original_label] = jet_jec_records_   [jet_collection_label];
+               jec_es_tokens_     [jet_original_label] = jec_es_tokens_     [jet_collection_label];
+            }
+            if ( jet.exists("jerRecord") ) {
+               jet_jer_records_   [jet_original_label] = jet_jer_records_   [jet_collection_label];
+               jer_es_tokens_     [jet_original_label] = jer_es_tokens_     [jet_collection_label];
+            }
+            if ( jet.exists("pileupJetId") ) jet_pileup_id_     [jet_original_label] = jet_pileup_id_     [jet_collection_label];
+         } 
+      }
+      registerTokensMap<pat::JetCollection>(jet_collections_, patJetTokens_);
+      
+   };   
+
+   // Table-driven dispatch
+   using RegistersFn = std::function<void(InputTags const&)>;
+   std::unordered_map<std::string, RegistersFn> inputTagsDispatch;
+   inputTagsDispatch["PrimaryVertices"] = [&](InputTags const& collections) {
+      registerTokens<reco::VertexCollection>(collections, primary_vertices_tokens_);
+      for (auto const& collection : collections) {
+         String tree_name = makeCollectionTree(collection);
+         primary_vertices_collections_.push_back(std::make_unique<PrimaryVertices>(collection, tree_[tree_name]));
+      }
+   };
+   inputTagsDispatch["PatMETs"] = [&](InputTags const& collections) {
+      for (auto const& collection : collections) makeCollectionTree(collection);
+      registerTokens<pat::METCollection>(collections, patMETTokens_);
+   };
+   inputTagsDispatch["PatMuons"] = [&](InputTags const& collections) {
+      for (auto const& collection : collections) makeCollectionTree(collection);
+      registerTokens<pat::MuonCollection>(collections, patMuonTokens_);
+   };
+   inputTagsDispatch["GenJets"] = [&](InputTags const& collections) {
+      for (auto const& collection : collections) makeCollectionTree(collection);
+      registerTokens<reco::GenJetCollection>(collections, genJetTokens_);
+   };
+   inputTagsDispatch["GenParticles"] = [&](InputTags const& collections) {
+      for (auto const& collection : collections) makeCollectionTree(collection);
+      registerTokens<reco::GenParticleCollection>(collections, genPartTokens_);
+   };
+   // Trigger stuff
+   inputTagsDispatch["TriggerObjectStandAlone"] = [&](InputTags const& collections) {
+      registerTokens<pat::TriggerObjectStandAloneCollection>(collections, triggerObjTokens_);
+   };
+   inputTagsDispatch["TriggerEvent"] = [&](InputTags const& collections) {
+      registerTokens<trigger::TriggerEvent>(collections, triggerEventTokens_);
+   };
+   inputTagsDispatch["TriggerResults"] = [&](InputTags const& collections) {
+      registerTokens<edm::TriggerResults>(collections, triggerResultsTokens_);
+      Strings triggerpaths;
+      Strings l1seeds;
+      if (config_.exists("TriggerPaths"))
+         triggerpaths = config_.getParameter<Strings>("TriggerPaths");
+      if (config_.exists("L1Seeds"))
+         l1seeds = config_.getParameter<Strings>("L1Seeds");
+      for (auto const& collection : collections) {
+         makeCollectionTree(collection);
+         trig_res_process_.push_back(collection.process());
+         triggeraccepts_collections_.push_back( pTriggerAccepts( new TriggerAccepts(collection, tree_[collection.label()], triggerpaths, l1seeds, hltPrescaleProvider_) ));
+         triggeraccepts_collections_.back()->Init();
+         triggeraccepts_collections_.back()->ReadPrescaleInfo(store_prescale_);
+      }
+   };
+   inputTagsDispatch["L1TJets"] = [&](InputTags const& collections) { // TODO: make it single inputtag, since we only want to make one collection of L1TJets in the ntuple
+      registerTokens<l1t::JetBxCollection>(collections, l1tJetTokens_);
+      for (auto const& collection : collections) {
+         if (l1tjets_collections_.size() == 0) {
+            String tree_name = makeCollectionTree(collection, false, "l1tJets");
+            l1tjets_collections_.push_back(std::make_unique<L1TJetCandidates>(collection, tree_[tree_name], is_mc_ ));
+            l1tjets_collections_.back() -> Init();
+         }
+      }
+   };
+   inputTagsDispatch["L1TMuons"] = [&](InputTags const& collections) {  // TODO: make it single inputtag, since we only want to make one collection of L1TMuons in the ntuple
+      registerTokens<l1t::MuonBxCollection>(collections, l1tMuonTokens_);
+      for (auto const& collection : collections) {
+         if (l1tmuons_collections_.size() == 0) {
+            String tree_name = makeCollectionTree(collection, false, "l1tMuons");
+            l1tmuons_collections_.push_back(std::make_unique<L1TMuonCandidates>(collection, tree_[tree_name], is_mc_ ));
+            l1tmuons_collections_.back() -> Init();
+         }
+      }
+   };
+
+   for (auto const& pset_name : psetsVec_) {
+      if ( pset_name != "JetCollections" ) continue; // TODO: need to improve this, see also above line with getParameterNamesForType
+      auto psets = config_.getParameter<std::vector<edm::ParameterSet>>(pset_name);
+      auto it = psetDispatch.find(pset_name);
+      if (it == psetDispatch.end()) {
+         throw cms::Exception("Configuration")
+         << "Unknown VPSet category '" << pset_name << "'\n";
+      }
+      it->second(psets);
+   }
+   // Loop over configured input tag categories, retrieve the collection tags for each category,
+   // and inputTagsDispatch registration of the corresponding tokens based on the category name.
+   for ( auto & inputTags : inputTagsVec_ ) {
       InputTags collections = config_.getParameter<InputTags>(inputTags);
-      for ( auto & collection : collections )
-      {
-         std::string label = collection.label();
-         std::string inst  = collection.instance();
-         std::string proc  = collection.process();
-         std::string collection_name = label+"_"+inst+"_"+proc;
-         if ( inputTags == "L1ExtraJets" ) l1JetTokens_[collection_name] = consumes<l1extra::L1JetParticleCollection>(collection);
-         if ( inputTags == "L1ExtraMuons" ) l1MuonTokens_[collection_name] = consumes<l1extra::L1MuonParticleCollection>(collection);
-         if ( inputTags == "CaloJets" ) caloJetTokens_[collection_name] = consumes<reco::CaloJetCollection>(collection);
-         if ( inputTags == "PFJets" ) pfJetTokens_[collection_name] = consumes<reco::PFJetCollection>(collection);
-         if ( inputTags == "RecoMuons" ) recoMuonTokens_[collection_name] = consumes<reco::MuonCollection>(collection);
-         if ( inputTags == "RecoTracks" ) recoTrackTokens_[collection_name] = consumes<reco::TrackCollection>(collection);
-         if ( inputTags == "PatJets" ) patJetTokens_[collection_name] = consumes<pat::JetCollection>(collection);
-         if ( inputTags == "PatMETs" ) patMETTokens_[collection_name] = consumes<pat::METCollection>(collection);
-         if ( inputTags == "PatMuons" ) patMuonTokens_[collection_name] = consumes<pat::MuonCollection>(collection);
-         if ( inputTags == "GenJets" ) genJetTokens_[collection_name] = consumes<reco::GenJetCollection>(collection);
-         if ( inputTags == "GenParticles" ) genPartTokens_[collection_name] = consumes<reco::GenParticleCollection>(collection);
-         if ( inputTags == "TriggerObjectStandAlone"  ) triggerObjTokens_[collection_name] = consumes<pat::TriggerObjectStandAloneCollection>(collection);
-         if ( inputTags == "TriggerEvent"  ) triggerEventTokens_[collection_name] = consumes<trigger::TriggerEvent>(collection);
-         if ( inputTags == "PrimaryVertices"  ) primaryVertexTokens_[collection_name] = consumes<reco::VertexCollection>(collection);
-         if ( inputTags == "TriggerResults"  ) triggerResultsTokens_[collection_name] = consumes<edm::TriggerResults>(collection);
-         if ( inputTags == "JetsTags" ) jetTagTokens_[collection_name] = consumes<reco::JetTagCollection>(collection);
-         if ( inputTags == "L1TJets" ) l1tJetTokens_[collection_name] = consumes<l1t::JetBxCollection>(collection);
-         if ( inputTags == "L1TMuons" ) l1tMuonTokens_[collection_name] = consumes<l1t::MuonBxCollection>(collection);
-         if ( inputTags == "ChargedCandidates" ) chargedCandTokens_[collection_name] = consumes<reco::RecoChargedCandidateCollection>(collection);
-     }
+      auto it = inputTagsDispatch.find(inputTags);
+      if (it == inputTagsDispatch.end()) {
+         throw cms::Exception("Configuration") << "Unknown input tag category '" << inputTags << "'\n";
+      }
+      it->second(collections);
    }
-   
-   hltPrescaleProvider_ = std::shared_ptr<HLTPrescaleProvider>(new HLTPrescaleProvider(config, consumesCollector(), *this));;
-   
    // Single InputTag
-   for ( auto & inputTag : inputTags_ )
-   {
-      edm::InputTag collection = config_.getParameter<edm::InputTag>(inputTag);
-      // Lumi products
-      if ( inputTag == "GenFilterInfo" )  { genFilterInfoToken_    = consumes<GenFilterInfo,edm::InLumi>(collection);         genFilterInfo_   = collection;}
-      if ( inputTag == "TotalEvents" )    { totalEventsToken_      = consumes<edm::MergeableCounter,edm::InLumi>(collection); totalEvents_     = collection;}
-      if ( inputTag == "FilteredEvents" ) { filteredEventsToken_   = consumes<edm::MergeableCounter,edm::InLumi>(collection); filteredEvents_  = collection;}
-      if ( inputTag == "FilteredMHatEvents" ) { filteredMHatEventsToken_ = consumes<edm::MergeableCounter,edm::InLumi>(collection); filteredMHatEvents_  = collection;}
-      if ( inputTag == "GenRunInfo" )     { genRunInfoToken_       = consumes<GenRunInfoProduct,edm::InRun>(collection);      genRunInfo_      = collection;}
-
-      if ( inputTag == "PileupInfo" )     { pileupInfoToken_       = consumes<std::vector<PileupSummaryInfo> >(collection);   pileupInfo_      = collection;}
-      if ( inputTag == "GenEventInfo" )   { genEventInfoToken_     = consumes<GenEventInfoProduct>(collection);               genEventInfo_    = collection;}
-      if ( inputTag == "LumiScalers" )    { lumiScalersToken_      = consumes<LumiScalersCollection>(collection);             lumiScalers_     = collection;}
-      if ( inputTag == "FixedGridRhoAll" ){ fixedGridRhoAllToken_  = consumes<double>(collection);                            fixedGridRhoAll_ = collection;}
-
-      // this can be done as a VInputTag
-      if ( inputTag == "PrefiringWeight"     ){ prefWeightToken_        = consumes<double>(collection);                       prefWeight_     = collection;}
-      if ( inputTag == "PrefiringWeightUp"   ){ prefWeightUpToken_      = consumes<double>(collection);                       prefWeightUp_   = collection;}
-      if ( inputTag == "PrefiringWeightDown" ){ prefWeightDownToken_    = consumes<double>(collection);                       prefWeightDown_ = collection;}
- 
+   using RegisterFn = std::function<void(InputTag const&)>;
+   std::unordered_map<std::string, RegisterFn> inputTagDispatch;
+   inputTagDispatch["PileupSummaryInfo"] = [&](InputTag const& collection) {
+      registerToken< std::vector<PileupSummaryInfo> >(collection,pileup_info_token_,pileup_info_);
+   };
+   inputTagDispatch["GenEventInfo"] = [&](InputTag const& collection) {
+      registerToken<GenEventInfoProduct>(collection,genEventInfoToken_,genEventInfo_);
+   };
+   inputTagDispatch["LumiScalers"] = [&](InputTag const& collection) {
+      registerToken<LumiScalersCollection>(collection,lumiScalersToken_,lumiScalers_);
+   };
+   inputTagDispatch["FixedGridRhoAll"] = [&](InputTag const& collection) {
+      registerToken<double>(collection,fixedGridRhoAllToken_,fixedGridRhoAll_);
+   };
+   inputTagDispatch["PrefiringWeight"] = [&](InputTag const& collection) {
+      registerToken<double>(collection,prefWeightToken_,prefWeight_);
+   };
+   inputTagDispatch["PrefiringWeightUp"] = [&](InputTag const& collection) {
+      registerToken<double>(collection,prefWeightUpToken_,prefWeightUp_);
+   };
+   inputTagDispatch["PrefiringWeightDown"] = [&](InputTag const& collection) {
+      registerToken<double>(collection,prefWeightDownToken_,prefWeightDown_);
+   };
+   inputTagDispatch["GenFilterInfo"] = [&](InputTag const& collection) {
+      registerToken<GenFilterInfo,edm::InLumi>(collection,genFilterInfoToken_,genFilterInfo_);
+   };
+   inputTagDispatch["GenRunInfo"] = [&](InputTag const& collection) {
+      registerToken<GenRunInfoProduct,edm::InRun>(collection,genRunInfoToken_,genRunInfo_);
+   };
+   inputTagDispatch["TotalEvents"] = [&](InputTag const& collection) {
+      registerToken<edm::MergeableCounter,edm::InLumi>(collection,totalEventsToken_,totalEvents_);
+   };
+   inputTagDispatch["FilteredEvents"] = [&](InputTag const& collection) {
+      registerToken<edm::MergeableCounter,edm::InLumi>(collection,filteredEventsToken_,filteredEvents_);
+   };
+   inputTagDispatch["FilteredMHatEvents"] = [&](InputTag const& collection) {
+      registerToken<edm::MergeableCounter,edm::InLumi>(collection,filteredMHatEventsToken_,filteredMHatEvents_);
+   };
+   inputTagDispatch["MetFiltersResults"] = [&](InputTag const& collection) {
+      registerToken<edm::TriggerResults>(collection, metfilters_tokens_, metfilters_);
+   };
+   for ( auto & inputTag : inputTags_ ) {
+      InputTag collection = config_.getParameter<InputTag>(inputTag);
+      auto it = inputTagDispatch.find(inputTag);
+      if (it != inputTagDispatch.end())
+         it->second(collection);
    }
-
-   
+   analyze_count_ = 0;
 }
-
-
-Ntuplizer::~Ntuplizer()
-{
- 
+Ntuplizer::~Ntuplizer() {
+   printf_info("==> Ntuplizer::~Ntuplizer() destructor...\n");
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
-
+   printf_info("*** THE END!!! ***\n");
 }
-
-
 //
 // member functions
 //
 
 // ------------ method called for each event  ------------
-void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup)
-{
-   using namespace edm;
-   
-//    typedef std::vector<Provenance const*> Provenances;
-//    Provenances provenances;
-//    event.getAllProvenance(provenances);
-//    
-//    for(Provenances::iterator itProv = provenances.begin(), itProvEnd = provenances.end();
-//                              itProv != itProvEnd;
-//                            ++itProv) {
-//       std::cout << (*itProv)->moduleLabel() << std::endl;
-//                            }
-//    
+void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
+   ++analyze_count_;
+   if ( analyze_count_ == 1 ) {
+      printf_info("==> Ntuplizer::analyze()...\n");
+   }
    // Event info
    eventinfo_ -> Fill(event);
-   
-//    if ( do_pileupinfo_ )
-//       pileupinfo_ -> Fill(event);
-
-   if ( is_mc_ )
-   {
+   if ( is_mc_ ) {
       // MC only stuff
    }
-   
-   // L1 jets
-      for ( auto & collection : l1jets_collections_ )
-         collection -> Fill(event);
-   
-   // L1 muons
-      for ( auto & collection : l1muons_collections_ )
-         collection -> Fill(event);
-   
-   // Calo jets (reco)
-      for ( auto & collection : calojets_collections_ )
-         collection -> Fill(event);
-
-   // PF jets (reco)
-      for ( auto & collection : pfjets_collections_ )
-         collection -> Fill(event);
-
-      // Reco muon (reco)
-      for ( auto & collection : recomuons_collections_ )
-         collection -> Fill(event);
-   
-      // Reco track (reco)
-      for ( auto & collection : recotracks_collections_ )
-         collection -> Fill(event);
-   
-      // Pat jets (pat)
-      for ( auto & collection : patjets_collections_ )
-         collection -> Fill(event, setup);
-   
-      // Pat mets (pat)
-      for ( auto & collection : patmets_collections_ )
-         collection -> Fill(event);
-   
-      // Pat muon (pat)
-      for ( auto & collection : patmuons_collections_ )
-         collection -> Fill(event);
-   
-      // Gen jets (reco)
-      for ( auto & collection : genjets_collections_ )
-         collection -> Fill(event);
-      
-      // Gen particles (reco)
-      for ( auto & collection : genparticles_collections_ )
-         collection -> Fill(event);
-      
-      // jets tags
-      for ( auto & collection : jetstags_collections_ )
-         collection -> Fill(event);
-      
-      
-      // trigger accepts
-      for ( auto & collection : triggeraccepts_collections_ )
-         collection -> Fill(event, setup);
-      
-//       // trigger info
-//       for ( auto & collection : triggerinfo_collections_ )
-//          collection -> Fill(event, setup);
-      
-       // primary vertices
-      for ( auto & collection : primaryvertices_collections_ )
-         collection -> Fill(event);
-   
-      // trigger objects
-      for ( auto & collection : triggerobjects_collections_ )
-         collection -> Fill(event);
-      
-      for ( auto & collection : triggerobjectsreco_collections_ )
-         collection -> Fill(event);
-      
-      // L1T jets
-      for ( auto & collection : l1tjets_collections_ )
-         collection -> Fill(event);
-      // L1T muons
-      for ( auto & collection : l1tmuons_collections_ )
-         collection -> Fill(event);
-      
-   // charged candidates (reco)
-      for ( auto & collection : chargedcands_collections_ )
-         collection -> Fill(event);
-
-      
+   // Pat jets (pat)
+   for ( auto & collection : patjets_collections_ )
+      collection -> Fill(event, setup);
+   // Pat mets (pat)
+   for ( auto & collection : patmets_collections_ )
+      collection -> Fill(event);
+   // Pat muon (pat)
+   for ( auto & collection : patmuons_collections_ )
+      collection -> Fill(event);
+   // Gen jets (reco)
+   for ( auto & collection : genjets_collections_ )
+      collection -> Fill(event);
+   // Gen particles (reco)
+   for ( auto & collection : genparticles_collections_ )
+      collection -> Fill(event);
+   // trigger accepts
+   for ( auto & collection : triggeraccepts_collections_ )
+      collection -> Fill(event, setup);
+   // primary vertices
+   for ( auto & collection : primary_vertices_collections_ )
+      collection -> Fill(event);
+   // trigger objects
+   for ( auto & collection : triggerobjects_collections_ )
+      collection -> Fill(event);
+   // L1T jets
+   for ( auto & collection : l1tjets_collections_ )
+      collection -> Fill(event);
+   // L1T muons
+   for ( auto & collection : l1tmuons_collections_ )
+      collection -> Fill(event);
 }
 
-
 // ------------ method called once each job just before starting event loop  ------------
-void 
-Ntuplizer::beginJob()
-{
-   do_pileupinfo_       = config_.exists("PileupInfo") && is_mc_;
+void Ntuplizer::beginJob() {
+   printf_info("==> Ntuplizer::beginJob()...\n");
+   // TODO: move all below to constructor?
+   do_pileup_info_      = config_.exists("PileupSummaryInfo") && is_mc_;
    do_geneventinfo_     = config_.exists("GenEventInfo") && is_mc_;
    do_lumiscalers_      = config_.exists("LumiScalers");
-   do_l1jets_           = config_.exists("L1ExtraJets");
-   do_l1muons_          = config_.exists("L1ExtraMuons");
-   do_calojets_         = config_.exists("CaloJets");
-   do_pfjets_           = config_.exists("PFJets");
-   do_recomuons_        = config_.exists("RecoMuons");
-   do_recotracks_       = config_.exists("RecoTracks");
-   do_patjets_          = config_.exists("PatJets");
    do_patmets_          = config_.exists("PatMETs");
    do_patmuons_         = config_.exists("PatMuons");
    do_genjets_          = config_.exists("GenJets");
    do_genparticles_     = config_.exists("GenParticles");
-   do_jetstags_         = config_.exists("JetsTags");
-//   do_triggeraccepts_   = config_.exists("TriggerResults") && config_.exists("TriggerPaths");
    do_triggeraccepts_   = config_.exists("TriggerResults");
-//   do_triggerinfo_      = config_.exists("TriggerResults");
-   do_primaryvertices_  = config_.exists("PrimaryVertices");
-//   do_eventfilter_      = config_.exists("EventFilter");
-   do_eventfilter_      = config_.exists("TotalEvents")  && config_.exists("FilteredEvents");
-   do_genfilter_        = config_.exists("GenFilterInfo");
+   do_event_count_summary_      = config_.exists("TotalEvents")  && config_.exists("FilteredEvents");
+   do_genfilter_        = config_.exists("GenFilterInfo") && is_mc_;
    do_triggerobjects_   = ( config_.exists("TriggerObjectStandAlone") || config_.exists("TriggerEvent") ) &&  config_.exists("TriggerObjectLabels");
    do_genruninfo_       = config_.exists("GenRunInfo") && is_mc_ ;
-   do_l1tjets_          = config_.exists("L1TJets");
-   do_l1tmuons_         = config_.exists("L1TMuons");
-   do_chargedcands_     = config_.exists("ChargedCandidates");
    
    if ( config_.exists("TestMode") ) // This is DANGEROUS! but can be useful. So BE CAREFUL!!!!
       testmode_ = config_.getParameter<bool> ("TestMode");
-   
    if ( config_.exists("UseFullName") )
       use_full_name_ = config_.getParameter<bool> ("UseFullName");
-
-   
-   edm::Service<TFileService> fs;
-   
-   TFileDirectory eventsDir = fs -> mkdir("Events");
-   
    std::string name;
    std::string fullname;
-   
-   genFilterResults_  = {};
-   eventFilterResults_ = {};
-   
-   // Btagging algorithms
-   // Will set one default
-   btagAlgos_.clear();
-   btagAlgosAlias_.clear();
-   btagAlgos_.push_back("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-   btagAlgosAlias_.push_back("btag_csvivf");
-   if ( config_.exists("BTagAlgorithmsAlias") )
-   {
-      btagAlgosAlias_.clear();
-      btagAlgosAlias_ = config_.getParameter< std::vector<std::string> >("BTagAlgorithmsAlias");
-   }
-   if ( config_.exists("BTagAlgorithms") )
-   {
-      btagAlgos_.clear();
-      btagAlgos_ = config_.getParameter< std::vector<std::string> >("BTagAlgorithms");
-   }
-   if ( btagAlgos_.size() != btagAlgosAlias_.size() )
-   {
-      // if user put the wrong number of alias, then use the algo name as alias
-      btagAlgosAlias_.clear();
-      for ( auto& it : btagAlgos_ )
-         btagAlgosAlias_.push_back(it);
-   }
-   
-   btagVars_.clear();
-   for ( size_t it = 0 ; it < btagAlgos_.size() ;  ++it )
-   {
-      btagVars_.push_back({btagAlgos_[it],btagAlgosAlias_[it]});
-//      btagVars_[btagAlgosAlias_[it]] = {btagAlgos_[it],(unsigned int)it};
-   }
-   
-   // JEC Record (from TXT files)
-   std::vector<std::string > jec_files;
-   // JEC Record (from CondDB)
-   jecRecords_.clear();
-   if ( do_patjets_ && config_.exists("JECRecords") )
-   {
-      jecRecords_ = config_.getParameter< std::vector<std::string> >("JECRecords");
-      if(config_.exists("JECUncertaintyFiles"))
-      {
-         jec_files = config_.getParameter< std::vector<std::string > >("JECUncertaintyFiles");
-      }
-   }
-   // JER Record (from TXT files)
-   std::vector<std::string > jer_files;
-   std::vector<std::string > jersf_files;
-   // JER Record (from CondDB)
-   jerRecords_.clear();
-   if ( do_patjets_ && config_.exists("JERRecords") )
-   {
-      jerRecords_ = config_.getParameter< std::vector<std::string> >("JERRecords");
-      if(config_.exists("JERResFiles"))
-      {
-      	jer_files = config_.getParameter< std::vector<std::string > >("JERResFiles");
-      }
-      if(config_.exists("JERSfFiles"))
-      {
-      	jersf_files = config_.getParameter< std::vector<std::string > >("JERSfFiles");
-      }
-      
-   }
-   //
-   size_t nPatJets = 0;
-   if ( do_patjets_ )
-      nPatJets = config_.getParameter<InputTags>("PatJets").size();
-   
-   if ( nPatJets > jecRecords_.size() && jecRecords_.size() != 0 )
-   {
-      std::cout << "*** ERROR ***  Ntuplizer: Number of JEC Records less than the number of PatJet collections." << std::endl;;
-      exit(-1);
-   }
-   if ( nPatJets > jerRecords_.size() && jerRecords_.size() != 0 )
-   {
-      std::cout << "*** ERROR ***  Ntuplizer: Number of JER Records less than the number of PatJet collections." << std::endl;;
-      exit(-1);
-   }
-   if ( jerRecords_.size() != 0 && jer_files.size() != 0 && jersf_files.size()!=0 &&(jerRecords_.size() != jer_files.size() || jerRecords_.size() != jersf_files.size()) )
-   {
-   		std::cerr << "*** ERROR *** Ntuplizer: Number of JER Records are not the same as number of provided input files. " <<std::endl;
-   		exit(-1);
-   }
-   
-   
+   gen_event_counts_  = {};
+   event_counts_ = {};
    // Event info tree
-   eventinfo_ = pEventInfo (new EventInfo(eventsDir));
+   eventinfo_ = EventInfoPtr(new EventInfo(eventsDir_));
    if ( config_.exists("FixedGridRhoAll") )
-   {
-      eventinfo_ -> FixedGridRhoInfo(config_.getParameter<edm::InputTag>("FixedGridRhoAll"));
-   }
-   if ( do_pileupinfo_ )
-      eventinfo_ -> PileupInfo(config_.getParameter<edm::InputTag>("PileupInfo"));
+      eventinfo_ -> FixedGridRhoInfo(config_.getParameter<InputTag>("FixedGridRhoAll"));
+   if ( do_pileup_info_ )
+      eventinfo_ -> PileupInfo(config_.getParameter<InputTag>("PileupSummaryInfo"));
    if ( do_geneventinfo_ )
-      eventinfo_ -> GenEventInfo(config_.getParameter<edm::InputTag>("GenEventInfo"));
+      eventinfo_ -> GenEventInfo(config_.getParameter<InputTag>("GenEventInfo"));
    if ( do_lumiscalers_ )
-      eventinfo_ -> LumiScalersInfo(config_.getParameter<edm::InputTag>("LumiScalers"));
-   
+      eventinfo_ -> LumiScalersInfo(config_.getParameter<InputTag>("LumiScalers"));
    if ( config_.exists("PrefiringWeight") &&  config_.exists("PrefiringWeightUp") && config_.exists("PrefiringWeightDown"))
-   {
-
       eventinfo_ -> PrefiringWeightInfo(prefWeight_, prefWeightUp_, prefWeightDown_);
-   }
+   if ( config_.exists("MetFiltersResults") )
+      eventinfo_ -> MetFilters(config_.getParameter<InputTag>("MetFiltersResults"));
 
-    // Metadata 
-   metadata_ = pMetadata (new Metadata(fs,is_mc_));
-   metadata_ -> AddDefinitions(btagVars_,"btagging");
-   // My cross section  value for the metadata
-   xsection_ = -1.0;
-   if ( config_.exists("CrossSection") )
-      xsection_ = config_.getParameter<double>("CrossSection");
-   
-   edm::InputTag trgRes;
-   if ( do_triggeraccepts_ ) 
-   {
+   InputTag trgRes;
+   if ( do_triggeraccepts_ ) {
       InputTags trs = config_.getParameter<InputTags>("TriggerResults");
       trgRes = trs[0];
    }
-   
    // split trigger objects
    bool splitTriggerObject = config_.exists("TriggerObjectSplits");
-   if ( do_triggerobjects_ && triggerObjectSplits_.empty() && splitTriggerObject )
-   {
-      triggerObjectSplits_  = config_.getParameter< std::vector<std::string> >("TriggerObjectSplits");
-      if ( ! triggerObjectSplits_.empty() && triggerObjectSplitsTypes_.empty() && config_.exists("TriggerObjectSplitsTypes") )
-      {
-         triggerObjectSplitsTypes_ = config_.getParameter< std::vector<std::string> >("TriggerObjectSplitsTypes");
+   if ( do_triggerobjects_ && triggerObjectSplits_.empty() && splitTriggerObject ) {
+      triggerObjectSplits_  = config_.getParameter< Strings >("TriggerObjectSplits");
+      if ( ! triggerObjectSplits_.empty() && triggerObjectSplitsTypes_.empty() && config_.exists("TriggerObjectSplitsTypes") ) {
+         triggerObjectSplitsTypes_ = config_.getParameter< Strings >("TriggerObjectSplitsTypes");
          for ( auto & tot : triggerObjectSplitsTypes_ ) std::transform(tot.begin(), tot.end(), tot.begin(), ::tolower);
          splitTriggerObject = !triggerObjectSplitsTypes_.empty();
       }
    }
-   
-   if ( triggerObjectSplits_.size() != triggerObjectSplitsTypes_.size() )
-   {
+   if ( triggerObjectSplits_.size() != triggerObjectSplitsTypes_.size() ) {
       std::cout << "-w- Ntuplizer: Size of trigger splits and splits types do not match!" << std::endl;
       std::cout << "               No splitting will be done" << std::endl;
       splitTriggerObject = false;
    }
+   // Input tags (vector)
+   // auto pileupJetIds = config_.getParameter<Strings>("PileupJetIds");
+
+   // Jets
+   size_t patJetCounter = 0;
+   auto jetCollections = config_.getParameter<std::vector<edm::ParameterSet>>("JetCollections");
+   for (auto const& jet : jetCollections) {
+      AddJetCollection(jet.getParameter<InputTag>("collection"));
+      if (jet.existsAs<InputTag>("original"))
+         AddJetCollection(jet.getParameter<InputTag>("original"));
+      patJetCounter++;
+   }
    
-//    if ( splitTriggerObject )
-//    {
-//       std::cout << "oioioi " << splitTriggerObject << std::endl;
-//       for ( size_t ito = 0 ; ito < triggerObjectSplits_.size() ; ++ito )
-//         std::cout << triggerObjectSplits_[ito] << "   " << triggerObjectSplitsTypes_[ito] << std::endl;
-//    }
-//    
-//    
-   
-  // Input tags (vector)
-   for ( auto & inputTags : inputTagsVec_ )
-   {
+   for ( auto & inputTags : inputTagsVec_ ) {
       InputTags collections = config_.getParameter<InputTags>(inputTags);
-      int patJetCounter = 0;
-      for ( auto & collection : collections )
-      {
+      // int patJetCounter = 0;
+      for ( auto & collection : collections ) {
          // Names for the trees, from inputs
          std::string label = collection.label();
          std::string inst  = collection.instance();
          std::string proc  = collection.process();
          name = label;
-         if ( find_first(inputTags,"L1Extra") )
-         {
-            // renaming tree for L1 jest as there is no explicit indication those are L1 jets objects
-            std::string l1obj = inputTags;
-            erase_first(l1obj,"L1Extra");
-            name += l1obj;
-         }
          fullname = name + "_" + inst + "_" + proc;
-         name += inputTags == "L1ExtraJets" && ! use_full_name_ ? "_" + inst : "";
          if ( collection.instance() != "" && collections.size() > 1 )
             name += "_" + inst;
          if ( use_full_name_ ) name = fullname;
-         if ( inputTags == "L1TJets"  && l1tjets_collections_.size() == 0 )  name = "l1tJets";
-         if ( inputTags == "L1TMuons" && l1tmuons_collections_.size() == 0 )  name = "l1tMuons";
-
-         // Initialise trees
-         if ( inputTags != "TriggerObjectStandAlone" && inputTags != "TriggerEvent" )
-            tree_[name] = eventsDir.make<TTree>(name.c_str(),fullname.c_str());
-         
-         // L1 Jets
-         if ( inputTags == "L1ExtraJets" )
-         {
-            l1jets_collections_.push_back( pL1JetCandidates( new L1JetCandidates(collection, tree_[name], is_mc_ ) ));
-            l1jets_collections_.back() -> Init();
-         }
-         
-         // L1 Muons
-         if ( inputTags == "L1ExtraMuons" )
-         {
-            l1muons_collections_.push_back( pL1MuonCandidates( new L1MuonCandidates(collection, tree_[name], is_mc_ ) ));
-            l1muons_collections_.back() -> Init();
-         }
-         
-         // Calo Jets
-         if ( inputTags == "CaloJets" )
-         {
-            calojets_collections_.push_back( pCaloJetCandidates( new CaloJetCandidates(collection, tree_[name], is_mc_ ) ));
-            calojets_collections_.back() -> Init();
-         }
-         // PF Jets
-         if ( inputTags == "PFJets" )
-         {
-            pfjets_collections_.push_back( pPFJetCandidates( new PFJetCandidates(collection, tree_[name], is_mc_ ) ));
-            pfjets_collections_.back() -> Init();
-         }
-         // Reco Muons
-         if ( inputTags == "RecoMuons" )
-         {
-            recomuons_collections_.push_back( pRecoMuonCandidates( new RecoMuonCandidates(collection, tree_[name], is_mc_ ) ));
-            recomuons_collections_.back() -> Init();
-         }
-         // Reco Tracks
-         if ( inputTags == "RecoTracks" )
-         {
-            recotracks_collections_.push_back( pRecoTrackCandidates( new RecoTrackCandidates(collection, tree_[name], is_mc_ ) ));
-            recotracks_collections_.back() -> Init();
-         }
-         
-         // Pat Jets
-         if ( inputTags == "PatJets" )
-         {
-            patjets_collections_.push_back( pPatJetCandidates( new PatJetCandidates(collection, tree_[name], is_mc_ ) ));
-            patjets_collections_.back() -> Init(btagVars_);
-            patjets_collections_.back() -> QGTaggerInstance("QGTagger");
-            patjets_collections_.back() -> PileupJetIdInstance("pileupJetId");
-            
-            if ( patJetCounter == 0 && jecRecords_.size() > 0  )  std::cout << "*** Jet Energy Corrections Records - PatJets ***" << std::endl;
-            if ( jecRecords_.size() > 0  )
-            {
-               if ( jec_files.size() > 0 && jec_files[patJetCounter] != "" )
-                  patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter],jec_files[patJetCounter]);  // use txt file
-               else
-                  patjets_collections_.back() -> AddJecInfo(jecRecords_[patJetCounter]);                           // use confdb
-
-            }
-            
-            if ( patJetCounter == 0 && jerRecords_.size() > 0  ) std::cout << "*** Jet Energy Resolutions Records - PatJets ***" << std::endl;
-            if ( jerRecords_.size() > 0 && is_mc_  )
-            {
-               if ( jer_files.size() > 0 && jer_files[patJetCounter] != "" )
-                  patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],jer_files[patJetCounter], jersf_files[patJetCounter],fixedGridRhoAll_);  // use txt file
-               else
-                  patjets_collections_.back() -> AddJerInfo(jerRecords_[patJetCounter],fixedGridRhoAll_);  // use txt file
-
-            }
-            
-//             if ( jecRecords_.size() > 0 && jerRecords_.size() > 0 )
-//             {
-//                if (jer_files.size() != 0 && jer_files[patJetCounter] != "" && jersf_files[patJetCounter] != "")
-//                {
-//             		patjets_collections_.back() -> Init(btagVars_,jecRecords_[patJetCounter],jerRecords_[patJetCounter],jer_files[patJetCounter],jersf_files[patJetCounter],fixedGridRhoAll_);
-//             	}
-//             	else
-//                {
-//                   patjets_collections_.back() -> Init(btagVars_,jecRecords_[patJetCounter],jerRecords_[patJetCounter],fixedGridRhoAll_);
-//                }
-//                if ( jecRecords_[patJetCounter] != "" )  std::cout << name << " => "  << jecRecords_[patJetCounter] << std::endl;
-//             }
-//             else
-//             {
-//                patjets_collections_.back() -> Init(btagVars_);
-//             }
-            ++patJetCounter;
-         }
          // Pat METs
-         if ( inputTags == "PatMETs" )
-         {
+         if ( inputTags == "PatMETs" ) {
             patmets_collections_.push_back( pPatMETCandidates( new PatMETCandidates(collection, tree_[name], is_mc_) ));
             patmets_collections_.back() -> Init();
          }
          // Pat Muons
-         if ( inputTags == "PatMuons" )
-         {
+         if ( inputTags == "PatMuons" ) {
             patmuons_collections_.push_back( pPatMuonCandidates( new PatMuonCandidates(collection, tree_[name], is_mc_ ) ));
             patmuons_collections_.back() -> Init();
          }
          // Gen Jets
-         if ( inputTags == "GenJets" )
-         {
+         if ( inputTags == "GenJets" ) {
             genjets_collections_.push_back( pGenJetCandidates( new GenJetCandidates(collection, tree_[name], is_mc_ ) ));
             genjets_collections_.back() -> Init();
          }
          // Gen Particles
-         if ( inputTags == "GenParticles" )
-         {
+         if ( inputTags == "GenParticles" ) {
             genparticles_collections_.push_back( pGenParticleCandidates( new GenParticleCandidates(collection, tree_[name], is_mc_ ) ));
             genparticles_collections_.back() -> Init();
-        }
-         // Jets Tags
-         if ( inputTags == "JetsTags" )
-         {
-            jetstags_collections_.push_back( pJetsTags( new JetsTags(collection, tree_[name]) ));
-            jetstags_collections_.back() -> Branches();
-         }
-   
-         // L1T Jets
-         if ( inputTags == "L1TJets" )
-         {
-            if ( l1tjets_collections_.size() == 0 )
-            {
-               l1tjets_collections_.push_back( pL1TJetCandidates( new L1TJetCandidates(collection, tree_[name], is_mc_ ) ));
-               l1tjets_collections_.back() -> Init();
-            }
-            else
-            {
-               std::cout << "Ntuplizer: # l1 jet collections > 1. Skipping." << std::endl;
-            }
-         }
-
-         // L1T Muon
-         if ( inputTags == "L1TMuons" )
-         {
-            if ( l1tmuons_collections_.size() == 0 )
-            {
-               l1tmuons_collections_.push_back( pL1TMuonCandidates( new L1TMuonCandidates(collection, tree_[name], is_mc_ ) ));
-               l1tmuons_collections_.back() -> Init();
-            }
-            else
-            {
-               std::cout << "Ntuplizer: # l1 muon collections > 1. Skipping." << std::endl;
-            }
-         }
-         // Charged candidates
-         if ( inputTags == "ChargedCandidates" )
-         {
-            chargedcands_collections_.push_back( pChargedCandidates( new ChargedCandidates(collection, tree_[name], is_mc_ ) ));
-            chargedcands_collections_.back() -> Init();
-         }
-         
+        }  
          // Trigger Objects
-         if ( do_triggeraccepts_  && do_triggerobjects_ && inputTags == "TriggerObjectStandAlone"  )
-         {
+         if ( do_triggeraccepts_  && do_triggerobjects_ && inputTags == "TriggerObjectStandAlone"  ) {
             if ( triggerObjectLabels_.empty() )
-               triggerObjectLabels_ = config_.getParameter< std::vector<std::string> >("TriggerObjectLabels");
+               triggerObjectLabels_ = config_.getParameter< Strings >("TriggerObjectLabels");
             sort( triggerObjectLabels_.begin(), triggerObjectLabels_.end() );
             triggerObjectLabels_.erase( unique( triggerObjectLabels_.begin(), triggerObjectLabels_.end() ), triggerObjectLabels_.end() );
             std::string dir = name;
-            TFileDirectory triggerObjectsDir = eventsDir.mkdir(dir);
-      
-            for ( auto & triggerObjectLabel : triggerObjectLabels_ )
-            {
+            TFileDirectory triggerObjectsDir = eventsDir_.mkdir(dir);
+            for ( auto & triggerObjectLabel : triggerObjectLabels_ ) {
                name = triggerObjectLabel;
                if ( use_full_name_ ) name += "_" + dir;
                tree_[name] = triggerObjectsDir.make<TTree>(name.c_str(),name.c_str());
                triggerobjects_collections_.push_back(pTriggerObjectCandidates( new TriggerObjectCandidates(collection, tree_[name], is_mc_ ) ));
                triggerobjects_collections_.back() -> Init();
                triggerobjects_collections_.back() -> UseTriggerResults(trgRes);
-               if ( splitTriggerObject )
-               {
-                  std::vector<std::string> types;
-                  for ( size_t tos = 0; tos < triggerObjectSplits_.size() ; ++tos )
-                  {
-                     if ( triggerObjectSplits_.at(tos) == name )
-                     {
-                        boost::split(types,triggerObjectSplitsTypes_.at(tos),boost::is_any_of(":"));
+               if ( splitTriggerObject ) {
+                  Strings types;
+                  for ( size_t tos = 0; tos < triggerObjectSplits_.size() ; ++tos ) {
+                     if ( triggerObjectSplits_.at(tos) == name ) {
+                        types = string_split(triggerObjectSplitsTypes_.at(tos), ':');
                         break;
                      }
                   }
                   sort( types.begin(), types.end() );
                   types.erase( unique( types.begin(), types.end() ), types.end() );
-                  for ( auto & tot : types )
-                  {
+                  for ( auto & tot : types ) {
                      std::string namesplit = name + "_" + tot;
                      tree_[namesplit] = triggerObjectsDir.make<TTree>(namesplit.c_str(),namesplit.c_str());
                      triggerobjects_collections_.push_back(pTriggerObjectCandidates( new TriggerObjectCandidates(collection, tree_[namesplit], is_mc_ ) ));
@@ -961,192 +751,231 @@ Ntuplizer::beginJob()
                      triggerobjects_collections_.back() -> UseTriggerResults(trgRes);
                      triggerobjects_collections_.back() -> TriggerObjectType(tot);
                   }
-
-               }
-               
+               } 
             }
          }
-         
-         if ( do_triggerobjects_ && inputTags == "TriggerEvent"  )
-         {
+         if ( do_triggerobjects_ && inputTags == "TriggerEvent"  ) {
             if ( triggerObjectLabels_.empty() )
-               triggerObjectLabels_ = config_.getParameter< std::vector<std::string> >("TriggerObjectLabels");
+               triggerObjectLabels_ = config_.getParameter< Strings >("TriggerObjectLabels");
             sort( triggerObjectLabels_.begin(), triggerObjectLabels_.end() );
             triggerObjectLabels_.erase( unique( triggerObjectLabels_.begin(), triggerObjectLabels_.end() ), triggerObjectLabels_.end() );
             std::string dir = name;
-            TFileDirectory triggerObjectsDir = eventsDir.mkdir(dir);
+            TFileDirectory triggerObjectsDir = eventsDir_.mkdir(dir);
       
-            for ( auto & triggerObjectLabel : triggerObjectLabels_ )
-            {
-               name = triggerObjectLabel;
-               if ( use_full_name_ ) name += "_" + dir;
-               tree_[name] = triggerObjectsDir.make<TTree>(name.c_str(),name.c_str());
-               triggerobjectsreco_collections_.push_back(pTriggerObjectRecoCandidates( new TriggerObjectRecoCandidates(collection, tree_[name], is_mc_ ) ));
-               triggerobjectsreco_collections_.back() -> Init();
-            }
-         }
-         
-         // Trigger Accepts
-         if ( do_triggeraccepts_ && inputTags == "TriggerResults" )
-         {
-            // TriggerResults collections names differ by the process, so add it to the name
-            std::vector< std::string> triggerpaths;
-            triggerpaths.clear();
-            std::vector< std::string> l1seeds;
-            l1seeds.clear();
-            
-            if ( config_.exists("TriggerPaths") ) triggerpaths = config_.getParameter< std::vector< std::string> >("TriggerPaths");
-            if ( config_.exists("L1Seeds") ) l1seeds = config_.getParameter< std::vector< std::string> >("L1Seeds");
-            
-            triggeraccepts_collections_.push_back( pTriggerAccepts( new TriggerAccepts(collection, tree_[name], triggerpaths, l1seeds, hltPrescaleProvider_) ));
-            triggeraccepts_collections_.back() -> Init();
-            triggeraccepts_collections_.back() -> ReadPrescaleInfo(readprescale_);  // sometimes an error occurs as if the collection was not consumed!??? See TriggerAccepts
-         }
-         
-//          // TriggerInfo
-//          if ( do_triggerinfo_ && inputTags == "TriggerResults" )
-//          {
-//             // TriggerResults collections names differ by the process, so add it to the name
-//             std::vector< std::string> triggerpaths;
-//             triggerpaths.clear();
-//             if ( config_.exists("TriggerPaths") ) triggerpaths = config_.getParameter< std::vector< std::string> >("TriggerPaths");
-//             TFileDirectory triggerResultsDir = eventsDir.mkdir("TriggerResults");
-//             
-//             for ( auto & path : triggerpaths )
-//             {
-//                name = path;
-//                tree_[name] = triggerResultsDir.make<TTree>(name.c_str(),name.c_str());
-//                triggerinfo_collections_.push_back( pTriggerInfo( new TriggerInfo(collection, tree_[name], path, hltPrescaleProvider_, testmode_) ));
-//                triggerinfo_collections_.back() -> ReadPrescaleInfo(readprescale_);  // sometimes an error occurs as if the collection was not consumed!??? See TriggerAccepts
-//             }
-//          }
-         
-         // Primary Vertices
-         if ( inputTags == "PrimaryVertices" )
-         {
-            primaryvertices_collections_.push_back( pPrimaryVertices( new PrimaryVertices(collection, tree_[name]) ));
-         }
-         
+         }       
       }
    }
-      
-   
+   // Metadata stuff
+   int n_filter_counters = 0;
+   int n_mhat_filter_counters = 0;
    // InputTag (single, i.e. not vector)
-   
-   int nCounters = 0;
-   int nMHatCounters = 0;
-   for ( auto & inputTag : inputTags_ )
-   {
-      edm::InputTag collection = config_.getParameter<edm::InputTag>(inputTag);
-      
-         // Names for the trees, from inputs
-         std::string label = collection.label();
-         std::string inst  = collection.instance();
-         std::string proc  = collection.process();
-         name = label;
-         fullname = name + "_" + inst + "_" + proc;
-         if ( use_full_name_ ) name = fullname;
-         
+   for ( auto & inputTag : inputTags_ ) { 
+      InputTag collection = config_.getParameter<InputTag>(inputTag);
+      // Names for the trees, from inputs
+      std::string label = collection.label();
+      std::string inst  = collection.instance();
+      std::string proc  = collection.process();
+      name = label;
+      fullname = name + "_" + inst + "_" + proc;
+      if ( use_full_name_ ) name = fullname;       
       // Generator filter
-      if ( do_genfilter_ && inputTag == "GenFilterInfo" && is_mc_ )
-      {
-         metadata_ -> SetGeneratorFilter(config_.getParameter<edm::InputTag> ("GenFilterInfo"));
-      }
+      if ( do_genfilter_ && inputTag == "GenFilterInfo" )
+         metadata_ -> SetGeneratorFilter(config_.getParameter<InputTag> ("GenFilterInfo"));
       // Event filter
-      if ( do_eventfilter_ )
-      {
-         eventCounters_.resize(2);
-         mHatEventCounters_.resize(2);
-         if ( inputTag == "TotalEvents" )     { eventCounters_[0] = totalEvents_; mHatEventCounters_[0] = totalEvents_; ++nCounters; ++nMHatCounters; }
-         if ( inputTag == "FilteredEvents" )  { eventCounters_[1] = filteredEvents_; ++nCounters; }
-         if ( inputTag == "FilteredMHatEvents" )  { mHatEventCounters_[1] = filteredMHatEvents_; ++nMHatCounters; }
-
-         if ( nCounters == 2 ) 		metadata_ -> SetEventFilter(eventCounters_);
-         if ( nMHatCounters == 2)	metadata_ -> SetMHatEventFilter(mHatEventCounters_);
-//         std::cout<<nMHatCounters<<std::endl;
+      if ( do_event_count_summary_ ) {
+         if ( inputTag == "TotalEvents" ) {
+            eventCounters_[0] = totalEvents_;
+            mHatEventCounters_[0] = totalEvents_;
+            ++n_filter_counters;
+            ++n_mhat_filter_counters;
+         }
+         if ( inputTag == "FilteredEvents" ) {
+            eventCounters_[1] = filteredEvents_;
+            ++n_filter_counters;
+         }
+         if ( inputTag == "FilteredMHatEvents" ) {
+            mHatEventCounters_[1] = filteredMHatEvents_;
+            ++n_mhat_filter_counters;
+         }
+         if ( n_filter_counters == 2 ) 		metadata_ -> SetEventCountSummary(eventCounters_);
+         if ( n_mhat_filter_counters == 2)	metadata_ -> SetMHatEventCountSummary(mHatEventCounters_);
       }
-      // Pileup Info
-//       if ( inputTag == "PileupInfo" && is_mc_ )
-//       {
-//          tree_[name] = eventsDir.make<TTree>(name.c_str(),fullname.c_str());
-//          pileupinfo_ = pPileupInfo( new PileupInfo(collection, tree_[name]) );
-//          pileupinfo_ -> Branches();
-// 
-//       }
-         
-
-
 
    } 
    
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void 
-Ntuplizer::endJob() 
-{
+void Ntuplizer::endJob() {
+   printf_info("==> NTuplizer::endJob()...\n");
    metadata_ -> Fill();
 }
 
 // ------------ method called when starting to processes a run  ------------
-void Ntuplizer::beginRun(edm::Run const& run, edm::EventSetup const& setup)
-{
-   // Initialize HLTConfig every lumi block
-   if ( do_triggeraccepts_ )
-   {
-      for ( size_t i = 0; i < triggeraccepts_collections_.size() ; ++i )
-      {
-         triggeraccepts_collections_[i]  -> Run(run,setup);
+void Ntuplizer::beginRun(edm::Run const& run, edm::EventSetup const& setup) {
+   printf_info("==> Ntuplizer::beginRun(): Run = %d ...\n", (int)run.run());
+
+   bool changed(true);
+
+   std::string proc;
+   if ( !trig_res_process_.empty() ) {
+      proc = trig_res_process_[0];        // for the time being only one TriggerResults is used TODO: simplify and always allow only one entry, i.e. remove vector
+      if (hltPrescaleProvider_->init(run, setup, proc, changed)) {
+         hltConfigProvider_ = hltPrescaleProvider_->hltConfigProvider();
       }
+      // trigger accepts
+      for ( auto & collection : triggeraccepts_collections_ )
+         collection -> Providers(hltPrescaleProvider_, std::make_shared<HLTConfigProvider>(hltConfigProvider_));
    }
-   
+   else {
+      std::cout << "Error: TriggerResults is empty!" << std::endl;
+      exit(-1);
+   }
+
 }
 
-
 // ------------ method called when ending the processing of a run  ------------
+void Ntuplizer::endRun(edm::Run const& run, edm::EventSetup const& setup) {
+   printf_info("==> Ntuplizer::endRun(): Run = %d ...\n", (int)run.run());
 
-void 
-Ntuplizer::endRun(edm::Run const& run, edm::EventSetup const& setup)
-{
-   if ( do_genruninfo_ )
-   {
+   if ( do_genruninfo_ ) {
       metadata_ -> SetCrossSections(run,genRunInfo_,xsection_);
    }
+
 }
 
 // ------------ method called when starting to processes a luminosity block  ------------
+void  Ntuplizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup) {
+   printf_info("==> Ntuplizer::beginLuminosityBlock(): Run = %d, LumiSection = %d ...\n", (int)lumi.run(), (int)lumi.id().value());
 
-void  Ntuplizer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup)
-{
-//    // Initialize HLTConfig every lumi block
-//    if ( do_triggeraccepts_ )
-//    {
-//       for ( size_t i = 0; i < triggeraccepts_collections_.size() ; ++i )
-//       {
-//          triggeraccepts_collections_[i]  -> LumiBlock(lumi,setup);
-//       }
-//    }
 }
 
-
 // ------------ method called when ending the processing of a luminosity block  ------------
+void Ntuplizer::endLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup) {
+   printf_info("==> Ntuplizer::endLuminosityBlock(): Run = %d, LumiSection = %d ...\n", (int)lumi.run(), (int)lumi.id().value());
+   metadata_ -> IncrementEventCount(lumi);
+}
 
-void 
-Ntuplizer::endLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& setup)
-{
-   metadata_ -> IncrementEventFilters(lumi);
+template<typename Collection>
+void Ntuplizer::registerTokens(InputTags const& collections, TokenMap<Collection>& tokenMap) {
+   for (auto const& collection : collections) {
+      std::string collection_name = collection.label() + "_" + collection.instance() + "_" + collection.process();
+      tokenMap[collection_name] = consumes<Collection>(collection);
+   }
+}
+
+template<typename Collection>
+void Ntuplizer::registerTokensMap(std::map<String,InputTag> const& collections, TokenMap<Collection>& tokenMap) {
+   for (auto const& [name, collection] : collections) {
+      std::string collection_name = collection.label() + "_" + collection.instance() + "_" + collection.process();
+      tokenMap[collection_name] = consumes<Collection>(collection);
+   }
+}
+
+template<typename Product>
+void Ntuplizer::registerToken(InputTag const& collection, Token<Product>& token, InputTag& storedCollection) {
+   token = consumes<Product>(collection);
+   storedCollection = collection;
+}
+
+template<typename Product, edm::BranchType B>
+void Ntuplizer::registerToken(InputTag const& collection, Token<Product>& token, InputTag& storedCollection) {
+   token = consumes<Product,B>(collection);
+   storedCollection = collection;
+}
+
+String Ntuplizer::makeCollectionTree(InputTag const& collection, bool use_full_name, String const& custom_tree_name) {
+   String label = collection.label();
+   String inst  = collection.instance();
+   String proc  = collection.process();
+   String full_name = label + "_" + inst + "_" + proc;
+   String tree_name;
+   if (!custom_tree_name.empty()) {
+      tree_name = custom_tree_name;
+   } else {
+      tree_name = use_full_name ? full_name : label;
+   }
+   tree_[tree_name] = eventsDir_.make<TTree>(tree_name.c_str(), full_name.c_str());
+   return tree_name;
+}
+
+void Ntuplizer::AddJetCollection(const edm::InputTag& collection) {
+   std::string label = collection.label();
+   std::string inst  = collection.instance();
+   std::string proc  = collection.process();
+   std::string name = label;
+   std::string fullname = name + "_" + inst + "_" + proc;
+   if (!inst.empty() && jet_collections_.size() > 1)
+      name += "_" + inst;
+   if (use_full_name_)
+      name = fullname;
+   patjets_collections_.push_back(std::make_unique<PatJetCandidates>(collection, tree_[name], is_mc_));
+   patjets_collections_.back() -> Init(jet_discriminators_[label]);
+   patjets_collections_.back() -> PileupJetId(jet_pileup_id_[label]);
+   patjets_collections_.back() -> AddJecInfo(jec_es_tokens_[label]);
+   patjets_collections_.back() -> AddJerInfo(jer_es_tokens_[label],fixedGridRhoAll_);
 }
 
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void
-Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
-  edm::ParameterSetDescription desc;
-  desc.setUnknown();
-  descriptions.addDefault(desc);
-}
+   edm::ParameterSetDescription desc;
+   edm::ParameterSetDescription desc_btagging;
+   edm::ParameterSetDescription desc_bregression;
+   edm::ParameterSetDescription desc_jets;
 
+   // desc.setAllowAnything();
+
+   desc.add<unsigned int>("stageL1Trigger", 2);
+   desc.add<bool>("StorePrescale", false);
+   desc.add<bool>("MonteCarlo");
+
+   desc.add<InputTag>("FixedGridRhoAll", InputTag("fixedGridRhoAll"));
+   desc.add<InputTags>("TriggerResults", { InputTag("TriggerResults", "", "HLT") });
+   desc.add<InputTags>( "PatMuons", { InputTag("slimmedMuons") });
+   desc.add<InputTags>( "L1TJets", { InputTag("caloStage2Digis","Jet","RECO") });
+   desc.add<InputTags>( "L1TMuons", { InputTag("gmtStage2Digis","Muon","RECO") });
+   desc.add<InputTags>( "PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
+   desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "PAT"));
+
+   desc_btagging.add<std::string>("discriminator");
+   desc_btagging.add<std::string>("alias");
+   desc_bregression.add<std::string>("discriminator");
+   desc_bregression.add<std::string>("alias");
+   desc_jets.add<edm::InputTag>("collection");
+   desc_jets.addOptional<edm::InputTag>("original");
+   desc_jets.addOptional<std::string>("pileupJetId");
+   desc_jets.addOptional<std::string>("jecRecord");
+   desc_jets.addOptional<std::string>("jerRecord");
+   desc_jets.addVPSetOptional("btagging", desc_btagging);
+   desc_jets.addVPSetOptional("bregression", desc_bregression);   
+   desc.addVPSet("JetCollections", desc_jets);
+
+   // Optionals
+   desc.addOptional<InputTags>("TriggerObjectStandAlone");
+   desc.addOptional<InputTag>("FilteredEvents");
+   desc.addOptional<InputTag>("TotalEvents");
+   desc.addOptional<Strings>("L1Seeds");
+   desc.addOptional<Strings>("TriggerPaths");
+   desc.addOptional<Strings>("TriggerObjectLabels");
+   desc.addOptional<Strings>("TriggerObjectSplits");
+   desc.addOptional<Strings>("TriggerObjectSplitsTypes");
+   desc.addOptional<InputTag>("PrefiringWeight");
+   desc.addOptional<InputTag>("PrefiringWeightUp");
+   desc.addOptional<InputTag>("PrefiringWeightDown");
+
+   desc.add<double>("CrossSection", -1.0);
+   desc.addOptional<InputTag>("GenEventInfo");
+   desc.addOptional<InputTag>("GenFilterInfo");
+   desc.addOptional<InputTag>("GenRunInfo");
+   desc.addOptional<InputTag>("PileupSummaryInfo");
+   desc.addOptional<InputTags>("GenJets");
+   desc.addOptional<InputTags>("GenParticles");
+   desc.addOptional<InputTag>("FilteredMHatEvents");
+
+   descriptions.addDefault(desc);
+}
 //define this as a plug-in
 DEFINE_FWK_MODULE(Ntuplizer);

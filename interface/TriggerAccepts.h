@@ -49,13 +49,13 @@ namespace analysis {
          public:
             TriggerAccepts();
             TriggerAccepts(const edm::InputTag&, TTree*, const std::vector<std::string> &, const std::vector<std::string> &, const std::shared_ptr<HLTPrescaleProvider> hltPrescale);
+            TriggerAccepts(const edm::InputTag&, TTree*, const std::vector<std::string> &, const std::vector<std::string> &);
            ~TriggerAccepts();
-            void Fill(const edm::Event & event, const edm::EventSetup & setup);
-            void Branches();
-            void Run(edm::Run const & , edm::EventSetup const& );
             void Init();
-
-            
+            void Branches();
+            void Fill(const edm::Event & event, const edm::EventSetup & setup);
+            void Run(edm::Run const & , edm::EventSetup const& );
+            void Providers(const std::shared_ptr<HLTPrescaleProvider> &, const std::shared_ptr<HLTConfigProvider> &);
             void ReadPrescaleInfo(const bool &);
             bool ReadPrescaleInfo();
       
@@ -63,19 +63,23 @@ namespace analysis {
             // ----------member data ---------------------------
             
             edm::InputTag input_collection_;
-            HLTConfigProvider hlt_config_;
+            std::shared_ptr<HLTConfigProvider> hlt_config_;
             std::shared_ptr<HLTPrescaleProvider> hlt_prescale_;
             std::vector<std::string> paths_;
             std::vector<std::string> seeds_;
-            bool accept_[1000];
+            bool accept_[1000];     // hopefully 1000 is enough for the number of paths and seeds
             bool l1accept_[1000];
-            int psl1_[1000];
-            int pshlt_[1000];
-            
+            float psl1_[1000];   // prescale is now double, but we store it as float in the ntuple, for the number is not large nor the precision is high
+            float pshlt_[1000];  // prescale is now double, but we store it as float in the ntuple, for the number is not large nor the precision is high
+
+            // TODO: Fractional prescale
+            // float psl1_frac_num_[1000]; 
+            // float psl1_frac_den_[1000]; 
+            // float pshlt_frac_num_[1000];
+            // float pshlt_frac_den_[1000];
+
             bool first_;
-            
             TTree * tree_;
-            
             bool psinfo_;
             
       };

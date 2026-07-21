@@ -18,8 +18,8 @@
 #include "FWCore/Framework/interface/Event.h"
 // 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
- 
 #include "Analysis/Ntuplizer/interface/Definitions.h"
+#include "Analysis/Utils/interface/color_printf.h"
 
 
 //
@@ -32,40 +32,23 @@ using namespace analysis::ntuple;
 //
 // constructors and destructor
 //
-Definitions::Definitions()
-{
+Definitions::Definitions() {
    // default constructor
 }
 
-Definitions::Definitions(edm::Service<TFileService> & fs)
-{
-   std::string category = "Definitions";
-   tree_ = fs->make<TTree>(category.c_str(),category.c_str());
-   
-}
-
-Definitions::Definitions(edm::Service<TFileService> & fs, const std::string & category )
-{
-   TFileDirectory subDir = fs->mkdir( "Definitions" );
-   tree_ = subDir.make<TTree>(category.c_str(),category.c_str());
-}
-
-Definitions::Definitions(TFileDirectory & subDir)
-{
+Definitions::Definitions(TFileDirectory & subDir) {
    std::string category = "Definitions";
    tree_ = subDir.make<TTree>(category.c_str(),category.c_str());
    
 }
 
-Definitions::Definitions(TFileDirectory & subDir, const std::string & category )
-{
+Definitions::Definitions(TFileDirectory & subDir, const std::string & category ) {
    TFileDirectory subSubDir = subDir.mkdir( "Definitions" );
    tree_ = subSubDir.make<TTree>(category.c_str(),category.c_str());
    
 }
 
-Definitions::~Definitions()
-{
+Definitions::~Definitions() {
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 }
@@ -76,30 +59,21 @@ Definitions::~Definitions()
 //
 
 // ------------ method called for each event  ------------
-void Definitions::Fill()
-{
+void Definitions::Fill() {
    tree_ -> Fill();
 }
 
+
+void Definitions::Add(const std::vector<std::string> & names, const std::vector<std::string> & aliases) {
+   names_ = names;
+   aliases_ = aliases;
+   for ( size_t i = 0 ; i < names_.size() ; ++i )
+      tree_->Branch(aliases_[i].c_str(), &names_[i]);
+   this->Fill();
+}
+
 // ------------ method called once each job just before starting event loop  ------------
-void Definitions::Init()
-{
-}
-
-void Definitions::Add(const std::vector<std::string> & names, const std::vector<std::string> & aliases)
-{
-   for ( size_t i = 0 ; i < names.size() ; ++i )
-      this -> Add(names[i],aliases[i]);
-}
-
-void Definitions::Add(const std::string & name, const std::string & alias)
-{
-   tree_ ->Branch(alias.c_str(),(void*)name.c_str(),"string/C",1024);
+void Definitions::Init() {
 }
 
 // ------------ other methods ----------------
-TTree * Definitions::Tree()
-{
-   return tree_;
-}
-

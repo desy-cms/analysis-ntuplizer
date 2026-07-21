@@ -24,20 +24,18 @@
 // 
 // user include files
 #include "FWCore/Framework/interface/Event.h"
-// 
 #include "FWCore/Framework/interface/EventSetup.h"
-
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
-#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
-#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "JetMETCorrections/Modules/interface/JetResolution.h"
 
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "Analysis/Utils/interface/types.h"
+#include "DataFormats/L1Trigger/interface/Jet.h"
+#include "DataFormats/L1Trigger/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
 
-#include "Analysis/Ntuplizer/interface/Utils.h"
 
 #include "TTree.h"
 
@@ -47,7 +45,18 @@
 
 namespace analysis {
    namespace ntuple {
-
+      template<typename T>
+      struct CollectionTraits {
+         using Collection = std::vector<T>;
+      };
+      template<>
+      struct CollectionTraits<l1t::Jet> {
+         using Collection = l1t::JetBxCollection;
+      };
+      template<>
+      struct CollectionTraits<l1t::Muon> {
+         using Collection = l1t::MuonBxCollection;
+      };
       template <typename T>
       class Candidates {
          public:
@@ -57,25 +66,26 @@ namespace analysis {
             void ReadFromEvent(const edm::Event&);
             void BTagAlgorithms(const std::vector<std::string> &, const std::vector<std::string> &);
             void Init();
-            void Init(const std::vector<TitleAlias> & );
+            void Init(const std::vector<analysis::utils::TitleAlias> & );
             void UseTriggerResults(edm::InputTag& );
             void TriggerObjectType(const std::string &);
             void AddJecInfo(const std::string & );
+            void AddJecInfo(const analysis::utils::JecESTokens & );
             void AddJecInfo(const std::string &, const std::string & );
             void AddJerInfo(const std::string &, const edm::InputTag & );
+            void AddJerInfo(const analysis::utils::JerESTokens &, const edm::InputTag & );
             void AddJerInfo(const std::string &, const std::string &, const std::string &, const edm::InputTag &  );
             void Branches();
             void Fill(const edm::Event&);
             void Fill(const edm::Event&, const edm::EventSetup&);
             void Fill();
-            void Kinematics();
+            void Properties();
+            int AdditionalProperties(int n, size_t i);
             void MinPt(const float& minPt = -1.);
             void MaxEta(const float& maxEta = -1.);
             void JECRecord(const std::string &);
-            void QGTaggerInstance(const std::string &);
-            void PileupJetIdInstance(const std::string &);
-            static const int maxCandidates = 250;
-      
+            void PileupJetId(const std::string &);
+            static constexpr int maxCandidates = 500;
          protected:
             // ----------member data ---------------------------
             std::vector<T> candidates_;
@@ -88,9 +98,7 @@ namespace analysis {
             std::unique_ptr<JetCorrectionUncertainty> jecUnc_;
             std::string jerRecord_;
             std::string jerFile_;
-            std::string jersfFile_;
-
-            
+            std::string jersfFile_;  
             // particles kinematics for the ntuple
             int   n_;
             float eta_[maxCandidates];
@@ -102,7 +110,6 @@ namespace analysis {
             float e_[maxCandidates];
             float et_[maxCandidates];
             int   q_[maxCandidates];
-            
             // pat muons
             bool isPFMuon_[maxCandidates];
             bool isGlobalMuon_[maxCandidates];
@@ -110,39 +117,36 @@ namespace analysis {
             bool isLooseMuon_[maxCandidates];
             bool isMediumMuon_[maxCandidates];
             bool isTightMuon_[maxCandidates];
-
             // Muon chamber stations
             float segmentCompatibility_[maxCandidates];
             float matchedStations_[maxCandidates];
-
             // Inner tracker vars                                                                                                                                                                   
             float validFraction_[maxCandidates];
             float validPixelHits_[maxCandidates];
             float trkLayersWithMeasurement_[maxCandidates];
             float ipxy_[maxCandidates];
             float ipz_[maxCandidates];
-
             // Global tracker vars        
             float trkKink_[maxCandidates];
             float chi2LocalPos_[maxCandidates];
             float validMuonHits_[maxCandidates];                                                                                 
             float normChi2_[maxCandidates];
-
             // pat jet additional vars
-            float btag_[15][maxCandidates];
+            std::vector<std::vector<float>> btag_;
             int   flavour_[maxCandidates];
             int   hadronFlavour_[maxCandidates];
             int   partonFlavour_[maxCandidates];
             int   physicsFlavour_[maxCandidates];
-            
-            float jetid_[15][maxCandidates];
-            int   ijetid_[15][maxCandidates];
-            std::vector<TitleAlias>  id_vars_;
-            std::vector<TitleAlias>  iid_vars_;
-
-            
+            std::vector<std::vector<float>> jetid_;
+            std::vector<analysis::utils::TitleAlias>  id_vars_;
             // Jet energy resolution and scale correction
+            float jec_factor_[maxCandidates];
+            float jec_factor_l1fastjet_[maxCandidates];
+            float jec_factor_l2relative_[maxCandidates];
+            float jec_factor_l3absolute_[maxCandidates];
+            float jec_factor_l2l3residual_[maxCandidates];
             float jecUncert_[maxCandidates];
+            analysis::utils::JecESTokens jec_tokens_;
             edm::InputTag rho_collection_;
             double rho_;
             float jerResolution_[maxCandidates];
@@ -151,19 +155,11 @@ namespace analysis {
             float jerSFDown_[maxCandidates];            
             JME::JetResolution res_;
             JME::JetResolutionScaleFactor res_sf_;
-            
-            // QG Jet
-            float qgLikelihood_[maxCandidates];
-            std::string qgtaggerInst_;
-            
+            analysis::utils::JerESTokens res_tokens_;
+
             // Jet pileup id
-            float puJetIdFullDiscr_[maxCandidates];
-            int   puJetIdFullId_[maxCandidates];
-            std::string pujetidInst_;
-            
-            // bJet regression
-            float bjetRegCorr_[maxCandidates];
-            float bjetRegRes_[maxCandidates];
+            float pileup_id_discr_[maxCandidates];
+            std::string pileup_id_name_;
                         
             int indx_[maxCandidates];
             int pdg_[maxCandidates];
@@ -175,89 +171,47 @@ namespace analysis {
             int da1_[maxCandidates];
             int da2_[maxCandidates];
             float mass_[maxCandidates];
-            
             // met specifics
             float sigxx_[maxCandidates];
             float sigxy_[maxCandidates];
             float sigyx_[maxCandidates];
             float sigyy_[maxCandidates];
-            
             // gen info (usually from pat objects)
             float gen_px_[maxCandidates];
             float gen_py_[maxCandidates];
             float gen_pz_[maxCandidates];
-            
             // type
             int  type_[maxCandidates];
-            
             // L1 objects
             int  hwQual_[maxCandidates];
             // L1 muons
             float etaAtVtx_[maxCandidates];
             float phiAtVtx_[maxCandidates];
-            
-            // reco tracks
-            float trkchi2_[maxCandidates];
-            float trkndof_[maxCandidates];
-            float trkd0_  [maxCandidates];
-            float trkdxy_ [maxCandidates];
-            bool  trkqual_[10][maxCandidates];
-            // hitpattern
-            int trkhp_lostmu_[maxCandidates];
-            int trkhp_valmu_[maxCandidates];
-            int trkhp_badmu_[maxCandidates];
-            int trkhp_valtrkhits_[maxCandidates];
-            int trkhp_valtechits_[maxCandidates];
-            int trkhp_valtibhits_[maxCandidates];
-            int trkhp_valtidhits_[maxCandidates];
-            int trkhp_valtobhits_[maxCandidates];
-            int trkhp_stationsvalhits_[maxCandidates];
-            int trkhp_stationsbadhits_[maxCandidates];
-            int trkhp_innerstationsvalhits_[maxCandidates];
-            int trkhp_outerstationsvalhits_[maxCandidates];
-           
-            
-            
+
             TTree * tree_;
-            
          private:
-            bool is_l1jet_;
-            bool is_l1muon_;
-            bool is_calojet_;
-            bool is_pfjet_;
             bool is_patjet_;
-            bool is_recomuon_;
-            bool is_recotrack_;
             bool is_patmuon_;
             bool is_genjet_;
             bool is_genparticle_;
             bool is_trigobject_;
-            bool is_trigobject_reco_;
             bool is_patmet_;
             bool is_mc_;
-            bool do_kinematics_;
             bool do_generator_;
             bool is_l1tjet_;
             bool is_l1tmuon_;
-            bool is_chargedcand_;
             
             float minPt_;
             float maxEta_;
             std::vector<std::string>  btagAlgos_;
             std::vector<std::string>  btagAlgosAlias_;
-            
-            std::vector<std::string>  filterLabels_;
-                      
+            std::vector<std::string>  filterLabels_;   
             int higgs_pdg_;
-            
-            std::vector<TitleAlias>  btag_vars_;
-            
+            std::vector<analysis::utils::TitleAlias>  btag_vars_;
             std::string trigobj_type_;
-   
-            
       };
       // for the function specialisation - can also be done in .cc (keeping this comment for reference)
-//      template <> int Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event);
+      // template <> int Candidates<pat::TriggerObject>::ReadFromEvent(const edm::Event& event);
    }
 }
 
