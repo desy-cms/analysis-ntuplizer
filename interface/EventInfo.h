@@ -84,20 +84,20 @@ namespace analysis {
             float n_true_pu_;
             
             // GenEventInfo
-            edm::InputTag genInfo_;
-            bool do_gen_;
-            double genWeight_;
-            double genScale_;
-            int    pdfid1_;
-            int    pdfid2_;
-            double pdfx1_;
-            double pdfx2_;
+            edm::InputTag gen_event_info_;
+            bool do_gen_event_info_;
+            double gen_weight_;
+            double gen_scale_;
+            int    pdf_id1_;
+            int    pdf_id2_;
+            double pdf_x1_;
+            double pdf_x2_;
             
             // Lumi scalers
             bool  do_lumi_;
-            edm::InputTag lumiScalers_;
-            float instLumi_;
-            float lumiPU_;
+            edm::InputTag lumi_scalers_;
+            float inst_lumi_;
+            float lumi_pu_;
             
             // FixedGridRho
             bool do_rho_;
@@ -105,13 +105,13 @@ namespace analysis {
             double rho_;
 
             // L1 prefiring weight
-            bool do_prefw_;
-            edm::InputTag prefweight_collection_;
-            edm::InputTag prefweight_up_collection_;
-            edm::InputTag prefweight_down_collection_;
-            double prefw_;
-            double prefw_up_;
-            double prefw_down_;
+            bool do_prefiring_weight_;
+            edm::InputTag prefiring_weight_collection_;
+            edm::InputTag prefiring_weight_up_collection_;
+            edm::InputTag prefiring_weight_down_collection_;
+            double prefiring_weight_;
+            double prefiring_weight_up_;
+            double prefiring_weight_down_;
 
             // MET filters
             bool do_met_filters_;
