@@ -36,6 +36,8 @@
 
 #include "TTree.h"
 
+#include "Analysis/Utils/interface/color_printf.h"
+
 //
 // class declaration
 //

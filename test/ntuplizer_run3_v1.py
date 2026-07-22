@@ -112,8 +112,7 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     FilteredEvents              = cms.InputTag ('nFilteredEvents'),
     TriggerResults              = cms.VInputTag(
                                                     cms.InputTag('TriggerResults','','HLT'), ),
-    TriggerObjectStandAlone     = cms.VInputTag(
-                                                    cms.InputTag('slimmedPatTrigger'), ),
+    TriggerObjectStandAlone     = cms.InputTag('slimmedPatTrigger'),
     JetCollections              = cms.VPSet(
                                                 cms.PSet(
                                                     collection    = cms.InputTag('updatedJetsPuppi'),
@@ -151,6 +150,7 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     TriggerObjectSplitsTypes    = TriggerInfo['TriggerObjectSplitsTypes'],
     MetFiltersResults           = cms.InputTag('TriggerResults', '', 'PAT'),
     FixedGridRhoAll             = cms.InputTag ('fixedGridRhoAll'),
+    GenFilterInfo       = cms.InputTag("genFilterEfficiencyProducer"),
 )
 # to modify according to year
 if command_line_options.type != 'mc':
