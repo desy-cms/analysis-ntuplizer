@@ -179,10 +179,9 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool do_event_count_summary_;
       bool do_genfilter_;
       bool do_triggerobjects_;
-      bool do_genruninfo_;
       bool do_lumiscalers_;
       bool store_prescale_;
-      bool testmode_;
+      bool test_mode_;
       bool do_metfilters_;
 
       Strings trig_res_process_;
@@ -306,9 +305,23 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    usesResource(TFileService::kSharedResource);
    edm::Service<TFileService> file_service; // TODO:  book TTrees and branches during construction (seems CMSSW style) or during beginJob() (seems ROOT style)?  For now, do it in the constructor.
    eventsDir_ = file_service -> mkdir("Events");   
+   eventinfo_ = EventInfoPtr(new EventInfo(eventsDir_));
 
-   // Functions
-   auto read_definitions = [&](const edm::ParameterSet& jet, const std::string& parameter, const std::string& metadata_name ) {
+
+   //now do what ever initialization is needed
+   is_mc_           = config_.getParameter<bool>  ("MonteCarlo");
+   store_prescale_  = config_.getParameter<bool>  ("StorePrescale");
+   test_mode_       = config_.getParameter<bool>  ("TestMode");
+   use_full_name_   = config_.getParameter<bool>  ("UseFullName");
+   xsection_        = config_.getParameter<double>("CrossSection");
+
+   eventCounters_.resize(2);
+   mHatEventCounters_.resize(2);
+
+   // Metadata 
+   metadata_ = std::make_unique<Metadata>(file_service, is_mc_);
+   metadata_ -> Init();
+   auto metadata_read_definitions = [&](const edm::ParameterSet& jet, const std::string& parameter, const std::string& metadata_name ) {
       std::vector<analysis::utils::TitleAlias> defs;
       if (!jet.existsAs<std::vector<edm::ParameterSet>>(parameter))
          return defs;
@@ -320,34 +333,18 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       return defs;
    };   
 
-
-   //now do what ever initialization is needed
-   is_mc_           = config_.getParameter<bool> ("MonteCarlo");
-   xsection_        = config_.getParameter<double>("CrossSection");
-   store_prescale_  = config_.getParameter<bool> ("StorePrescale");
-   eventCounters_.resize(2);
-   mHatEventCounters_.resize(2);
-
-
-   // Metadata 
-   metadata_ = std::make_unique<Metadata>(file_service, is_mc_);
-   metadata_ -> Init();
    // Definitions of the variables to be stored in the metadata tree
+   do_metfilters_ = config_.existsAs<InputTag>("MetFiltersResults");
+   do_triggeraccepts_   = config_.existsAs<InputTag>("TriggerResults");
 
-   do_metfilters_ = config_.exists("MetFiltersResults");
-
-   do_triggeraccepts_   = config_.exists("TriggerResults");
-   trig_res_process_.clear();
-   
-   use_full_name_ = false;
-   testmode_      = false;
    inputTagsVec_ = config_.getParameterNamesForType<InputTags>();
    inputTags_    = config_.getParameterNamesForType<InputTag>();
-   psetsVec_     = config_.getParameterNamesForType<std::vector<edm::ParameterSet>>();
-   
+   psetsVec_     = config_.getParameterNamesForType<std::vector<edm::ParameterSet>>();   
    hltPrescaleProvider_ = std::make_shared<HLTPrescaleProvider>(config_, consumesCollector(), *this);
+
    std::string name;
    std::string fullname;
+   trig_res_process_.clear();   
 
    using RegistersPSetFn = std::function<void(std::vector<edm::ParameterSet> const&)>;
    std::unordered_map<std::string, RegistersPSetFn> psetDispatch;
@@ -365,9 +362,9 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          String jet_collection_label = collection.label();
          jet_collections_[jet_collection_label] = collection;
          makeCollectionTree(collection);
-         auto btagging = read_definitions(jet,"btagging","btagging_" + jet_collection_label);
+         auto btagging = metadata_read_definitions(jet,"btagging","btagging_" + jet_collection_label);
          jet_btagging_[jet_collection_label] = btagging;
-         auto bregression = read_definitions(jet,"bregression","bregression_" + jet_collection_label);
+         auto bregression = metadata_read_definitions(jet,"bregression","bregression_" + jet_collection_label);
          jet_bregression_[jet_collection_label] = bregression;
          std::vector<analysis::utils::TitleAlias>  discriminators;
          discriminators.reserve(btagging.size() + bregression.size());
@@ -514,27 +511,23 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    std::unordered_map<std::string, RegisterFn> inputTagDispatch;
    inputTagDispatch["PileupSummaryInfo"] = [&](InputTag const& collection) {
       registerToken< std::vector<PileupSummaryInfo> >(collection,pileup_info_token_,pileup_info_);
+      if ( is_mc_ ) eventinfo_ -> PileupInfo(config_.getParameter<InputTag>("PileupSummaryInfo"));
    };
    inputTagDispatch["GenEventInfo"] = [&](InputTag const& collection) {
       registerToken<GenEventInfoProduct>(collection,genEventInfoToken_,genEventInfo_);
+      if ( is_mc_ ) eventinfo_ -> GenEventInfo(config_.getParameter<InputTag>("GenEventInfo"));
    };
    inputTagDispatch["LumiScalers"] = [&](InputTag const& collection) {
       registerToken<LumiScalersCollection>(collection,lumiScalersToken_,lumiScalers_);
+      eventinfo_ -> LumiScalersInfo(config_.getParameter<InputTag>("LumiScalers"));
    };
    inputTagDispatch["FixedGridRhoAll"] = [&](InputTag const& collection) {
       registerToken<double>(collection,fixedGridRhoAllToken_,fixedGridRhoAll_);
-   };
-   inputTagDispatch["PrefiringWeight"] = [&](InputTag const& collection) {
-      registerToken<double>(collection,prefWeightToken_,prefWeight_);
-   };
-   inputTagDispatch["PrefiringWeightUp"] = [&](InputTag const& collection) {
-      registerToken<double>(collection,prefWeightUpToken_,prefWeightUp_);
-   };
-   inputTagDispatch["PrefiringWeightDown"] = [&](InputTag const& collection) {
-      registerToken<double>(collection,prefWeightDownToken_,prefWeightDown_);
+      eventinfo_ -> FixedGridRhoInfo(config_.getParameter<InputTag>("FixedGridRhoAll"));
    };
    inputTagDispatch["GenFilterInfo"] = [&](InputTag const& collection) {
       registerToken<GenFilterInfo,edm::InLumi>(collection,genFilterInfoToken_,genFilterInfo_);
+      if ( is_mc_ ) metadata_ -> SetGeneratorFilter(config_.getParameter<InputTag> ("GenFilterInfo"));
    };
    inputTagDispatch["GenRunInfo"] = [&](InputTag const& collection) {
       registerToken<GenRunInfoProduct,edm::InRun>(collection,genRunInfoToken_,genRunInfo_);
@@ -550,13 +543,47 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    };
    inputTagDispatch["MetFiltersResults"] = [&](InputTag const& collection) {
       registerToken<edm::TriggerResults>(collection, metfilters_tokens_, metfilters_);
+      eventinfo_ -> MetFilters(config_.getParameter<InputTag>("MetFiltersResults"));
    };
+   inputTagDispatch["PrefiringWeight"] = [&](InputTag const& collection) {
+      registerToken<double>(collection,prefWeightToken_,prefWeight_);
+   };
+   inputTagDispatch["PrefiringWeightUp"] = [&](InputTag const& collection) {
+      registerToken<double>(collection,prefWeightUpToken_,prefWeightUp_);
+   };
+   inputTagDispatch["PrefiringWeightDown"] = [&](InputTag const& collection) {
+      registerToken<double>(collection,prefWeightDownToken_,prefWeightDown_);
+   };
+   // analysis::utils::PrefiringTags prefiring_tags;
+   // std::unordered_map<std::string, std::function<void(InputTag const&)>> inputTagDispatch = {
+   //    {"PrefiringWeight", [&](InputTag const& tag) {
+   //       registerToken<double>(tag, prefWeightToken_, prefWeight_);
+   //       prefiring_tags.nominal = tag;
+   //    }},
+   //    {"PrefiringWeightUp", [&](InputTag const& tag) {
+   //       registerToken<double>(tag, prefWeightUpToken_, prefWeightUp_);
+   //       prefiring_tags.up = tag;
+   //    }},
+   //    {"PrefiringWeightDown", [&](InputTag const& tag) {
+   //       registerToken<double>(tag, prefWeightDownToken_, prefWeightDown_);
+   //       prefiring_tags.down = tag;
+   //    }},
+   // };
    for ( auto & inputTag : inputTags_ ) {
       InputTag collection = config_.getParameter<InputTag>(inputTag);
       auto it = inputTagDispatch.find(inputTag);
       if (it != inputTagDispatch.end())
          it->second(collection);
    }
+   std::optional<edm::InputTag> prefTagUp;
+   if (config_.existsAs<edm::InputTag>("PrefiringWeightUp"))
+      prefTagUp = prefWeightUp_;
+   std::optional<edm::InputTag> prefTagDown;
+   if (config_.existsAs<edm::InputTag>("PrefiringWeightDown"))
+      prefTagDown = prefWeightDown_;
+
+   if ( config_.exists("PrefiringWeight") ) eventinfo_->PrefiringWeightInfo(prefWeight_, prefTagUp, prefTagDown);
+
    analyze_count_ = 0;
 }
 Ntuplizer::~Ntuplizer() {
@@ -627,30 +654,13 @@ void Ntuplizer::beginJob() {
    do_event_count_summary_      = config_.exists("TotalEvents")  && config_.exists("FilteredEvents");
    do_genfilter_        = config_.exists("GenFilterInfo") && is_mc_;
    do_triggerobjects_   = ( config_.exists("TriggerObjectStandAlone") || config_.exists("TriggerEvent") ) &&  config_.exists("TriggerObjectLabels");
-   do_genruninfo_       = config_.exists("GenRunInfo") && is_mc_ ;
    
-   if ( config_.exists("TestMode") ) // This is DANGEROUS! but can be useful. So BE CAREFUL!!!!
-      testmode_ = config_.getParameter<bool> ("TestMode");
-   if ( config_.exists("UseFullName") )
-      use_full_name_ = config_.getParameter<bool> ("UseFullName");
    std::string name;
    std::string fullname;
    gen_event_counts_  = {};
    event_counts_ = {};
-   // Event info tree
-   eventinfo_ = EventInfoPtr(new EventInfo(eventsDir_));
-   if ( config_.exists("FixedGridRhoAll") )
-      eventinfo_ -> FixedGridRhoInfo(config_.getParameter<InputTag>("FixedGridRhoAll"));
-   if ( do_pileup_info_ )
-      eventinfo_ -> PileupInfo(config_.getParameter<InputTag>("PileupSummaryInfo"));
-   if ( do_geneventinfo_ )
-      eventinfo_ -> GenEventInfo(config_.getParameter<InputTag>("GenEventInfo"));
-   if ( do_lumiscalers_ )
-      eventinfo_ -> LumiScalersInfo(config_.getParameter<InputTag>("LumiScalers"));
-   if ( config_.exists("PrefiringWeight") &&  config_.exists("PrefiringWeightUp") && config_.exists("PrefiringWeightDown"))
-      eventinfo_ -> PrefiringWeightInfo(prefWeight_, prefWeightUp_, prefWeightDown_);
-   if ( config_.exists("MetFiltersResults") )
-      eventinfo_ -> MetFilters(config_.getParameter<InputTag>("MetFiltersResults"));
+   // if ( config_.exists("PrefiringWeight") &&  config_.exists("PrefiringWeightUp") && config_.exists("PrefiringWeightDown"))
+   //    eventinfo_ -> PrefiringWeightInfo(prefWeight_, prefWeightUp_, prefWeightDown_);
 
    InputTag trgRes;
    if ( do_triggeraccepts_ ) {
@@ -779,8 +789,8 @@ void Ntuplizer::beginJob() {
       fullname = name + "_" + inst + "_" + proc;
       if ( use_full_name_ ) name = fullname;       
       // Generator filter
-      if ( do_genfilter_ && inputTag == "GenFilterInfo" )
-         metadata_ -> SetGeneratorFilter(config_.getParameter<InputTag> ("GenFilterInfo"));
+      // if ( do_genfilter_ && inputTag == "GenFilterInfo" )
+      //    metadata_ -> SetGeneratorFilter(config_.getParameter<InputTag> ("GenFilterInfo"));
       // Event filter
       if ( do_event_count_summary_ ) {
          if ( inputTag == "TotalEvents" ) {
@@ -838,7 +848,7 @@ void Ntuplizer::beginRun(edm::Run const& run, edm::EventSetup const& setup) {
 void Ntuplizer::endRun(edm::Run const& run, edm::EventSetup const& setup) {
    printf_info("==> Ntuplizer::endRun(): Run = %d ...\n", (int)run.run());
 
-   if ( do_genruninfo_ ) {
+   if ( config_.exists("GenRunInfo") && is_mc_ ) {
       metadata_ -> SetCrossSections(run,genRunInfo_,xsection_);
    }
 
@@ -934,10 +944,10 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 
    desc.add<InputTag>("FixedGridRhoAll", InputTag("fixedGridRhoAll"));
    desc.add<InputTags>("TriggerResults", { InputTag("TriggerResults", "", "HLT") });
-   desc.add<InputTags>( "PatMuons", { InputTag("slimmedMuons") });
-   desc.add<InputTags>( "L1TJets", { InputTag("caloStage2Digis","Jet","RECO") });
-   desc.add<InputTags>( "L1TMuons", { InputTag("gmtStage2Digis","Muon","RECO") });
-   desc.add<InputTags>( "PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
+   desc.add<InputTags>("PatMuons", { InputTag("slimmedMuons") });
+   desc.add<InputTags>("L1TJets", { InputTag("caloStage2Digis","Jet","RECO") });
+   desc.add<InputTags>("L1TMuons", { InputTag("gmtStage2Digis","Muon","RECO") });
+   desc.add<InputTags>("PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
    desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "PAT"));
 
    desc_btagging.add<std::string>("discriminator");
@@ -965,6 +975,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<InputTag>("PrefiringWeight");
    desc.addOptional<InputTag>("PrefiringWeightUp");
    desc.addOptional<InputTag>("PrefiringWeightDown");
+   desc.addOptional<InputTag>("LumiScalers");
 
    desc.add<double>("CrossSection", -1.0);
    desc.addOptional<InputTag>("GenEventInfo");
@@ -974,6 +985,9 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<InputTags>("GenJets");
    desc.addOptional<InputTags>("GenParticles");
    desc.addOptional<InputTag>("FilteredMHatEvents");
+
+   desc.add<bool>("UseFullName", false);
+   desc.add<bool>("TestMode", false);
 
    descriptions.addDefault(desc);
 }
