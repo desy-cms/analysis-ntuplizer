@@ -151,6 +151,7 @@ process.MssmHbb                 = cms.EDAnalyzer('Ntuplizer',
     MetFiltersResults           = cms.InputTag('TriggerResults', '', 'PAT'),
     FixedGridRhoAll             = cms.InputTag ('fixedGridRhoAll'),
     GenFilterInfo       = cms.InputTag("genFilterEfficiencyProducer"),
+    # GenParticles        = cms.InputTag("prunedGenParticles"),
 )
 # to modify according to year
 if command_line_options.type != 'mc':

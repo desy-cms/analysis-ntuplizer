@@ -161,6 +161,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
          void registerTokensMap(std::map<String,InputTag> const& , TokenMap<Collection>& );
       String makeCollectionTree(InputTag const& collection, bool useFullName = false, String const& custom_tree_name = "");
       void AddJetCollection(const edm::InputTag& collection );
+      String generateCollectionName(const edm::InputTag& );
 
 
       // ----------member data ---------------------------
@@ -214,6 +215,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       InputTag prefWeightDown_;
       InputTag metfilters_;
       InputTag triggerobjects_;
+      InputTag genparticles_;
 
       Token<GenFilterInfo>                    genFilterInfoToken_;
       Token<edm::MergeableCounter>            totalEventsToken_;
@@ -229,6 +231,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Token<double>                           prefWeightDownToken_;
       Token<edm::TriggerResults>              metfilters_tokens_;
       Token<pat::TriggerObjectStandAloneCollection>   triggerObjToken_;
+      Token<reco::GenParticleCollection>              genparticles_token_;
       
       InputTags eventCounters_;
       InputTags mHatEventCounters_;
@@ -252,6 +255,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Collections<TriggerAccepts>               triggeraccepts_collections_;
       
       // Collections for the ntuples (single)
+      pGenParticleCandidates genparticles_collection_;
       
       // metadata
       double xsection_;
@@ -565,6 +569,14 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          }
       }
    };
+   // inputTagDispatch["GenParticles"] = [&](InputTag const& collection) {
+   //    registerToken<reco::GenParticleCollection>(collection, genparticles_token_, genparticles_);
+   //    if ( is_mc_ ) {
+   //       name  = generateCollectionName(collection);
+   //       genparticles_collection_ = std::make_unique<GenParticleCandidates>(collection, tree_[name], is_mc_ );
+   //       genparticles_collection_ -> Init();
+   //    }
+   // };
 
    inputTagDispatch["PileupSummaryInfo"] = [&](InputTag const& collection) {
       registerToken< std::vector<PileupSummaryInfo> >(collection,pileup_info_token_,pileup_info_);
@@ -662,6 +674,7 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
    // Gen particles (reco)
    for ( auto & collection : genparticles_collections_ )
       collection -> Fill(event);
+   // genparticles_collection_ -> Fill(event);
    // trigger accepts
    for ( auto & collection : triggeraccepts_collections_ )
       collection -> Fill(event, setup);
@@ -889,6 +902,16 @@ void Ntuplizer::AddJetCollection(const edm::InputTag& collection) {
    patjets_collections_.back() -> AddJerInfo(jer_es_tokens_[label],fixedGridRhoAll_);
 }
 
+String Ntuplizer::generateCollectionName(const edm::InputTag& collection) {
+   String name;
+   String label = collection.label();
+   String inst  = collection.instance();
+   String proc  = collection.process();
+   name = label;
+   String fullname = name + "_" + inst + "_" + proc;
+   if ( use_full_name_ ) name = fullname;       
+   return name;
+}
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -946,6 +969,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<InputTag>("GenRunInfo");
    desc.addOptional<InputTag>("PileupSummaryInfo");
    desc.addOptional<InputTags>("GenJets");
+   // desc.addOptional<InputTag>("GenParticles");
    desc.addOptional<InputTags>("GenParticles");
    desc.addOptional<InputTag>("FilteredMHatEvents");
 
