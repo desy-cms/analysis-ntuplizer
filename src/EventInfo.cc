@@ -217,26 +217,32 @@ void EventInfo::ReadFixedGridRhoInfo(const edm::Event& event) {
    rho_ = *(rhoHandler.product());
 }
 
-void EventInfo::PrefiringWeightInfo(const edm::InputTag & tag, const edm::InputTag & tag_up ,const edm::InputTag & tag_down) {
+void EventInfo::PrefiringWeightInfo(const edm::InputTag & nominal, std::optional<edm::InputTag> up, std::optional<edm::InputTag> down) {
    do_prefiring_weight_ = true;
-   prefiring_weight_collection_ = tag;
-   prefiring_weight_up_collection_ = tag_up;
-   prefiring_weight_down_collection_ = tag_down;  
-   tree_->Branch("non_prefiring_prob"      , &prefiring_weight_      , "non_prefiring_prob/D");
-   tree_->Branch("non_prefiring_prob_up"   , &prefiring_weight_up_   , "non_prefiring_prob_up/D");
-   tree_->Branch("non_prefiring_prob_down" , &prefiring_weight_down_ , "non_prefiring_prob_down/D"); 
+   prefiring_weight_collection_      = nominal;
+   prefiring_weight_up_collection_   = std::move(up);
+   prefiring_weight_down_collection_ = std::move(down);
+   tree_->Branch("non_prefiring_prob",      &prefiring_weight_,      "non_prefiring_prob/D");
+   tree_->Branch("non_prefiring_prob_up",   &prefiring_weight_up_,   "non_prefiring_prob_up/D");
+   tree_->Branch("non_prefiring_prob_down", &prefiring_weight_down_, "non_prefiring_prob_down/D");
 }
 
 void EventInfo::ReadPrefiringWeight(const edm::Event& event) {
-   edm::Handle<double> prefwHandler;
-   edm::Handle<double> prefwUpHandler;
-   edm::Handle<double> prefwDownHandler;
-   event.getByLabel(prefiring_weight_collection_, prefwHandler);
-   event.getByLabel(prefiring_weight_up_collection_, prefwUpHandler);
-   event.getByLabel(prefiring_weight_down_collection_, prefwDownHandler);
-   prefiring_weight_      = *(prefwHandler.product());
-   prefiring_weight_up_   = *(prefwUpHandler.product());
-   prefiring_weight_down_ = *(prefwDownHandler.product());
+   edm::Handle<double> prefiring_weight_handler;
+   event.getByLabel(prefiring_weight_collection_, prefiring_weight_handler);
+   prefiring_weight_ = *prefiring_weight_handler;
+   prefiring_weight_up_   = prefiring_weight_;
+   prefiring_weight_down_ = prefiring_weight_;
+   if (prefiring_weight_up_collection_) {
+      edm::Handle<double> prefiring_weight_up_handler;
+      event.getByLabel(*prefiring_weight_up_collection_, prefiring_weight_up_handler);
+      if (prefiring_weight_up_handler.isValid()) prefiring_weight_up_ = *prefiring_weight_up_handler;
+   }
+   if (prefiring_weight_down_collection_) {
+      edm::Handle<double> prefiring_weight_down_handler;
+      event.getByLabel(*prefiring_weight_down_collection_, prefiring_weight_down_handler);
+      if (prefiring_weight_down_handler.isValid()) prefiring_weight_down_ = *prefiring_weight_down_handler;
+   }
 }
 
 void EventInfo::MetFilters(const edm::InputTag & tag) {

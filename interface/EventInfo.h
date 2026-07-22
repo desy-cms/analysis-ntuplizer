@@ -21,6 +21,7 @@
 
 // system include files
 #include <memory>
+#include <optional>
 // 
 // user include files
 #include "FWCore/Framework/interface/Event.h"
@@ -58,7 +59,7 @@ namespace analysis {
             void ReadLumiScalers(const edm::Event&);
             void FixedGridRhoInfo(const edm::InputTag&);
             void ReadFixedGridRhoInfo(const edm::Event&);
-            void PrefiringWeightInfo(const edm::InputTag &, const edm::InputTag &, const edm::InputTag & );
+            void PrefiringWeightInfo(const edm::InputTag & nominal, std::optional<edm::InputTag> up = std::nullopt, std::optional<edm::InputTag> down = std::nullopt );
             void ReadPrefiringWeight(const edm::Event&);
             void MetFilters(const edm::InputTag&);
             void ReadMetFilters(const edm::Event&);
@@ -107,8 +108,9 @@ namespace analysis {
             // L1 prefiring weight
             bool do_prefiring_weight_;
             edm::InputTag prefiring_weight_collection_;
-            edm::InputTag prefiring_weight_up_collection_;
-            edm::InputTag prefiring_weight_down_collection_;
+            std::optional<edm::InputTag> prefiring_weight_up_collection_;
+            std::optional<edm::InputTag> prefiring_weight_down_collection_;
+            
             double prefiring_weight_;
             double prefiring_weight_up_;
             double prefiring_weight_down_;
