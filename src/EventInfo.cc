@@ -57,7 +57,7 @@ EventInfo::EventInfo(edm::Service<TFileService> & fs) {
    
    do_pu_   = false;
    do_gen_event_info_  = false;
-   do_lumi_ = false;
+   do_lumi_scalers_ = false;
    do_rho_  = false;
    do_prefiring_weight_ = false;
 }
@@ -75,7 +75,7 @@ EventInfo::EventInfo(TFileDirectory & dir) {
 
    do_pu_   = false;
    do_gen_event_info_  = false;
-   do_lumi_ = false;
+   do_lumi_scalers_ = false;
    do_rho_  = false;
    do_prefiring_weight_ = false;
 
@@ -117,7 +117,7 @@ void EventInfo::Fill(const edm::Event& event) {
       pdf_x1_      = -1.;
       pdf_x2_      = -1.;        
    }
-   if ( do_lumi_ ) {
+   if ( do_lumi_scalers_ ) {
       ReadLumiScalers(event);
    }
    if ( do_rho_ ) {
@@ -185,7 +185,7 @@ void EventInfo::ReadGenEventInfo(const edm::Event& event) {
 }
 
 void EventInfo::LumiScalersInfo(const edm::InputTag& tag) {
-   do_lumi_  = true;
+   do_lumi_scalers_  = true;
    lumi_scalers_ = tag;
    // lumiScalers
    tree_->Branch("instant_lumi", &inst_lumi_,"instant_lumi/F");
@@ -193,10 +193,16 @@ void EventInfo::LumiScalersInfo(const edm::InputTag& tag) {
 }
 
 void EventInfo::ReadLumiScalers(const edm::Event& event) {
+   inst_lumi_ = -1.;
+   lumi_pu_ = -1.;
    edm::Handle<LumiScalersCollection> lumis;
    event.getByLabel(lumi_scalers_, lumis);
-   inst_lumi_ = lumis -> begin() -> instantLumi();
-   lumi_pu_   = lumis -> begin() -> pileup();
+   if ( lumis.isValid() ) {
+      if ( lumis -> size() > 0 ) {
+         inst_lumi_ = lumis -> begin() -> instantLumi();
+         lumi_pu_   = lumis -> begin() -> pileup();
+      }
+   }
 }
 
 void EventInfo::FixedGridRhoInfo(const edm::InputTag& tag) {

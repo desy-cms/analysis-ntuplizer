@@ -94,7 +94,7 @@ namespace analysis {
             double pdf_x2_;
             
             // Lumi scalers
-            bool  do_lumi_;
+            bool  do_lumi_scalers_;
             edm::InputTag lumi_scalers_;
             float inst_lumi_;
             float lumi_pu_;
