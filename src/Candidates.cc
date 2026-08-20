@@ -36,6 +36,8 @@
 
 #include "TTree.h"
 
+#include "Analysis/Utils/interface/color_printf.h"
+
 //
 // class declaration
 //
@@ -559,7 +561,7 @@ void Candidates<T>::Branches() {
       tree_->Branch("physicsFlavour", physicsFlavour_,  "physicsFlavour[n]/I");
       
       tree_->Branch("jecUncert", jecUncert_, "jecUncert[n]/F");
-      tree_->Branch("fec_factor"              , jec_factor_             , "jec_factor[n]/F");
+      tree_->Branch("jec_factor"              , jec_factor_             , "jec_factor[n]/F");
       tree_->Branch("jec_factor_l1fastjet_"   , jec_factor_l1fastjet_   , "jec_factor_l1fastjet_[n]/F");
       tree_->Branch("jec_factor_l2relative_"  , jec_factor_l2relative_  , "jec_factor_l2relative_[n]/F");
       tree_->Branch("jec_factor_l3absolute_"  , jec_factor_l3absolute_  , "jec_factor_l3absolute_[n]/F");

@@ -47,7 +47,6 @@
 #include "DataFormats/Scalers/interface/LumiScalers.h"
 #include "DataFormats/Common/interface/MergeableCounter.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
-#include "DataFormats/HLTReco/interface/TriggerEvent.h"
 
 #include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenFilterInfo.h"
@@ -78,12 +77,12 @@ using analysis::utils::string_split;
 // Template aliases
 template<typename T>
 using Ptr = std::unique_ptr<T>;
+template<typename T>
+using Collections = std::vector<Ptr<T>>;
 template<typename Collection>
 using Token = edm::EDGetTokenT<Collection>;
 template<typename Collection>
 using TokenMap = std::map<std::string, Token<Collection>>;
-template<typename T>
-using Collections = std::vector<Ptr<T>>;
 
 // Aliases
 using TitleIndex                   = analysis::utils::TitleIndex;
@@ -152,6 +151,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
       template<typename Product>
          void registerToken(InputTag const&, Token<Product>&, InputTag& );
+      template<typename Product, typename Collection>
+         void registerToken(InputTag const&, Token<Product>&, std::unique_ptr<Collection>& );
       template<typename Product, edm::BranchType B>
          void registerToken(InputTag const&, Token<Product>&, InputTag& );
       template<typename Collection>
@@ -160,6 +161,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
          void registerTokensMap(std::map<String,InputTag> const& , TokenMap<Collection>& );
       String makeCollectionTree(InputTag const& collection, bool useFullName = false, String const& custom_tree_name = "");
       void AddJetCollection(const edm::InputTag& collection );
+      String generateCollectionName(const edm::InputTag& );
 
 
       // ----------member data ---------------------------
@@ -169,20 +171,11 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       bool use_full_name_;
       bool do_l1jets_;
       bool do_l1muons_;
-      bool do_patmets_;
-      bool do_patmuons_;
-      bool do_genjets_;
-      bool do_genparticles_;
-      bool do_pileup_info_;
-      bool do_geneventinfo_;
       bool do_triggeraccepts_;
       bool do_event_count_summary_;
-      bool do_genfilter_;
       bool do_triggerobjects_;
-      bool do_genruninfo_;
-      bool do_lumiscalers_;
       bool store_prescale_;
-      bool testmode_;
+      bool test_mode_;
       bool do_metfilters_;
 
       Strings trig_res_process_;
@@ -198,11 +191,9 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       TokenMap<pat::JetCollection>                       patJetTokens_;
       TokenMap<pat::MuonCollection>                      patMuonTokens_;
       TokenMap<pat::METCollection>                       patMETTokens_;
-      TokenMap<pat::TriggerObjectStandAloneCollection>   triggerObjTokens_;
       TokenMap<edm::TriggerResults>                      triggerResultsTokens_;
       TokenMap<l1t::JetBxCollection>                     l1tJetTokens_;
       TokenMap<l1t::MuonBxCollection>                    l1tMuonTokens_;
-      TokenMap<trigger::TriggerEvent>                    triggerEventTokens_;
       TokenMap<reco::VertexCollection>                   primary_vertices_tokens_;
       TokenMap<reco::GenJetCollection>                   genJetTokens_;
       TokenMap<reco::GenParticleCollection>              genPartTokens_;
@@ -223,6 +214,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       InputTag prefWeightUp_;
       InputTag prefWeightDown_;
       InputTag metfilters_;
+      InputTag triggerobjects_;
+      InputTag genparticles_;
 
       Token<GenFilterInfo>                    genFilterInfoToken_;
       Token<edm::MergeableCounter>            totalEventsToken_;
@@ -237,7 +230,8 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Token<double>                           prefWeightUpToken_;
       Token<double>                           prefWeightDownToken_;
       Token<edm::TriggerResults>              metfilters_tokens_;
-
+      Token<pat::TriggerObjectStandAloneCollection>   triggerObjToken_;
+      Token<reco::GenParticleCollection>              genparticles_token_;
       
       InputTags eventCounters_;
       InputTags mHatEventCounters_;
@@ -261,6 +255,7 @@ class Ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one
       Collections<TriggerAccepts>               triggeraccepts_collections_;
       
       // Collections for the ntuples (single)
+      pGenParticleCandidates genparticles_collection_;
       
       // metadata
       double xsection_;
@@ -306,9 +301,23 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    usesResource(TFileService::kSharedResource);
    edm::Service<TFileService> file_service; // TODO:  book TTrees and branches during construction (seems CMSSW style) or during beginJob() (seems ROOT style)?  For now, do it in the constructor.
    eventsDir_ = file_service -> mkdir("Events");   
+   eventinfo_ = EventInfoPtr(new EventInfo(eventsDir_));
 
-   // Functions
-   auto read_definitions = [&](const edm::ParameterSet& jet, const std::string& parameter, const std::string& metadata_name ) {
+
+   //now do what ever initialization is needed
+   is_mc_           = config_.getParameter<bool>  ("MonteCarlo");
+   store_prescale_  = config_.getParameter<bool>  ("StorePrescale");
+   test_mode_       = config_.getParameter<bool>  ("TestMode");
+   use_full_name_   = config_.getParameter<bool>  ("UseFullName");
+   xsection_        = config_.getParameter<double>("CrossSection");
+
+   eventCounters_.resize(2);
+   mHatEventCounters_.resize(2);
+
+   // Metadata 
+   metadata_ = std::make_unique<Metadata>(file_service, is_mc_);
+   metadata_ -> Init();
+   auto metadata_read_definitions = [&](const edm::ParameterSet& jet, const std::string& parameter, const std::string& metadata_name ) {
       std::vector<analysis::utils::TitleAlias> defs;
       if (!jet.existsAs<std::vector<edm::ParameterSet>>(parameter))
          return defs;
@@ -318,36 +327,39 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       }
       metadata_->AddDefinitions(defs, metadata_name);
       return defs;
-   };   
-
-
-   //now do what ever initialization is needed
-   is_mc_           = config_.getParameter<bool> ("MonteCarlo");
-   xsection_        = config_.getParameter<double>("CrossSection");
-   store_prescale_  = config_.getParameter<bool> ("StorePrescale");
-   eventCounters_.resize(2);
-   mHatEventCounters_.resize(2);
-
-
-   // Metadata 
-   metadata_ = std::make_unique<Metadata>(file_service, is_mc_);
-   metadata_ -> Init();
-   // Definitions of the variables to be stored in the metadata tree
-
-   do_metfilters_ = config_.exists("MetFiltersResults");
-
-   do_triggeraccepts_   = config_.exists("TriggerResults");
-   trig_res_process_.clear();
+   };  
    
-   use_full_name_ = false;
-   testmode_      = false;
+   // split trigger objects
+   bool splitTriggerObject = config_.exists("TriggerObjectSplits");
+   if ( do_triggerobjects_ && triggerObjectSplits_.empty() && splitTriggerObject ) {
+      triggerObjectSplits_  = config_.getParameter< Strings >("TriggerObjectSplits");
+      if ( ! triggerObjectSplits_.empty() && triggerObjectSplitsTypes_.empty() && config_.exists("TriggerObjectSplitsTypes") ) {
+         triggerObjectSplitsTypes_ = config_.getParameter< Strings >("TriggerObjectSplitsTypes");
+         for ( auto & tot : triggerObjectSplitsTypes_ ) std::transform(tot.begin(), tot.end(), tot.begin(), ::tolower);
+         splitTriggerObject = !triggerObjectSplitsTypes_.empty();
+      }
+   }
+   if ( triggerObjectSplits_.size() != triggerObjectSplitsTypes_.size() ) {
+      std::cout << "-w- Ntuplizer: Size of trigger splits and splits types do not match!" << std::endl;
+      std::cout << "               No splitting will be done" << std::endl;
+      splitTriggerObject = false;
+   }
+   
+
+   // Definitions of the variables to be stored in the metadata tree
+   do_metfilters_ = config_.existsAs<InputTag>("MetFiltersResults");
+   do_triggeraccepts_   = config_.exists("TriggerResults");
+   do_event_count_summary_  = config_.exists("TotalEvents")  && config_.exists("FilteredEvents");
+   do_triggerobjects_   = config_.exists("TriggerObjectStandAlone")  &&  config_.exists("TriggerObjectLabels");   
+
    inputTagsVec_ = config_.getParameterNamesForType<InputTags>();
    inputTags_    = config_.getParameterNamesForType<InputTag>();
-   psetsVec_     = config_.getParameterNamesForType<std::vector<edm::ParameterSet>>();
-   
+   psetsVec_     = config_.getParameterNamesForType<std::vector<edm::ParameterSet>>();   
    hltPrescaleProvider_ = std::make_shared<HLTPrescaleProvider>(config_, consumesCollector(), *this);
+
    std::string name;
    std::string fullname;
+   trig_res_process_.clear();   
 
    using RegistersPSetFn = std::function<void(std::vector<edm::ParameterSet> const&)>;
    std::unordered_map<std::string, RegistersPSetFn> psetDispatch;
@@ -365,9 +377,9 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
          String jet_collection_label = collection.label();
          jet_collections_[jet_collection_label] = collection;
          makeCollectionTree(collection);
-         auto btagging = read_definitions(jet,"btagging","btagging_" + jet_collection_label);
+         auto btagging = metadata_read_definitions(jet,"btagging","btagging_" + jet_collection_label);
          jet_btagging_[jet_collection_label] = btagging;
-         auto bregression = read_definitions(jet,"bregression","bregression_" + jet_collection_label);
+         auto bregression = metadata_read_definitions(jet,"bregression","bregression_" + jet_collection_label);
          jet_bregression_[jet_collection_label] = bregression;
          std::vector<analysis::utils::TitleAlias>  discriminators;
          discriminators.reserve(btagging.size() + bregression.size());
@@ -446,12 +458,6 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       registerTokens<reco::GenParticleCollection>(collections, genPartTokens_);
    };
    // Trigger stuff
-   inputTagsDispatch["TriggerObjectStandAlone"] = [&](InputTags const& collections) {
-      registerTokens<pat::TriggerObjectStandAloneCollection>(collections, triggerObjTokens_);
-   };
-   inputTagsDispatch["TriggerEvent"] = [&](InputTags const& collections) {
-      registerTokens<trigger::TriggerEvent>(collections, triggerEventTokens_);
-   };
    inputTagsDispatch["TriggerResults"] = [&](InputTags const& collections) {
       registerTokens<edm::TriggerResults>(collections, triggerResultsTokens_);
       Strings triggerpaths;
@@ -509,32 +515,88 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       }
       it->second(collections);
    }
+
+   InputTag trgRes;
+   if ( do_triggeraccepts_ ) {
+      InputTags trs = config_.getParameter<InputTags>("TriggerResults");
+      trgRes = trs[0];
+   }
+
    // Single InputTag
    using RegisterFn = std::function<void(InputTag const&)>;
    std::unordered_map<std::string, RegisterFn> inputTagDispatch;
+   //
+   inputTagDispatch["TriggerObjectStandAlone"] = [&](InputTag const& collection) {
+      registerToken<pat::TriggerObjectStandAloneCollection>(collection, triggerObjToken_, triggerobjects_);
+      std::string label = collection.label();
+      std::string inst  = collection.instance();
+      std::string proc  = collection.process();
+      name = label;
+      fullname = name + "_" + inst + "_" + proc;
+      if ( use_full_name_ ) name = fullname;      
+      if ( config_.existsAs<Strings> ("TriggerObjectLabels") ) {
+         triggerObjectLabels_ = config_.getParameter< Strings >("TriggerObjectLabels");
+         sort( triggerObjectLabels_.begin(), triggerObjectLabels_.end() );
+         triggerObjectLabels_.erase( unique( triggerObjectLabels_.begin(), triggerObjectLabels_.end() ), triggerObjectLabels_.end() );
+         String triggerobjects_folder = name;
+         TFileDirectory triggerObjectsDir = eventsDir_.mkdir(triggerobjects_folder);
+         for ( auto & triggerObjectLabel : triggerObjectLabels_ ) {
+            name = triggerObjectLabel;
+            if ( use_full_name_ ) name += "_" + triggerobjects_folder;
+            tree_[name] = triggerObjectsDir.make<TTree>(name.c_str(),name.c_str());
+            triggerobjects_collections_.push_back(std::make_unique<TriggerObjectCandidates>(collection, tree_[name], is_mc_));
+            triggerobjects_collections_.back() -> Init();
+            triggerobjects_collections_.back() -> UseTriggerResults(trgRes);
+            if ( splitTriggerObject ) {
+               Strings types;
+               for ( size_t tos = 0; tos < triggerObjectSplits_.size() ; ++tos ) {
+                  if ( triggerObjectSplits_.at(tos) == name ) {
+                     types = string_split(triggerObjectSplitsTypes_.at(tos), ':');
+                     break;
+                  }
+               }
+               sort( types.begin(), types.end() );
+               types.erase( unique( types.begin(), types.end() ), types.end() );
+               for ( auto & tot : types ) {
+                  std::string namesplit = name + "_" + tot;
+                  tree_[namesplit] = triggerObjectsDir.make<TTree>(namesplit.c_str(),namesplit.c_str());
+                  triggerobjects_collections_.push_back(std::make_unique<TriggerObjectCandidates>(collection, tree_[namesplit], is_mc_ ));
+                  triggerobjects_collections_.back() -> Init();
+                  triggerobjects_collections_.back() -> UseTriggerResults(trgRes);
+                  triggerobjects_collections_.back() -> TriggerObjectType(tot);
+               }
+            } 
+         }
+      }
+   };
+   // inputTagDispatch["GenParticles"] = [&](InputTag const& collection) {
+   //    registerToken<reco::GenParticleCollection>(collection, genparticles_token_, genparticles_);
+   //    if ( is_mc_ ) {
+   //       name  = generateCollectionName(collection);
+   //       genparticles_collection_ = std::make_unique<GenParticleCandidates>(collection, tree_[name], is_mc_ );
+   //       genparticles_collection_ -> Init();
+   //    }
+   // };
+
    inputTagDispatch["PileupSummaryInfo"] = [&](InputTag const& collection) {
       registerToken< std::vector<PileupSummaryInfo> >(collection,pileup_info_token_,pileup_info_);
+      if ( is_mc_ ) eventinfo_ -> PileupInfo(config_.getParameter<InputTag>("PileupSummaryInfo"));
    };
    inputTagDispatch["GenEventInfo"] = [&](InputTag const& collection) {
       registerToken<GenEventInfoProduct>(collection,genEventInfoToken_,genEventInfo_);
+      if ( is_mc_ ) eventinfo_ -> GenEventInfo(config_.getParameter<InputTag>("GenEventInfo"));
    };
    inputTagDispatch["LumiScalers"] = [&](InputTag const& collection) {
       registerToken<LumiScalersCollection>(collection,lumiScalersToken_,lumiScalers_);
+      eventinfo_ -> LumiScalersInfo(config_.getParameter<InputTag>("LumiScalers"));
    };
    inputTagDispatch["FixedGridRhoAll"] = [&](InputTag const& collection) {
       registerToken<double>(collection,fixedGridRhoAllToken_,fixedGridRhoAll_);
-   };
-   inputTagDispatch["PrefiringWeight"] = [&](InputTag const& collection) {
-      registerToken<double>(collection,prefWeightToken_,prefWeight_);
-   };
-   inputTagDispatch["PrefiringWeightUp"] = [&](InputTag const& collection) {
-      registerToken<double>(collection,prefWeightUpToken_,prefWeightUp_);
-   };
-   inputTagDispatch["PrefiringWeightDown"] = [&](InputTag const& collection) {
-      registerToken<double>(collection,prefWeightDownToken_,prefWeightDown_);
+      eventinfo_ -> FixedGridRhoInfo(config_.getParameter<InputTag>("FixedGridRhoAll"));
    };
    inputTagDispatch["GenFilterInfo"] = [&](InputTag const& collection) {
       registerToken<GenFilterInfo,edm::InLumi>(collection,genFilterInfoToken_,genFilterInfo_);
+      if ( is_mc_ ) metadata_ -> SetGeneratorFilter(config_.getParameter<InputTag> ("GenFilterInfo"));
    };
    inputTagDispatch["GenRunInfo"] = [&](InputTag const& collection) {
       registerToken<GenRunInfoProduct,edm::InRun>(collection,genRunInfoToken_,genRunInfo_);
@@ -550,6 +612,16 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
    };
    inputTagDispatch["MetFiltersResults"] = [&](InputTag const& collection) {
       registerToken<edm::TriggerResults>(collection, metfilters_tokens_, metfilters_);
+      eventinfo_ -> MetFilters(config_.getParameter<InputTag>("MetFiltersResults"));
+   };
+   inputTagDispatch["PrefiringWeight"] = [&](InputTag const& collection) {
+      registerToken<double>(collection,prefWeightToken_,prefWeight_);
+   };
+   inputTagDispatch["PrefiringWeightUp"] = [&](InputTag const& collection) {
+      registerToken<double>(collection,prefWeightUpToken_,prefWeightUp_);
+   };
+   inputTagDispatch["PrefiringWeightDown"] = [&](InputTag const& collection) {
+      registerToken<double>(collection,prefWeightDownToken_,prefWeightDown_);
    };
    for ( auto & inputTag : inputTags_ ) {
       InputTag collection = config_.getParameter<InputTag>(inputTag);
@@ -557,6 +629,13 @@ Ntuplizer::Ntuplizer(const edm::ParameterSet& config):config_(config) { //:   //
       if (it != inputTagDispatch.end())
          it->second(collection);
    }
+   std::optional<InputTag> prefTagUp;
+   if (config_.existsAs<InputTag>("PrefiringWeightUp"))
+      prefTagUp = prefWeightUp_;
+   std::optional<InputTag> prefTagDown;
+   if (config_.existsAs<InputTag>("PrefiringWeightDown"))
+      prefTagDown = prefWeightDown_;
+   if ( config_.existsAs<InputTag>("PrefiringWeight") ) eventinfo_->PrefiringWeightInfo(prefWeight_, prefTagUp, prefTagDown);
    analyze_count_ = 0;
 }
 Ntuplizer::~Ntuplizer() {
@@ -595,6 +674,7 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
    // Gen particles (reco)
    for ( auto & collection : genparticles_collections_ )
       collection -> Fill(event);
+   // genparticles_collection_ -> Fill(event);
    // trigger accepts
    for ( auto & collection : triggeraccepts_collections_ )
       collection -> Fill(event, setup);
@@ -616,64 +696,13 @@ void Ntuplizer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
 void Ntuplizer::beginJob() {
    printf_info("==> Ntuplizer::beginJob()...\n");
    // TODO: move all below to constructor?
-   do_pileup_info_      = config_.exists("PileupSummaryInfo") && is_mc_;
-   do_geneventinfo_     = config_.exists("GenEventInfo") && is_mc_;
-   do_lumiscalers_      = config_.exists("LumiScalers");
-   do_patmets_          = config_.exists("PatMETs");
-   do_patmuons_         = config_.exists("PatMuons");
-   do_genjets_          = config_.exists("GenJets");
-   do_genparticles_     = config_.exists("GenParticles");
-   do_triggeraccepts_   = config_.exists("TriggerResults");
-   do_event_count_summary_      = config_.exists("TotalEvents")  && config_.exists("FilteredEvents");
-   do_genfilter_        = config_.exists("GenFilterInfo") && is_mc_;
-   do_triggerobjects_   = ( config_.exists("TriggerObjectStandAlone") || config_.exists("TriggerEvent") ) &&  config_.exists("TriggerObjectLabels");
-   do_genruninfo_       = config_.exists("GenRunInfo") && is_mc_ ;
+
    
-   if ( config_.exists("TestMode") ) // This is DANGEROUS! but can be useful. So BE CAREFUL!!!!
-      testmode_ = config_.getParameter<bool> ("TestMode");
-   if ( config_.exists("UseFullName") )
-      use_full_name_ = config_.getParameter<bool> ("UseFullName");
    std::string name;
    std::string fullname;
    gen_event_counts_  = {};
    event_counts_ = {};
-   // Event info tree
-   eventinfo_ = EventInfoPtr(new EventInfo(eventsDir_));
-   if ( config_.exists("FixedGridRhoAll") )
-      eventinfo_ -> FixedGridRhoInfo(config_.getParameter<InputTag>("FixedGridRhoAll"));
-   if ( do_pileup_info_ )
-      eventinfo_ -> PileupInfo(config_.getParameter<InputTag>("PileupSummaryInfo"));
-   if ( do_geneventinfo_ )
-      eventinfo_ -> GenEventInfo(config_.getParameter<InputTag>("GenEventInfo"));
-   if ( do_lumiscalers_ )
-      eventinfo_ -> LumiScalersInfo(config_.getParameter<InputTag>("LumiScalers"));
-   if ( config_.exists("PrefiringWeight") &&  config_.exists("PrefiringWeightUp") && config_.exists("PrefiringWeightDown"))
-      eventinfo_ -> PrefiringWeightInfo(prefWeight_, prefWeightUp_, prefWeightDown_);
-   if ( config_.exists("MetFiltersResults") )
-      eventinfo_ -> MetFilters(config_.getParameter<InputTag>("MetFiltersResults"));
 
-   InputTag trgRes;
-   if ( do_triggeraccepts_ ) {
-      InputTags trs = config_.getParameter<InputTags>("TriggerResults");
-      trgRes = trs[0];
-   }
-   // split trigger objects
-   bool splitTriggerObject = config_.exists("TriggerObjectSplits");
-   if ( do_triggerobjects_ && triggerObjectSplits_.empty() && splitTriggerObject ) {
-      triggerObjectSplits_  = config_.getParameter< Strings >("TriggerObjectSplits");
-      if ( ! triggerObjectSplits_.empty() && triggerObjectSplitsTypes_.empty() && config_.exists("TriggerObjectSplitsTypes") ) {
-         triggerObjectSplitsTypes_ = config_.getParameter< Strings >("TriggerObjectSplitsTypes");
-         for ( auto & tot : triggerObjectSplitsTypes_ ) std::transform(tot.begin(), tot.end(), tot.begin(), ::tolower);
-         splitTriggerObject = !triggerObjectSplitsTypes_.empty();
-      }
-   }
-   if ( triggerObjectSplits_.size() != triggerObjectSplitsTypes_.size() ) {
-      std::cout << "-w- Ntuplizer: Size of trigger splits and splits types do not match!" << std::endl;
-      std::cout << "               No splitting will be done" << std::endl;
-      splitTriggerObject = false;
-   }
-   // Input tags (vector)
-   // auto pileupJetIds = config_.getParameter<Strings>("PileupJetIds");
 
    // Jets
    size_t patJetCounter = 0;
@@ -718,51 +747,6 @@ void Ntuplizer::beginJob() {
             genparticles_collections_.push_back( pGenParticleCandidates( new GenParticleCandidates(collection, tree_[name], is_mc_ ) ));
             genparticles_collections_.back() -> Init();
         }  
-         // Trigger Objects
-         if ( do_triggeraccepts_  && do_triggerobjects_ && inputTags == "TriggerObjectStandAlone"  ) {
-            if ( triggerObjectLabels_.empty() )
-               triggerObjectLabels_ = config_.getParameter< Strings >("TriggerObjectLabels");
-            sort( triggerObjectLabels_.begin(), triggerObjectLabels_.end() );
-            triggerObjectLabels_.erase( unique( triggerObjectLabels_.begin(), triggerObjectLabels_.end() ), triggerObjectLabels_.end() );
-            std::string dir = name;
-            TFileDirectory triggerObjectsDir = eventsDir_.mkdir(dir);
-            for ( auto & triggerObjectLabel : triggerObjectLabels_ ) {
-               name = triggerObjectLabel;
-               if ( use_full_name_ ) name += "_" + dir;
-               tree_[name] = triggerObjectsDir.make<TTree>(name.c_str(),name.c_str());
-               triggerobjects_collections_.push_back(pTriggerObjectCandidates( new TriggerObjectCandidates(collection, tree_[name], is_mc_ ) ));
-               triggerobjects_collections_.back() -> Init();
-               triggerobjects_collections_.back() -> UseTriggerResults(trgRes);
-               if ( splitTriggerObject ) {
-                  Strings types;
-                  for ( size_t tos = 0; tos < triggerObjectSplits_.size() ; ++tos ) {
-                     if ( triggerObjectSplits_.at(tos) == name ) {
-                        types = string_split(triggerObjectSplitsTypes_.at(tos), ':');
-                        break;
-                     }
-                  }
-                  sort( types.begin(), types.end() );
-                  types.erase( unique( types.begin(), types.end() ), types.end() );
-                  for ( auto & tot : types ) {
-                     std::string namesplit = name + "_" + tot;
-                     tree_[namesplit] = triggerObjectsDir.make<TTree>(namesplit.c_str(),namesplit.c_str());
-                     triggerobjects_collections_.push_back(pTriggerObjectCandidates( new TriggerObjectCandidates(collection, tree_[namesplit], is_mc_ ) ));
-                     triggerobjects_collections_.back() -> Init();
-                     triggerobjects_collections_.back() -> UseTriggerResults(trgRes);
-                     triggerobjects_collections_.back() -> TriggerObjectType(tot);
-                  }
-               } 
-            }
-         }
-         if ( do_triggerobjects_ && inputTags == "TriggerEvent"  ) {
-            if ( triggerObjectLabels_.empty() )
-               triggerObjectLabels_ = config_.getParameter< Strings >("TriggerObjectLabels");
-            sort( triggerObjectLabels_.begin(), triggerObjectLabels_.end() );
-            triggerObjectLabels_.erase( unique( triggerObjectLabels_.begin(), triggerObjectLabels_.end() ), triggerObjectLabels_.end() );
-            std::string dir = name;
-            TFileDirectory triggerObjectsDir = eventsDir_.mkdir(dir);
-      
-         }       
       }
    }
    // Metadata stuff
@@ -778,9 +762,6 @@ void Ntuplizer::beginJob() {
       name = label;
       fullname = name + "_" + inst + "_" + proc;
       if ( use_full_name_ ) name = fullname;       
-      // Generator filter
-      if ( do_genfilter_ && inputTag == "GenFilterInfo" )
-         metadata_ -> SetGeneratorFilter(config_.getParameter<InputTag> ("GenFilterInfo"));
       // Event filter
       if ( do_event_count_summary_ ) {
          if ( inputTag == "TotalEvents" ) {
@@ -838,7 +819,7 @@ void Ntuplizer::beginRun(edm::Run const& run, edm::EventSetup const& setup) {
 void Ntuplizer::endRun(edm::Run const& run, edm::EventSetup const& setup) {
    printf_info("==> Ntuplizer::endRun(): Run = %d ...\n", (int)run.run());
 
-   if ( do_genruninfo_ ) {
+   if ( config_.exists("GenRunInfo") && is_mc_ ) {
       metadata_ -> SetCrossSections(run,genRunInfo_,xsection_);
    }
 
@@ -874,6 +855,11 @@ void Ntuplizer::registerTokensMap(std::map<String,InputTag> const& collections, 
 
 template<typename Product>
 void Ntuplizer::registerToken(InputTag const& collection, Token<Product>& token, InputTag& storedCollection) {
+   token = consumes<Product>(collection);
+   storedCollection = collection;
+}
+template<typename Product, typename Collection>
+void Ntuplizer::registerToken(InputTag const& collection, Token<Product>& token, std::unique_ptr<Collection>& storedCollection) {
    token = consumes<Product>(collection);
    storedCollection = collection;
 }
@@ -916,6 +902,16 @@ void Ntuplizer::AddJetCollection(const edm::InputTag& collection) {
    patjets_collections_.back() -> AddJerInfo(jer_es_tokens_[label],fixedGridRhoAll_);
 }
 
+String Ntuplizer::generateCollectionName(const edm::InputTag& collection) {
+   String name;
+   String label = collection.label();
+   String inst  = collection.instance();
+   String proc  = collection.process();
+   name = label;
+   String fullname = name + "_" + inst + "_" + proc;
+   if ( use_full_name_ ) name = fullname;       
+   return name;
+}
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -934,10 +930,10 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 
    desc.add<InputTag>("FixedGridRhoAll", InputTag("fixedGridRhoAll"));
    desc.add<InputTags>("TriggerResults", { InputTag("TriggerResults", "", "HLT") });
-   desc.add<InputTags>( "PatMuons", { InputTag("slimmedMuons") });
-   desc.add<InputTags>( "L1TJets", { InputTag("caloStage2Digis","Jet","RECO") });
-   desc.add<InputTags>( "L1TMuons", { InputTag("gmtStage2Digis","Muon","RECO") });
-   desc.add<InputTags>( "PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
+   desc.add<InputTags>("PatMuons", { InputTag("slimmedMuons") });
+   desc.add<InputTags>("L1TJets", { InputTag("caloStage2Digis","Jet","RECO") });
+   desc.add<InputTags>("L1TMuons", { InputTag("gmtStage2Digis","Muon","RECO") });
+   desc.add<InputTags>("PrimaryVertices", { InputTag("offlineSlimmedPrimaryVertices") });
    desc.add<InputTag>("MetFiltersResults", InputTag("TriggerResults", "", "PAT"));
 
    desc_btagging.add<std::string>("discriminator");
@@ -954,7 +950,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addVPSet("JetCollections", desc_jets);
 
    // Optionals
-   desc.addOptional<InputTags>("TriggerObjectStandAlone");
+   desc.addOptional<InputTag>("TriggerObjectStandAlone");
    desc.addOptional<InputTag>("FilteredEvents");
    desc.addOptional<InputTag>("TotalEvents");
    desc.addOptional<Strings>("L1Seeds");
@@ -965,6 +961,7 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<InputTag>("PrefiringWeight");
    desc.addOptional<InputTag>("PrefiringWeightUp");
    desc.addOptional<InputTag>("PrefiringWeightDown");
+   desc.addOptional<InputTag>("LumiScalers");
 
    desc.add<double>("CrossSection", -1.0);
    desc.addOptional<InputTag>("GenEventInfo");
@@ -972,8 +969,12 @@ void Ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
    desc.addOptional<InputTag>("GenRunInfo");
    desc.addOptional<InputTag>("PileupSummaryInfo");
    desc.addOptional<InputTags>("GenJets");
+   // desc.addOptional<InputTag>("GenParticles");
    desc.addOptional<InputTags>("GenParticles");
    desc.addOptional<InputTag>("FilteredMHatEvents");
+
+   desc.add<bool>("UseFullName", false);
+   desc.add<bool>("TestMode", false);
 
    descriptions.addDefault(desc);
 }
